@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title></title>
+  <title>Apprendre les nombres (1–100)</title>
   <style>
     :root{--bg:#ffffff;--good:#16a34a;--bad:#e11d48;--accent:#1f6feb}
     html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#06213a}
@@ -14,11 +14,11 @@
 
     /* menu principal */
     .menu{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-    .menu button{padding:18px 22px;border-radius:14px;font-size:1.4rem;font-weight:900;width:84%;max-width:420px}
+    .menu button{padding:18px 22px;border-radius:14px;font-size:1.25rem;font-weight:900;width:84%;max-width:420px}
 
     .top{flex:0 0 45%;display:flex;align-items:center;justify-content:center}
-    /* number: large by default, but we allow JS to reduce it to fit on one line */
     #number{font-size:8rem;font-weight:900;line-height:1;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .word{font-size:1.6rem;font-weight:700;text-align:center;margin-top:8px;min-height:2rem}
     .bottom{flex:1 1 55%;display:flex;flex-direction:column;justify-content:flex-start;padding:18px;gap:12px}
     .options{display:flex;flex-direction:column;gap:12px;margin-top:8px}
     .option{appearance:none;background:#f7fbff;border-radius:14px;padding:18px;text-align:center;font-size:1.6rem;font-weight:800;border:3px solid transparent;user-select:none}
@@ -37,7 +37,7 @@
     .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:40}
     .dialog{background:white;padding:16px;border-radius:10px;text-align:center;max-width:92%}
 
-    @media (max-width:520px){ #number{font-size:5rem} .option{font-size:1.25rem;padding:14px} .menu button{font-size:1.2rem} }
+    @media (max-width:520px){ #number{font-size:5rem} .option{font-size:1.25rem;padding:14px} .menu button{font-size:1.1rem} }
   </style>
 </head>
 <body>
@@ -48,12 +48,19 @@
     <div id="mainMenu" class="menu" aria-hidden="false">
       <button id="modeC2L" class="primary">Chiffres → Lettres</button>
       <button id="modeL2C" class="primary">Lettres → Chiffres</button>
+      <button id="openTraining" class="primary">Entraînement</button>
+      <button id="openRangeMenu" class="ghost">Choix de la plage de nombres</button>
+      <button id="openVoiceMenu" class="ghost">Choix de la voix</button>
+      <button id="openOtherMenu" class="ghost">Autres options</button>
     </div>
 
     <!-- Zone de jeu (masquée tant que menu visible) -->
     <div id="gameArea" style="display:none">
       <div class="top">
-        <div id="number" aria-live="polite">—</div>
+        <div>
+          <div id="number" aria-live="polite">—</div>
+          <div class="word" id="word">&nbsp;</div>
+        </div>
       </div>
 
       <div class="bottom">
@@ -63,6 +70,68 @@
           <button id="btnHelp" class="ghost">Aide</button>
           <div style="display:flex;gap:8px">
             <button id="btnMenu" class="ghost">Menu principal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- panneau plages (overlay) -->
+    <div id="rangeMenu" class="overlay" style="display:none">
+      <div class="dialog">
+        <div style="font-weight:900;margin-bottom:6px">Choix de la plage de nombres</div>
+        <div style="margin-bottom:8px">Plages prédéfinies</div>
+        <div class="range-grid" id="rangeButtons" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px"></div>
+        <button id="btnTens" class="ghost" style="width:100%">Uniquement les dizaines (10,20,...,100)</button>
+
+        <div style="height:12px"></div>
+        <div style="font-weight:700;margin-bottom:6px">Choix personnalisé</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="customMin" type="number" min="0" max="100" placeholder="Min" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eef7ff">
+          <input id="customMax" type="number" min="0" max="100" placeholder="Max" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eef7ff">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;justify-content:center">
+          <button id="btnCustomSet" class="primary">Valider</button>
+          <button id="btnRangeBack" class="ghost">Retour au menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- panneau autres options (overlay) -->
+    <div id="otherMenu" class="overlay" style="display:none">
+      <div class="dialog">
+        <div style="font-weight:900;margin-bottom:6px">Autres options</div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:260px">
+          <label for="targetCorrect">Réponses justes pour terminer la partie (1–100)</label>
+          <input id="targetCorrect" type="number" min="1" max="100" step="1" style="padding:8px;border-radius:8px;border:1px solid #eef7ff" />
+
+          <label for="wrongSec">Durée d'affichage après une erreur (secondes, min 1)</label>
+          <input id="wrongSec" type="number" min="1" max="30" step="1" style="padding:8px;border-radius:8px;border:1px solid #eef7ff" />
+
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
+            <button id="btnOtherSave" class="primary">Enregistrer</button>
+            <button id="btnOtherBack" class="ghost">Retour au menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- panneau voix (overlay) -->
+    <div id="voiceMenu" class="overlay" style="display:none">
+      <div class="dialog">
+        <div style="font-weight:900;margin-bottom:6px">Choix de la voix</div>
+        <div class="voice-panel" style="display:flex;flex-direction:column;gap:8px;min-width:260px">
+          <label for="voiceSelect">Voix françaises disponibles</label>
+          <select id="voiceSelect" aria-label="Voix française"></select>
+
+          <label for="rateRange">Vitesse (<span id="rateVal">0.95</span>)</label>
+          <input id="rateRange" type="range" min="0.6" max="1.4" step="0.01" value="0.95">
+
+          <label for="volumeRange">Volume (<span id="volumeVal">1.00</span>)</label>
+          <input id="volumeRange" type="range" min="0.0" max="1.0" step="0.01" value="1.00">
+
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
+            <button id="btnPlayRandom" class="primary">Écouter un nombre aléatoire</button>
+            <button id="btnVoiceBack" class="ghost">Retour au menu</button>
           </div>
         </div>
       </div>
@@ -97,15 +166,13 @@
 
   <script>
   // Paramètres
-  const TARGET_CORRECT = 20;
-  const TTS_RATE = 0.95;
-  const TTS_PITCH = 1.05;
+  let targetCorrect = parseInt(localStorage.getItem('targetCorrect') || '20', 10);
+  let wrongExtraSec = parseInt(localStorage.getItem('wrongExtraSec') || '2', 10); // seconds, min 1
 
   // Durées (ms)
   const GOOD_FEEDBACK_MS = 700;      // délai après bonne réponse
-  const ERROR_EXTRA_MS = 2000;       // +2s demandé
-  const ERROR_HIGHLIGHT_MS = 1800 + ERROR_EXTRA_MS; // 3800
-  const ERROR_FALLBACK_MS = 1200 + ERROR_EXTRA_MS;  // 3200
+  function getErrorExtraMs(){ return Math.max(1, parseInt(wrongExtraSec,10)||2) * 1000; }
+  function getErrorDurations(){ const extra = getErrorExtraMs(); return { highlight: 1800 + extra, fallback: 1200 + extra }; }
 
   // État du jeu
   let correctCount = 0;
@@ -114,121 +181,211 @@
   let optionsCount = 2;
   let currentAnswer = null; // toujours un nombre (1..100)
   let locked = false;
-  let currentMode = null; // 'C2L' ou 'L2C' ou null
+  let currentMode = null; // 'C2L' ou 'L2C' ou 'TRAIN' ou null
+
+  // Plage de nombres
+  let rangeSettings = JSON.parse(localStorage.getItem('numberRange') || 'null') || { type: 'full', min: 1, max: 100, onlyTens: false, name: '1-100' };
+  let allowedNumbers = [];
+
+  // Entraînement state
+  let trainIndex = 0;
+  let trainTimer = null;
 
   // DOM
   const scoreEl = document.getElementById('score');
   const mainMenu = document.getElementById('mainMenu');
   const gameArea = document.getElementById('gameArea');
   const numberEl = document.getElementById('number');
+  const wordEl = document.getElementById('word');
   const optionsEl = document.getElementById('options');
   const btnHelp = document.getElementById('btnHelp');
   const btnMenu = document.getElementById('btnMenu');
 
-  // TTS voix fr-Jacques (robuste)
-  let chosenVoice = null;
+  // range UI
+  const openRangeMenu = document.getElementById('openRangeMenu');
+  const rangeMenu = document.getElementById('rangeMenu');
+  const rangeButtons = document.getElementById('rangeButtons');
+  const btnTens = document.getElementById('btnTens');
+  const customMin = document.getElementById('customMin');
+  const customMax = document.getElementById('customMax');
+  const btnCustomSet = document.getElementById('btnCustomSet');
+  const btnRangeBack = document.getElementById('btnRangeBack');
+
+  // other options UI
+  const openOtherMenu = document.getElementById('openOtherMenu');
+  const otherMenu = document.getElementById('otherMenu');
+  const targetCorrectInput = document.getElementById('targetCorrect');
+  const wrongSecInput = document.getElementById('wrongSec');
+  const btnOtherSave = document.getElementById('btnOtherSave');
+  const btnOtherBack = document.getElementById('btnOtherBack');
+
+  // voice UI elements
+  const openVoiceMenu = document.getElementById('openVoiceMenu');
+  const voiceMenu = document.getElementById('voiceMenu');
+  const voiceSelect = document.getElementById('voiceSelect');
+  const rateRange = document.getElementById('rateRange');
+  const volumeRange = document.getElementById('volumeRange');
+  const rateVal = document.getElementById('rateVal');
+  const volumeVal = document.getElementById('volumeVal');
+  const btnPlayRandom = document.getElementById('btnPlayRandom');
+  const btnVoiceBack = document.getElementById('btnVoiceBack');
+
+  // training UI
+  const openTraining = document.getElementById('openTraining');
+
+  // TTS état
+  let chosenVoice = null; // objet voix
+  let chosenVoiceName = localStorage.getItem('ttsVoiceName') || null;
+  // default rate / volume
+  rateRange.value = localStorage.getItem('ttsRate') || 0.95;
+  volumeRange.value = localStorage.getItem('ttsVolume') || 1.0;
+  rateVal && (rateVal.textContent = parseFloat(rateRange.value).toFixed(2));
+  volumeVal && (volumeVal.textContent = parseFloat(volumeRange.value).toFixed(2));
+
+  // robust getVoices
   function getVoices(){ try{ if(window.speechSynthesis && typeof window.speechSynthesis.getVoices==='function'){ const v=window.speechSynthesis.getVoices(); return Array.isArray(v)?v:Array.from(v||[]); } }catch(e){} return []; }
-  function pickFrJacquesVoiceOnce(){ const voices=getVoices(); if(!voices||voices.length===0) return false; let v=voices.find(x=>x&&/fr[-_]?ca/i.test(x.lang)); if(!v) v=voices.find(x=>x&&/^fr/i.test(x.lang)); if(!v) v=voices[0]; chosenVoice=v||null; return true; }
-  function ensurePickFrJacquesVoice(){ if(pickFrJacquesVoiceOnce()) return; if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged = ()=>{ pickFrCaVoiceOnce(); }; } let attempts=0; const maxAttempts=12; const interval=setInterval(()=>{ attempts++; if(pickFrCaVoiceOnce()||attempts>=maxAttempts) clearInterval(interval); },200); }
-  ensurePickFrJacquesVoice();
-  function speak(text){ if(!('speechSynthesis' in window)) return; try{ const u=new SpeechSynthesisUtterance(text); u.rate=TTS_RATE; u.pitch=TTS_PITCH; u.volume=1; if(chosenVoice) u.voice=chosenVoice; u.lang = chosenVoice && chosenVoice.lang ? chosenVoice.lang : 'fr-FR'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }catch(e){ console.warn('TTS error',e); } }
+
+  // populate select with French voices only
+  function populateVoiceList(){
+    const voices = getVoices();
+    const fr = voices.filter(v => v && v.lang && /^fr/i.test(v.lang));
+    // clear
+    voiceSelect.innerHTML = '';
+    if(fr.length === 0){
+      const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Aucune voix française trouvée'; voiceSelect.appendChild(opt); return;
+    }
+    fr.forEach(v => {
+      const opt = document.createElement('option'); opt.value = v.name; opt.textContent = `${v.name} — ${v.lang}`; voiceSelect.appendChild(opt);
+    });
+    // restore saved choice or prefer 'Amélie'
+    if(chosenVoiceName === '__mute__') { voiceSelect.value = '__mute__'; chosenVoice = null; return; }
+    if(chosenVoiceName){
+      const found = Array.from(voiceSelect.options).find(o => o.value === chosenVoiceName);
+      if(found) { voiceSelect.value = chosenVoiceName; chosenVoice = fr.find(v => v.name === chosenVoiceName) || null; return; }
+    }
+    const ami = fr.find(v => /am[eé]lie/i.test(v.name));
+    if(ami){ voiceSelect.value = ami.name; chosenVoice = ami; chosenVoiceName = ami.name; localStorage.setItem('ttsVoiceName', chosenVoiceName); return; }
+    voiceSelect.value = fr[0].name; chosenVoice = fr[0]; chosenVoiceName = fr[0].name; localStorage.setItem('ttsVoiceName', chosenVoiceName);
+  }
+
+  // ensure voices loaded
+  function ensureVoicesLoaded(){
+    populateVoiceList();
+    if('speechSynthesis' in window){
+      window.speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+    // polling fallback
+    let attempts = 0; const maxAttempts = 12; const interval = setInterval(()=>{
+      attempts++; populateVoiceList();
+      if(voiceSelect.options.length>0 || attempts>=maxAttempts) clearInterval(interval);
+    },200);
+  }
+
+  ensureVoicesLoaded();
+
+  // speak using chosenVoice and settings; respect "Muet"
+  function speak(text){
+    if(!('speechSynthesis' in window)) return;
+    if(chosenVoiceName === '__mute__') return; // silent
+    try{
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = parseFloat(rateRange.value) || 0.95;
+      u.volume = parseFloat(volumeRange.value) || 1.0;
+      u.pitch = 1.05;
+      if(chosenVoice) u.voice = chosenVoice;
+      u.lang = chosenVoice && chosenVoice.lang ? chosenVoice.lang : 'fr-FR';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    } catch(e){ console.warn('TTS error',e); }
+  }
 
   // utilitaires
   function numberToWords(n){ if(n<0||n>100) return String(n); const units=['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize']; const tens=['','', 'vingt','trente','quarante','cinquante','soixante']; if(n<=16) return units[n]; if(n<20) return 'dix-'+units[n-10]; if(n<70){ const t=Math.floor(n/10); const u=n%10; if(u===0) return tens[t]; if(u===1&&t!==8) return tens[t]+'-et-un'; return tens[t]+'-'+units[u]; } if(n<80) return 'soixante-'+numberToWords(n-60); if(n<100){ if(n===80) return 'quatre-vingts'; return 'quatre-vingt-'+numberToWords(n-80); } if(n===100) return 'cent'; return String(n); }
   function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
-  function generateOptions(correct,count){ const s=new Set([correct]); while(s.size<count){ const v=Math.floor(Math.random()*100)+1; if(v!==correct) s.add(v); } const a=Array.from(s); shuffle(a); return a; }
+
+  // generate options from allowedNumbers
+  function generateOptions(correct,count){
+    const pool = allowedNumbers.slice();
+    const set = new Set([correct]);
+    const idx = pool.indexOf(correct);
+    if(idx !== -1) pool.splice(idx,1);
+    while(set.size < Math.min(count, allowedNumbers.length)){
+      if(pool.length === 0) break;
+      const v = pool[Math.floor(Math.random()*pool.length)]; set.add(v); const i = pool.indexOf(v); if(i!==-1) pool.splice(i,1);
+    }
+    while(set.size < count){ const v = Math.floor(Math.random()*101); if(!set.has(v)) set.add(v); }
+    const arr = Array.from(set); shuffle(arr); return arr;
+  }
+
+  // compute allowedNumbers from rangeSettings
+  function computeAllowedNumbers(){
+    if(rangeSettings.type === 'tens' || rangeSettings.onlyTens){ allowedNumbers = []; for(let k=10;k<=100;k+=10) allowedNumbers.push(k); }
+    else { const min = Math.max(0, Math.min(100, Math.floor(rangeSettings.min))); const max = Math.max(0, Math.min(100, Math.floor(rangeSettings.max))); allowedNumbers = []; for(let x=min;x<=max;x++) allowedNumbers.push(x); }
+    if(allowedNumbers.length === 0){ allowedNumbers = [1,2,3]; }
+  }
 
   // affichage score
   function updateScore(){ scoreEl.textContent = `${correctCount} / ${totalCount}`; }
 
   // menu
-  function showMenu(){ currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; updateScore(); }
+  function showMenu(){ currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; voiceMenu.style.display='none'; rangeMenu.style.display='none'; otherMenu.style.display='none'; updateScore(); }
 
   // démarrer une partie dans le mode demandé
-  function startGame(mode){ currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display='block'; updateScore(); showQuestion(); }
+  function startGame(mode){ computeAllowedNumbers(); currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display='block'; updateScore(); showQuestion(); }
 
   // Adjust font size of #number to ensure it fits on one line when content is long
-  function adjustNumberFont(){
-    const el = numberEl;
-    // ensure no wrapping
-    el.style.whiteSpace = 'nowrap';
-    // reset font-size to css default (allows recalculation)
-    el.style.fontSize = '';
-    // give the browser one paint cycle to compute sizes
-    requestAnimationFrame(()=>{
-      const parentWidth = el.parentElement ? el.parentElement.clientWidth : el.clientWidth;
-      if(parentWidth <= 0) return;
-      // available width slightly reduced to account for padding
-      const avail = Math.max(20, Math.floor(parentWidth * 0.92));
-      // start from current computed font size
-      let computed = window.getComputedStyle(el).fontSize;
-      let fontSize = parseFloat(computed) || 64; // px
-      const minSize = 18; // px
-      let safety = 0;
-      // reduce progressively until the text fits or we hit the minimum
-      while(el.scrollWidth > avail && fontSize > minSize && safety < 40){
-        fontSize = Math.max(minSize, Math.floor(fontSize * 0.92));
-        el.style.fontSize = fontSize + 'px';
-        safety++;
-      }
-    });
-  }
+  function adjustNumberFont(){ const el = numberEl; el.style.whiteSpace = 'nowrap'; el.style.fontSize = ''; requestAnimationFrame(()=>{ const parentWidth = el.parentElement ? el.parentElement.clientWidth : el.clientWidth; if(parentWidth <= 0) return; const avail = Math.max(20, Math.floor(parentWidth * 0.92)); let computed = window.getComputedStyle(el).fontSize; let fontSize = parseFloat(computed) || 64; const minSize = 18; let safety = 0; while(el.scrollWidth > avail && fontSize > minSize && safety < 40){ fontSize = Math.max(minSize, Math.floor(fontSize * 0.92)); el.style.fontSize = fontSize + 'px'; safety++; } }); }
 
   // montrer question adaptée au mode
-  function showQuestion(){ if(correctCount>=TARGET_CORRECT){ finish(); return; } locked=false; const n=Math.floor(Math.random()*100)+1; currentAnswer=n; optionsEl.innerHTML='';
-    if(currentMode==='C2L'){
-      // chiffre affiché en haut, options en lettres
-      numberEl.textContent = n;
-      adjustNumberFont();
-      const choices = generateOptions(n, optionsCount);
-      choices.forEach(num=>{
-        const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=numberToWords(num); b.dataset.val=String(num);
-        b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b);
-      });
-    } else if(currentMode==='L2C'){
-      // nombre en toutes lettres affiché en haut, options en chiffres
-      numberEl.textContent = numberToWords(n);
-      adjustNumberFont();
-      const choices = generateOptions(n, optionsCount);
-      choices.forEach(num=>{
-        const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=String(num); b.dataset.val=String(num);
-        b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b);
-      });
-    }
-    updateScore();
-  }
+  function showQuestion(){ computeAllowedNumbers(); if(correctCount>=targetCorrect){ finish(); return; } if(allowedNumbers.length === 0){ alert('La plage choisie ne contient aucun nombre. Retour au menu.'); showMenu(); return; } locked=false; const n = allowedNumbers[Math.floor(Math.random()*allowedNumbers.length)]; currentAnswer=n; optionsEl.innerHTML=''; if(currentMode==='C2L'){ numberEl.textContent = n; wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=numberToWords(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } else if(currentMode==='L2C'){ numberEl.textContent = numberToWords(n); wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=String(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } updateScore(); }
 
   // gestion du clic selon mode (les dataset.val sont toujours des nombres)
-  function onOptionClicked(e){ if(locked) return; locked=true; const btn=e.currentTarget; const chosen=Number(btn.dataset.val); totalCount++; updateScore();
-    if(chosen===currentAnswer){ correctCount++; updateScore(); consecutiveCorrect++; if(consecutiveCorrect>=2 && optionsCount<4){ optionsCount=Math.min(4, optionsCount+1); consecutiveCorrect=0; }
-      btn.classList.add('highlight-blink'); // feedback
-      // courte annonce : "Bravo"
-      speak('Bravo.');
-      setTimeout(()=>{ btn.classList.remove('highlight-blink'); showQuestion(); }, GOOD_FEEDBACK_MS);
-    } else {
-      consecutiveCorrect=0; optionsCount=Math.max(2, optionsCount-1); btn.classList.add('wrong'); const correctWords = numberToWords(currentAnswer);
-      // Annonce de la bonne réponse : en mode C2L on dira "Non, c'était vingt-cinq" ; en mode L2C on dira également la forme en lettres pour homogénéité
-      speak(`Non, c'était ${correctWords}.`);
-      const childBtns = Array.from(optionsEl.children); const good = childBtns.find(b=>Number(b.dataset.val)===currentAnswer);
-      if(good){ good.classList.add('highlight-blink'); setTimeout(()=>{ good.classList.remove('highlight-blink'); btn.classList.remove('wrong'); showQuestion(); }, ERROR_HIGHLIGHT_MS); }
-      else { setTimeout(()=>{ btn.classList.remove('wrong'); showQuestion(); }, ERROR_FALLBACK_MS); }
-    }
-  }
+  function onOptionClicked(e){ if(locked) return; locked=true; const btn=e.currentTarget; const chosen=Number(btn.dataset.val); totalCount++; updateScore(); if(chosen===currentAnswer){ correctCount++; updateScore(); consecutiveCorrect++; if(consecutiveCorrect>=2 && optionsCount<4){ optionsCount=Math.min(4, optionsCount+1); consecutiveCorrect=0; } btn.classList.add('highlight-blink'); speak('Bravo.'); setTimeout(()=>{ btn.classList.remove('highlight-blink'); showQuestion(); }, GOOD_FEEDBACK_MS); } else { consecutiveCorrect=0; optionsCount=Math.max(2, optionsCount-1); btn.classList.add('wrong'); const correctWords = numberToWords(currentAnswer); speak(`Non, c'était ${correctWords}.`); const childBtns = Array.from(optionsEl.children); const good = childBtns.find(b=>Number(b.dataset.val)===currentAnswer); const errs = getErrorDurations(); if(good){ good.classList.add('highlight-blink'); setTimeout(()=>{ good.classList.remove('highlight-blink'); btn.classList.remove('wrong'); showQuestion(); }, errs.highlight); } else { setTimeout(()=>{ btn.classList.remove('wrong'); showQuestion(); }, errs.fallback); } } }
 
   // fin de partie -> retour au menu principal (comme demandé)
-  function finish(){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); const finalText = clone.querySelector('#finalText'); finalText.textContent = `Score final : ${correctCount} / ${totalCount}`; document.body.appendChild(overlay); speak(`Félicitations. Vous avez obtenu ${correctCount} réponses justes.`);
-    overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); showMenu(); }); }
+  function finish(){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); const finalText = clone.querySelector('#finalText'); finalText.textContent = `Score final : ${correctCount} / ${totalCount}`; document.body.appendChild(overlay); speak(`Félicitations. Vous avez obtenu ${correctCount} réponses justes.`); overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); showMenu(); }); }
 
   // navigation menu principal depuis la partie (avec confirmation)
-  function askConfirmMenu(){ const tpl = document.getElementById('confirmMenuTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('#confirmOverlay'); document.body.appendChild(overlay);
-    overlay.querySelector('#confirmYes').addEventListener('click', ()=>{ overlay.remove(); showMenu(); });
-    overlay.querySelector('#confirmNo').addEventListener('click', ()=>{ overlay.remove(); }); }
+  function askConfirmMenu(){ const tpl = document.getElementById('confirmMenuTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('#confirmOverlay'); document.body.appendChild(overlay); overlay.querySelector('#confirmYes').addEventListener('click', ()=>{ overlay.remove(); showMenu(); }); overlay.querySelector('#confirmNo').addEventListener('click', ()=>{ overlay.remove(); }); }
 
-  // événements UI
+  // voice menu handlers
+  openVoiceMenu.addEventListener('click', ()=>{ voiceMenu.style.display = 'flex'; populateVoiceList(); });
+  btnVoiceBack.addEventListener('click', ()=>{ voiceMenu.style.display = 'none'; });
+
+  // range menu handlers
+  openRangeMenu.addEventListener('click', ()=>{ rangeButtons.innerHTML = ''; for(let start=0; start<=90; start+=10){ const end = start + (start===90?10:9); const btn = document.createElement('button'); btn.textContent = `${start}–${end}`; btn.addEventListener('click', ()=>{ setRange({ type: 'range', min: start, max: end, onlyTens:false, name:`${start}-${end}` }); rangeMenu.style.display = 'none'; }); rangeButtons.appendChild(btn); } rangeMenu.style.display = 'flex'; });
+  btnTens.addEventListener('click', ()=>{ setRange({ type: 'tens', min: 10, max: 100, onlyTens:true, name: 'dizaines' }); rangeMenu.style.display = 'none'; });
+  btnCustomSet.addEventListener('click', ()=>{ const min = Math.max(0, Math.min(100, parseInt(customMin.value,10)||0)); const max = Math.max(0, Math.min(100, parseInt(customMax.value,10)||0)); if(min>max){ alert('Le minimum doit être inférieur ou égal au maximum.'); return; } setRange({ type: 'range', min, max, onlyTens:false, name:`${min}-${max}` }); rangeMenu.style.display='none'; });
+  btnRangeBack.addEventListener('click', ()=>{ rangeMenu.style.display='none'; });
+  function setRange(settings){ rangeSettings = settings; localStorage.setItem('numberRange', JSON.stringify(rangeSettings)); computeAllowedNumbers(); }
+
+  // other options handlers
+  openOtherMenu.addEventListener('click', ()=>{ targetCorrectInput.value = parseInt(localStorage.getItem('targetCorrect') || targetCorrect, 10); wrongSecInput.value = parseInt(localStorage.getItem('wrongExtraSec') || wrongExtraSec, 10); otherMenu.style.display = 'flex'; });
+  btnOtherSave.addEventListener('click', ()=>{ const t = Math.max(1, Math.min(100, parseInt(targetCorrectInput.value,10)||20)); const w = Math.max(1, Math.min(30, parseInt(wrongSecInput.value,10)||2)); targetCorrect = t; wrongExtraSec = w; localStorage.setItem('targetCorrect', String(targetCorrect)); localStorage.setItem('wrongExtraSec', String(wrongExtraSec)); otherMenu.style.display = 'none'; });
+  btnOtherBack.addEventListener('click', ()=>{ otherMenu.style.display = 'none'; });
+
+  // when user selects a voice
+  voiceSelect.addEventListener('change', ()=>{ chosenVoiceName = voiceSelect.value; localStorage.setItem('ttsVoiceName', chosenVoiceName); if(chosenVoiceName === '__mute__'){ chosenVoice = null; return; } const all = getVoices(); chosenVoice = all.find(v=>v.name===chosenVoiceName) || null; });
+  rateRange.addEventListener('input', ()=>{ rateVal.textContent = parseFloat(rateRange.value).toFixed(2); localStorage.setItem('ttsRate', rateRange.value); });
+  volumeRange.addEventListener('input', ()=>{ volumeVal.textContent = parseFloat(volumeRange.value).toFixed(2); localStorage.setItem('ttsVolume', volumeRange.value); });
+  btnPlayRandom.addEventListener('click', ()=>{ const n=Math.floor(Math.random()*100)+1; speak(numberToWords(n)); });
+
+  // training handlers
+  openTraining.addEventListener('click', ()=>{ // compute allowedNumbers from settings and start
+    computeAllowedNumbers(); trainIndex = 0; currentMode = 'TRAIN'; mainMenu.style.display='none'; gameArea.style.display='block'; showTrainingStep(); });
+
+  function showTrainingStep(){ if(currentMode !== 'TRAIN') return; if(trainIndex >= allowedNumbers.length){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); document.body.appendChild(overlay); overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); stopTraining(); showMenu(); }); return; } const n = allowedNumbers[trainIndex]; currentAnswer = n; optionsEl.innerHTML = ''; numberEl.textContent = n; wordEl.textContent = numberToWords(n); // speak twice with 2s interval
+    speak(numberToWords(n)); trainTimer = setTimeout(()=>{ speak(numberToWords(n)); trainTimer = setTimeout(()=>{ trainIndex++; showTrainingStep(); }, 2000); }, 2000); }
+
+  function stopTraining(){ if(trainTimer){ clearTimeout(trainTimer); trainTimer = null; } }
+
+  // événements UI quiz
   document.getElementById('modeC2L').addEventListener('click', ()=> startGame('C2L'));
   document.getElementById('modeL2C').addEventListener('click', ()=> startGame('L2C'));
-  btnHelp.addEventListener('click', ()=>{ if(!currentMode) return; /* réciter l'énoncé */ if(currentMode==='C2L'){ speak(numberToWords(currentAnswer)); } else { speak(numberToWords(currentAnswer)); } });
+  btnHelp.addEventListener('click', ()=>{ if(!currentMode) return; if(currentMode==='C2L'){ speak(numberToWords(currentAnswer)); } else if(currentMode==='L2C'){ speak(numberToWords(currentAnswer)); } else if(currentMode==='TRAIN'){ const n = allowedNumbers[trainIndex] || null; if(n) speak(numberToWords(n)); } });
   btnMenu.addEventListener('click', ()=>{ askConfirmMenu(); });
+
+  btnVoiceBack && btnVoiceBack.addEventListener('click', ()=>{ voiceMenu.style.display='none'; });
 
   // keyboard accessibility
   document.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ const f=optionsEl.querySelector('.option'); if(f) f.click(); } });
@@ -236,6 +393,11 @@
   // adjust font on resize when visible
   window.addEventListener('resize', ()=>{ if(gameArea.style.display!=='none'){ adjustNumberFont(); } });
 
+  // initialize saved voice settings (and attempt to bind chosenVoice)
+  (function initVoiceSettings(){ if(localStorage.getItem('ttsRate')) rateRange.value = localStorage.getItem('ttsRate'); if(localStorage.getItem('ttsVolume')) volumeRange.value = localStorage.getItem('ttsVolume'); rateVal && (rateVal.textContent = parseFloat(rateRange.value).toFixed(2)); volumeVal && (volumeVal.textContent = parseFloat(volumeRange.value).toFixed(2)); ensureVoicesLoaded(); setTimeout(()=>{ const all = getVoices(); if(all.length>0){ populateVoiceList(); if(chosenVoiceName){ if(chosenVoiceName==='__mute__'){ chosenVoice = null; } else chosenVoice = all.find(v=>v.name===chosenVoiceName) || chosenVoice; } } }, 400); })();
+
+  // initial compute allowedNumbers
+  computeAllowedNumbers();
   // initial state
   showMenu();
   </script>
