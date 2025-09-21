@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jeu — Nombres complexes</title>
+  <style>
+    :root{--accent:#2b74e4;--muted:#666}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:#ffffff;color:#111}
+
+    /* Full white background, no panel border, no rounding. */
+    .wrap{min-height:100vh}
+
+    /* MENU: occupy full viewport and center content vertically and horizontally */
+    #menuPanel{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px}
+    .logo{max-width:36%;height:auto;margin-bottom:6px}
+    .menuBtns{width:100%;max-width:520px;display:flex;flex-direction:column;gap:12px;padding:0;margin:0 auto}
+    .btn{width:100%;padding:14px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:800;font-size:1.05rem;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--accent);border:2px solid rgba(43,116,228,0.12)}
+
+    /* GAME: occupy full viewport and center content vertically and horizontally */
+    #gamePanel{height:100vh;display:none;position:relative}
+    .gameInner{height:100%;display:flex;align-items:center;justify-content:center}
+    .centerZone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;width:100%;padding:28px;max-width:520px;margin:0 auto}
+
+    .problem{font-weight:800;margin:0;padding:0;text-align:center}
+    .problem.big{font-size:44px;line-height:1.05}
+
+    .options{display:grid;gap:12px;width:100%;max-width:520px;margin:0 auto}
+    .opt{padding:14px;border:0;border-radius:8px;background:#eef6ff;color:var(--accent);font-weight:800;font-size:1.05rem;cursor:pointer}
+
+    /* Corners: score top-right, pass bottom-left, menu bottom-right */
+    .scoreTop{position:fixed;top:12px;right:14px;font-weight:800;color:var(--muted);z-index:30}
+    #passBtn{position:fixed;left:12px;bottom:12px;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,0.06);font-weight:700;color:var(--accent);cursor:pointer;z-index:30}
+    #menuBtn{position:fixed;right:12px;bottom:12px;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,0.06);font-weight:700;color:var(--accent);cursor:pointer;z-index:30}
+
+    /* Fraction styling (kept simple) */
+    .frac{display:inline-block;vertical-align:middle;text-align:center}
+    .frac .num,.frac .den{display:block;padding:0 6px}
+    .frac .bar{display:block;height:1px;background:#111;margin:6px 0}
+
+    .status{color:var(--muted);min-height:20px;text-align:center}
+
+    /* Confirmation overlay */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:40}
+    .confirm{background:#fff;padding:18px;border-radius:8px;max-width:320px;text-align:center}
+    .confirm .row{display:flex;gap:10px;justify-content:center;margin-top:12px}
+    .confirm button{padding:10px 14px;border-radius:8px;border:0;font-weight:700}
+    .confirm .yes{background:var(--accent);color:#fff}
+    .confirm .no{background:#eef6ff;color:var(--accent)}
+
+    @media(max-width:420px){
+      .problem.big{font-size:32px}
+      .opt{padding:12px;font-size:1rem}
+      #passBtn, #menuBtn{padding:8px 10px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main id="menuPanel">
+      <img src="logo.png" alt="Logo" class="logo" onerror="this.style.display='none'">
+
+      <div class="menuBtns">
+        <button class="btn" data-mode="add">Addition</button>
+        <button class="btn" data-mode="sub">Soustraction</button>
+        <button class="btn" data-mode="mul">Multiplications</button>
+        <button class="btn" data-mode="div">Divisions</button>
+        <button class="btn ghost" data-mode="mix">Mélange</button>
+      </div>
+    </main>
+
+    <section id="gamePanel">
+      <div class="scoreTop" id="scoreTop">0 / 10</div>
+      <div class="gameInner">
+        <div class="centerZone">
+          <div class="problem big" id="problemDisplay">—</div>
+          <div class="options" id="options" role="list"></div>
+          <div class="status" id="status">\u00A0</div>
+        </div>
+      </div>
+
+      <button id="passBtn">Passer</button>
+      <button id="menuBtn">Menu</button>
+    </section>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="confirm">
+      <div>Retour au menu principal ?</div>
+      <div class="row">
+        <button class="yes" id="confirmYes">Oui</button>
+        <button class="no" id="confirmNo">Non</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Same game logic as before, adapted to new layout
+    const Complex = (re,im)=>({re: re|0, im: im|0});
+    const cEq = (a,b)=>a.re===b.re && a.im===b.im;
+    function complexToTerm(z){ const r=z.re,i=z.im; if(i===0) return `${r}`; if(r===0){ if(i===1) return 'i'; if(i===-1) return '-i'; return `${i}i`; } const sign=i>0?'+':'-'; const abs=Math.abs(i); const imag=(abs===1)?'i':`${abs}i`; return `${r}${sign}${imag}`; }
+    function isPureReal(z){return z.im===0} function isPureImag(z){return z.re===0} function singleTerm(z){return isPureReal(z) || isPureImag(z)} function hasMinus(z){ return z.im<0 || (z.re<0 && z.im===0); }
+
+    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function displayWithParenthesesHTML(a, op, b){ const firstIsSingle=singleTerm(a); const secondIsSingleNoMinus=singleTerm(b)&&!hasMinus(b); const sAraw=complexToTerm(a); const sBraw=complexToTerm(b); let sA_disp=sAraw; if((op==='*'||op==='/') && !firstIsSingle) sA_disp=`(${sAraw})`; let sB_disp=sBraw; if(!secondIsSingleNoMinus) sB_disp=`(${sBraw})`; if(op==='/'){ const num=escapeHtml(sAraw); const den=escapeHtml(sBraw); return `<span class="frac"><span class="num">${num}</span><span class="bar"></span><span class="den">${den}</span></span>`; } const showOp=(op==='*')?'×':op; return escapeHtml(`${sA_disp} ${showOp} ${sB_disp}`); }
+
+    function cAdd(a,b){ return Complex(a.re + b.re, a.im + b.im); }
+    function cSub(a,b){ return Complex(a.re - b.re, a.im - b.im); }
+    function cMul(a,b){ return Complex(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re); }
+    function cDiv(a,b){ const denom=b.re*b.re + b.im*b.im; const reN=a.re*b.re + a.im*b.im; const imN=a.im*b.re - a.re*b.im; return Complex(reN/denom, imN/denom); }
+
+    const randInt=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+    function buildTwoOperandProblem(allowedOps){ const op=allowedOps[randInt(0,allowedOps.length-1)]; if(op==='+'||op==='-'){ const a=Complex(randInt(-8,8),randInt(-8,8)); const b=Complex(randInt(-8,8),randInt(-8,8)); const res=(op==='+')?cAdd(a,b):cSub(a,b); return {a,b,op,res}; } if(op==='*'){ const a=Complex(randInt(-6,6),randInt(-6,6)); const b=Complex(randInt(-6,6),randInt(-6,6)); const res=cMul(a,b); return {a,b,op,res}; } const q=Complex(randInt(-4,4),randInt(-4,4)); let d; do{ d=Complex(randInt(-6,6),randInt(-6,6)); } while(d.re===0 && d.im===0); const a=cMul(q,d); return {a,b:d,op:'/',res:q}; }
+    function allowedOpsForMode(mode){ if(mode==='add') return ['+']; if(mode==='sub') return ['-']; if(mode==='mul') return ['*']; if(mode==='div') return ['/']; return ['+','-','*','/']; }
+    function generateOptions(correct,count){ const set=new Set(); const items=[]; const key=z=>`${z.re},${z.im}`; set.add(key(correct)); items.push(correct); const RANGE=8; while(items.length<count){ const cand=Complex(randInt(correct.re-RANGE,correct.re+RANGE),randInt(correct.im-RANGE,correct.im+RANGE)); const k=key(cand); if(set.has(k)) continue; set.add(k); items.push(cand); } for(let i=items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [items[i],items[j]]=[items[j],items[i]]; } return items; }
+
+    const DEFAULT_TARGET=10; let state={mode:null,target:DEFAULT_TARGET,score:0,choices:2,streak:0}; let current=null;
+    const menuPanel=document.getElementById('menuPanel'); const gamePanel=document.getElementById('gamePanel'); const problemDisplay=document.getElementById('problemDisplay'); const optionsEl=document.getElementById('options'); const statusEl=document.getElementById('status'); const scoreTop=document.getElementById('scoreTop'); const passBtn=document.getElementById('passBtn'); const menuBtn=document.getElementById('menuBtn'); const overlay=document.getElementById('overlay'); const confirmYes=document.getElementById('confirmYes'); const confirmNo=document.getElementById('confirmNo');
+
+    document.querySelectorAll('.btn[data-mode]').forEach(btn=>{ btn.addEventListener('click',()=>{ startGame(btn.getAttribute('data-mode')); }); btn.addEventListener('touchstart',()=>{}); });
+
+    passBtn.addEventListener('click',()=>{ if(!current) return; showTemporary(`Solution : ${complexToTerm(current.res)}`); state.streak=0; state.choices=Math.max(2,state.choices-1); setTimeout(()=>{ nextProblem(); },900); });
+    menuBtn.addEventListener('click',()=>{ overlay.style.display='flex'; }); confirmNo.addEventListener('click',()=>{ overlay.style.display='none'; }); confirmYes.addEventListener('click',()=>{ overlay.style.display='none'; stopGame(); });
+
+    function startGame(mode){ state.mode=mode; state.score=0; state.choices=2; state.streak=0; current=null; updateScore(); menuPanel.style.display='none'; gamePanel.style.display='block'; nextProblem(); }
+    function stopGame(){ menuPanel.style.display='block'; gamePanel.style.display='none'; }
+    function updateScore(){ scoreTop.textContent=`${state.score} / ${state.target}`; }
+    function nextProblem(){ const allowed=allowedOpsForMode(state.mode); current=buildTwoOperandProblem(allowed); renderCurrent(); }
+    function renderCurrent(){ problemDisplay.innerHTML=displayWithParenthesesHTML(current.a,current.op,current.b); const opts=generateOptions(current.res,state.choices); optionsEl.innerHTML=''; opts.forEach(opt=>{ const btn=document.createElement('button'); btn.className='opt'; btn.textContent=complexToTerm(opt); btn.addEventListener('click',()=>selectOption(btn,opt)); optionsEl.appendChild(btn); }); updateScore(); statusEl.textContent='\u00A0'; }
+    function selectOption(btn,opt){ if(cEq(opt,current.res)){ state.score++; state.streak++; showTemporary(`Correct — ${complexToTerm(current.res)}`,'green'); if(state.streak>=2 && state.choices<4){ state.choices++; state.streak=0; } } else { state.streak=0; state.choices=Math.max(2,state.choices-1); showTemporary(`Incorrect — réponse attendue ${complexToTerm(current.res)}`,'crimson'); } updateScore(); if(state.score>=state.target){ showTemporary(`Bravo — objectif atteint (${state.score}/${state.target}).`,'teal'); optionsEl.innerHTML=''; return; } setTimeout(nextProblem,700); }
+    function showTemporary(text,color){ statusEl.textContent=text; statusEl.style.color=color||'var(--muted)'; setTimeout(()=>{ statusEl.style.color='var(--muted)'; statusEl.textContent='\u00A0'; },1600); }
+    optionsEl.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===' ') e.target.click(); });
+    menuPanel.style.display='block'; gamePanel.style.display='none';
+  </script>
+</body>
+</html>
