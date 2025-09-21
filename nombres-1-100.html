@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Apprendre les nombres (1–100)</title>
+  <title>Apprendre les nombres (0–100)</title>
   <style>
     :root{--bg:#ffffff;--good:#16a34a;--bad:#e11d48;--accent:#1f6feb}
     html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#06213a}
@@ -54,6 +54,7 @@
 
     <!-- Menu principal -->
     <div id="mainMenu" class="menu" aria-hidden="false">
+      <div id="activeRange" style="font-weight:700;margin-bottom:6px">Plage : 0–100</div>
       <button id="modeC2L" class="primary">Chiffres → Lettres</button>
       <button id="modeL2C" class="primary">Lettres → Chiffres</button>
       <button id="openTraining" class="primary">Entraînement</button>
@@ -85,6 +86,7 @@
         <div style="font-weight:900;margin-bottom:6px">Choix de la plage de nombres</div>
         <div style="margin-bottom:8px">Plages prédéfinies</div>
         <div class="range-grid" id="rangeButtons" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px"></div>
+        <button id="btnAll" class="ghost" style="width:100%">Tous les nombres (0–100)</button>
         <button id="btnTens" class="ghost" style="width:100%">Uniquement les dizaines (10,20,...,100)</button>
 
         <div style="height:12px"></div>
@@ -110,6 +112,12 @@
 
           <label for="wrongSec">Durée d'affichage après une erreur (secondes, min 1)</label>
           <input id="wrongSec" type="number" min="1" max="30" step="1" style="padding:8px;border-radius:8px;border:1px solid #eef7ff" />
+
+          <label for="repeatTrainingChk">Répéter le nombre en mode Entraînement</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="repeatTrainingChk" type="checkbox" />
+            <span style="font-size:0.95rem;color:#304b6b">Cocher pour répéter deux fois (2×)</span>
+          </div>
 
           <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
             <button id="btnOtherSave" class="primary">Enregistrer</button>
@@ -183,12 +191,32 @@
   let totalCount = 0;
   let consecutiveCorrect = 0;
   let optionsCount = 2;
-  let currentAnswer = null; // toujours un nombre (1..100)
+  let currentAnswer = null; // toujours un nombre (0..100)
   let locked = false;
   let currentMode = null; // 'C2L' ou 'L2C' ou 'TRAIN' ou null
 
   // Plage de nombres
-  let rangeSettings = JSON.parse(localStorage.getItem('numberRange') || 'null') || { type: 'full', min: 1, max: 100, onlyTens: false, name: '1-100' };
+  let rangeSettings = (function(){
+    // read saved settings safely
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem('numberRange') || 'null'); } catch(e){ raw = null; }
+    return raw || { type: 'range', min: 0, max: 100, onlyTens: false, name: '0-100' };
+  })();
+
+  function normalizeRangeSettings(){
+    if(!rangeSettings) rangeSettings = { type: 'range', min: 0, max: 100, onlyTens:false, name:'0-100' };
+    // handle tens preset
+    if(rangeSettings.type === 'tens' || rangeSettings.onlyTens){ rangeSettings.type = 'tens'; rangeSettings.onlyTens = true; rangeSettings.min = 10; rangeSettings.max = 100; rangeSettings.name = 'dizaines'; return; }
+    // coerce numeric bounds and clamp
+    const minVal = Number.isFinite(Number(rangeSettings.min)) ? Math.floor(Number(rangeSettings.min)) : 0;
+    const maxVal = Number.isFinite(Number(rangeSettings.max)) ? Math.floor(Number(rangeSettings.max)) : 100;
+    rangeSettings.min = Math.max(0, Math.min(100, minVal));
+    rangeSettings.max = Math.max(0, Math.min(100, maxVal));
+    // if bounds invalid or identical (e.g. 0-0) reset to sensible default 0-100
+    if(rangeSettings.min > rangeSettings.max) { const t = rangeSettings.min; rangeSettings.min = rangeSettings.max; rangeSettings.max = t; }
+    if(rangeSettings.min === rangeSettings.max){ rangeSettings.min = 0; rangeSettings.max = 100; }
+    rangeSettings.name = rangeSettings.name || `${rangeSettings.min}-${rangeSettings.max}`;
+  }
   let allowedNumbers = [];
 
   // Entraînement state
@@ -210,6 +238,7 @@
   const rangeMenu = document.getElementById('rangeMenu');
   const rangeButtons = document.getElementById('rangeButtons');
   const btnTens = document.getElementById('btnTens');
+  const btnAll = document.getElementById('btnAll');
   const customMin = document.getElementById('customMin');
   const customMax = document.getElementById('customMax');
   const btnCustomSet = document.getElementById('btnCustomSet');
@@ -240,6 +269,8 @@
   // TTS état
   let chosenVoice = null; // objet voix
   let chosenVoiceName = localStorage.getItem('ttsVoiceName') || null;
+  // répéter en mode entraînement ? (true = répéter deux fois)
+  let repeatTraining = (localStorage.getItem('repeatTraining') !== '0');
   // default rate / volume
   rateRange.value = localStorage.getItem('ttsRate') || 0.95;
   volumeRange.value = localStorage.getItem('ttsVolume') || 1.0;
@@ -303,6 +334,13 @@
     } catch(e){ console.warn('TTS error',e); }
   }
 
+  function speakRandomPraise(){
+    const praises = ['Très bien','Super','Bravo','Excellent','Bien joué','Formidable','Parfait'];
+    const p = praises[Math.floor(Math.random()*praises.length)];
+    // ajoute une courte variation vocale
+    speak(p + '.');
+  }
+
   // utilitaires
   function numberToWords(n){ if(n<0||n>100) return String(n); const units=['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize']; const tens=['','', 'vingt','trente','quarante','cinquante','soixante']; if(n<=16) return units[n]; if(n<20) return 'dix-'+units[n-10]; if(n<70){ const t=Math.floor(n/10); const u=n%10; if(u===0) return tens[t]; if(u===1&&t!==8) return tens[t]+'-et-un'; return tens[t]+'-'+units[u]; } if(n<80) return 'soixante-'+numberToWords(n-60); if(n<100){ if(n===80) return 'quatre-vingts'; return 'quatre-vingt-'+numberToWords(n-80); } if(n===100) return 'cent'; return String(n); }
   function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
@@ -331,8 +369,22 @@
   // affichage score
   function updateScore(){ scoreEl.textContent = `${correctCount} / ${totalCount}`; }
 
+  // affiche la plage active dans le menu principal
+  function getRangeLabel(){
+    if(!rangeSettings) return '1–100';
+    if(rangeSettings.type === 'tens' || rangeSettings.onlyTens) return 'Dizaines (10,20,...,100)';
+    if(rangeSettings.type === 'range') return `${rangeSettings.min}–${rangeSettings.max}`;
+    // fallback
+    return rangeSettings.name || '1–100';
+  }
+  function updateActiveRangeDisplay(){
+    const el = document.getElementById('activeRange');
+    if(!el) return;
+    el.textContent = 'Plage : ' + getRangeLabel();
+  }
+
   // menu
-  function showMenu(){ currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; voiceMenu.style.display='none'; rangeMenu.style.display='none'; otherMenu.style.display='none'; updateScore(); }
+  function showMenu(){ currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; voiceMenu.style.display='none'; rangeMenu.style.display='none'; otherMenu.style.display='none'; updateScore(); updateActiveRangeDisplay(); }
 
   // démarrer une partie dans le mode demandé
   function startGame(mode){ computeAllowedNumbers(); currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display = 'flex'; updateScore(); showQuestion(); }
@@ -341,10 +393,12 @@
   function adjustNumberFont(){ const el = numberEl; el.style.whiteSpace = 'nowrap'; el.style.fontSize = ''; requestAnimationFrame(()=>{ const parentWidth = el.parentElement ? el.parentElement.clientWidth : el.clientWidth; if(parentWidth <= 0) return; const avail = Math.max(20, Math.floor(parentWidth * 0.92)); let computed = window.getComputedStyle(el).fontSize; let fontSize = parseFloat(computed) || 64; const minSize = 18; let safety = 0; while(el.scrollWidth > avail && fontSize > minSize && safety < 40){ fontSize = Math.max(minSize, Math.floor(fontSize * 0.92)); el.style.fontSize = fontSize + 'px'; safety++; } }); }
 
   // montrer question adaptée au mode
-  function showQuestion(){ computeAllowedNumbers(); if(correctCount>=targetCorrect){ finish(); return; } if(allowedNumbers.length === 0){ alert('La plage choisie ne contient aucun nombre. Retour au menu.'); showMenu(); return; } locked=false; const n = allowedNumbers[Math.floor(Math.random()*allowedNumbers.length)]; currentAnswer=n; optionsEl.innerHTML=''; if(currentMode==='C2L'){ numberEl.textContent = n; wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=numberToWords(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } else if(currentMode==='L2C'){ numberEl.textContent = numberToWords(n); wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=String(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } updateScore(); }
+  function showQuestion(){ computeAllowedNumbers(); if(correctCount>=targetCorrect){ finish(); return; } if(allowedNumbers.length === 0){ alert('La plage choisie ne contient aucun nombre. Retour au menu.'); showMenu(); return; } locked=false; const n = allowedNumbers[Math.floor(Math.random()*allowedNumbers.length)]; currentAnswer=n; optionsEl.innerHTML=''; if(currentMode==='C2L'){ numberEl.textContent = n; wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=numberToWords(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } else if(currentMode==='L2C'){ numberEl.textContent = numberToWords(n); wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=String(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } // adapt font now that content is set
+    adjustNumberFont();
+    updateScore(); }
 
   // gestion du clic selon mode (les dataset.val sont toujours des nombres)
-  function onOptionClicked(e){ if(locked) return; locked=true; const btn=e.currentTarget; const chosen=Number(btn.dataset.val); totalCount++; updateScore(); if(chosen===currentAnswer){ correctCount++; updateScore(); consecutiveCorrect++; if(consecutiveCorrect>=2 && optionsCount<4){ optionsCount=Math.min(4, optionsCount+1); consecutiveCorrect=0; } btn.classList.add('highlight-blink'); speak('Bravo.'); setTimeout(()=>{ btn.classList.remove('highlight-blink'); showQuestion(); }, GOOD_FEEDBACK_MS); } else { consecutiveCorrect=0; optionsCount=Math.max(2, optionsCount-1); btn.classList.add('wrong'); const correctWords = numberToWords(currentAnswer); speak(`Non, c'était ${correctWords}.`); const childBtns = Array.from(optionsEl.children); const good = childBtns.find(b=>Number(b.dataset.val)===currentAnswer); const errs = getErrorDurations(); if(good){ good.classList.add('highlight-blink'); setTimeout(()=>{ good.classList.remove('highlight-blink'); btn.classList.remove('wrong'); showQuestion(); }, errs.highlight); } else { setTimeout(()=>{ btn.classList.remove('wrong'); showQuestion(); }, errs.fallback); } } }
+  function onOptionClicked(e){ if(locked) return; locked=true; const btn=e.currentTarget; const chosen=Number(btn.dataset.val); totalCount++; updateScore(); if(chosen===currentAnswer){ correctCount++; updateScore(); consecutiveCorrect++; if(consecutiveCorrect>=2 && optionsCount<4){ optionsCount=Math.min(4, optionsCount+1); consecutiveCorrect=0; } btn.classList.add('highlight-blink'); speakRandomPraise(); setTimeout(()=>{ btn.classList.remove('highlight-blink'); showQuestion(); }, GOOD_FEEDBACK_MS); } else { consecutiveCorrect=0; optionsCount=Math.max(2, optionsCount-1); btn.classList.add('wrong'); const correctWords = numberToWords(currentAnswer); speak(`Non, c'était ${correctWords}.`); const childBtns = Array.from(optionsEl.children); const good = childBtns.find(b=>Number(b.dataset.val)===currentAnswer); const errs = getErrorDurations(); if(good){ good.classList.add('highlight-blink'); setTimeout(()=>{ good.classList.remove('highlight-blink'); btn.classList.remove('wrong'); showQuestion(); }, errs.highlight); } else { setTimeout(()=>{ btn.classList.remove('wrong'); showQuestion(); }, errs.fallback); } } }
 
   // fin de partie -> retour au menu principal (comme demandé)
   function finish(){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); const finalText = clone.querySelector('#finalText'); finalText.textContent = `Score final : ${correctCount} / ${totalCount}`; document.body.appendChild(overlay); speak(`Félicitations. Vous avez obtenu ${correctCount} réponses justes.`); overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); showMenu(); }); }
@@ -359,13 +413,16 @@
   // range menu handlers
   openRangeMenu.addEventListener('click', ()=>{ rangeButtons.innerHTML = ''; for(let start=0; start<=90; start+=10){ const end = start + (start===90?10:9); const btn = document.createElement('button'); btn.textContent = `${start}–${end}`; btn.addEventListener('click', ()=>{ setRange({ type: 'range', min: start, max: end, onlyTens:false, name:`${start}-${end}` }); rangeMenu.style.display = 'none'; }); rangeButtons.appendChild(btn); } rangeMenu.style.display = 'flex'; });
   btnTens.addEventListener('click', ()=>{ setRange({ type: 'tens', min: 10, max: 100, onlyTens:true, name: 'dizaines' }); rangeMenu.style.display = 'none'; });
+  btnAll.addEventListener('click', ()=>{ setRange({ type: 'range', min: 0, max: 100, onlyTens:false, name: '0-100' }); rangeMenu.style.display = 'none'; });
   btnCustomSet.addEventListener('click', ()=>{ const min = Math.max(0, Math.min(100, parseInt(customMin.value,10)||0)); const max = Math.max(0, Math.min(100, parseInt(customMax.value,10)||0)); if(min>max){ alert('Le minimum doit être inférieur ou égal au maximum.'); return; } setRange({ type: 'range', min, max, onlyTens:false, name:`${min}-${max}` }); rangeMenu.style.display='none'; });
   btnRangeBack.addEventListener('click', ()=>{ rangeMenu.style.display='none'; });
-  function setRange(settings){ rangeSettings = settings; localStorage.setItem('numberRange', JSON.stringify(rangeSettings)); computeAllowedNumbers(); }
+  function setRange(settings){ rangeSettings = settings; localStorage.setItem('numberRange', JSON.stringify(rangeSettings)); computeAllowedNumbers(); updateActiveRangeDisplay(); }
 
   // other options handlers
-  openOtherMenu.addEventListener('click', ()=>{ targetCorrectInput.value = parseInt(localStorage.getItem('targetCorrect') || targetCorrect, 10); wrongSecInput.value = parseInt(localStorage.getItem('wrongExtraSec') || wrongExtraSec, 10); otherMenu.style.display = 'flex'; });
-  btnOtherSave.addEventListener('click', ()=>{ const t = Math.max(1, Math.min(100, parseInt(targetCorrectInput.value,10)||20)); const w = Math.max(1, Math.min(30, parseInt(wrongSecInput.value,10)||2)); targetCorrect = t; wrongExtraSec = w; localStorage.setItem('targetCorrect', String(targetCorrect)); localStorage.setItem('wrongExtraSec', String(wrongExtraSec)); otherMenu.style.display = 'none'; });
+  openOtherMenu.addEventListener('click', ()=>{ targetCorrectInput.value = parseInt(localStorage.getItem('targetCorrect') || targetCorrect, 10); wrongSecInput.value = parseInt(localStorage.getItem('wrongExtraSec') || wrongExtraSec, 10); // set repeat checkbox
+    const chk = document.getElementById('repeatTrainingChk'); if(chk) chk.checked = (localStorage.getItem('repeatTraining') !== '0'); otherMenu.style.display = 'flex'; });
+  btnOtherSave.addEventListener('click', ()=>{ const t = Math.max(1, Math.min(100, parseInt(targetCorrectInput.value,10)||20)); const w = Math.max(1, Math.min(30, parseInt(wrongSecInput.value,10)||2)); targetCorrect = t; wrongExtraSec = w; localStorage.setItem('targetCorrect', String(targetCorrect)); localStorage.setItem('wrongExtraSec', String(wrongExtraSec)); // save repeat setting
+    const chk2 = document.getElementById('repeatTrainingChk'); if(chk2){ repeatTraining = !!chk2.checked; localStorage.setItem('repeatTraining', repeatTraining ? '1' : '0'); } otherMenu.style.display = 'none'; });
   btnOtherBack.addEventListener('click', ()=>{ otherMenu.style.display = 'none'; });
 
   // when user selects a voice
@@ -378,8 +435,18 @@
   openTraining.addEventListener('click', ()=>{ // compute allowedNumbers from settings and start
     computeAllowedNumbers(); trainIndex = 0; currentMode = 'TRAIN'; mainMenu.style.display='none'; gameArea.style.display = 'flex'; showTrainingStep(); });
 
-  function showTrainingStep(){ if(currentMode !== 'TRAIN') return; if(trainIndex >= allowedNumbers.length){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); document.body.appendChild(overlay); overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); stopTraining(); showMenu(); }); return; } const n = allowedNumbers[trainIndex]; currentAnswer = n; optionsEl.innerHTML = ''; numberEl.textContent = n; wordEl.textContent = numberToWords(n); // speak twice with 2s interval
-    speak(numberToWords(n)); trainTimer = setTimeout(()=>{ speak(numberToWords(n)); trainTimer = setTimeout(()=>{ trainIndex++; showTrainingStep(); }, 2000); }, 2000); }
+  function showTrainingStep(){ if(currentMode !== 'TRAIN') return; if(trainIndex >= allowedNumbers.length){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); document.body.appendChild(overlay); overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); stopTraining(); showMenu(); }); return; } const n = allowedNumbers[trainIndex]; currentAnswer = n; optionsEl.innerHTML = ''; numberEl.textContent = n; wordEl.textContent = numberToWords(n);
+    // speak according to setting: either twice (2s apart) or once
+    if(repeatTraining){
+      speak(numberToWords(n));
+      trainTimer = setTimeout(()=>{
+        speak(numberToWords(n));
+        trainTimer = setTimeout(()=>{ trainIndex++; showTrainingStep(); }, 2000);
+      }, 2000);
+    } else {
+      speak(numberToWords(n));
+      trainTimer = setTimeout(()=>{ trainIndex++; showTrainingStep(); }, 2000);
+    } }
 
   function stopTraining(){ if(trainTimer){ clearTimeout(trainTimer); trainTimer = null; } }
 
@@ -443,6 +510,7 @@
   })();
 
   // initial compute allowedNumbers
+  normalizeRangeSettings();
   computeAllowedNumbers();
   // initial state
   showMenu();
