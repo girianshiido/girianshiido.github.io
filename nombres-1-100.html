@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title></title>
+  <style>
+    :root{--bg:#ffffff;--good:#16a34a;--bad:#e11d48;--accent:#1f6feb}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#06213a}
+    .app{height:100vh;display:flex;flex-direction:column;position:relative}
+
+    /* score en haut à droite */
+    #score{position:absolute;top:12px;right:12px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.9);box-shadow:0 4px 10px rgba(6,33,58,0.06);font-weight:900}
+
+    /* menu principal */
+    .menu{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+    .menu button{padding:18px 22px;border-radius:14px;font-size:1.4rem;font-weight:900;width:84%;max-width:420px}
+
+    .top{flex:0 0 45%;display:flex;align-items:center;justify-content:center}
+    /* number: large by default, but we allow JS to reduce it to fit on one line */
+    #number{font-size:8rem;font-weight:900;line-height:1;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .bottom{flex:1 1 55%;display:flex;flex-direction:column;justify-content:flex-start;padding:18px;gap:12px}
+    .options{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+    .option{appearance:none;background:#f7fbff;border-radius:14px;padding:18px;text-align:center;font-size:1.6rem;font-weight:800;border:3px solid transparent;user-select:none}
+    .option:active{transform:translateY(1px)}
+    .controls{display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+    button{border-radius:12px;padding:10px 14px;border:none;font-weight:800;font-size:1rem}
+    .primary{background:var(--accent);color:white}
+    .ghost{background:transparent;border:1px solid rgba(10,30,60,0.06)}
+
+    /* clignotement de bord pour bonne réponse mise en évidence */
+    @keyframes blinkOutline { 0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.0); border-color: var(--good);} 50% { box-shadow: 0 0 0 12px rgba(22,163,74,0.10);} 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.0); border-color: var(--good);} }
+    .highlight-blink{ border-color: var(--good) !important; animation: blinkOutline 1.6s ease-in-out 0s 2; }
+    .wrong{ border-color: var(--bad) !important; }
+
+    /* overlays */
+    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:40}
+    .dialog{background:white;padding:16px;border-radius:10px;text-align:center;max-width:92%}
+
+    @media (max-width:520px){ #number{font-size:5rem} .option{font-size:1.25rem;padding:14px} .menu button{font-size:1.2rem} }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div id="score">0 / 0</div>
+
+    <!-- Menu principal -->
+    <div id="mainMenu" class="menu" aria-hidden="false">
+      <button id="modeC2L" class="primary">Chiffres → Lettres</button>
+      <button id="modeL2C" class="primary">Lettres → Chiffres</button>
+    </div>
+
+    <!-- Zone de jeu (masquée tant que menu visible) -->
+    <div id="gameArea" style="display:none">
+      <div class="top">
+        <div id="number" aria-live="polite">—</div>
+      </div>
+
+      <div class="bottom">
+        <div class="options" id="options" role="list"></div>
+
+        <div class="controls">
+          <button id="btnHelp" class="ghost">Aide</button>
+          <div style="display:flex;gap:8px">
+            <button id="btnMenu" class="ghost">Menu principal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <template id="confirmMenuTpl">
+    <div class="overlay" id="confirmOverlay">
+      <div class="dialog">
+        <div style="font-weight:900;margin-bottom:10px">Retour au menu</div>
+        <div style="margin-bottom:12px">Êtes-vous sûr de vouloir quitter la partie en cours ?</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="confirmYes" class="primary">Oui</button>
+          <button id="confirmNo" class="ghost">Non</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="finishedTpl">
+    <div class="overlay">
+      <div class="dialog">
+        <div style="font-weight:900;margin-bottom:8px">Félicitations</div>
+        <div id="finalText" style="margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="btnBackToMenu" class="primary">Retour au menu</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+  // Paramètres
+  const TARGET_CORRECT = 20;
+  const TTS_RATE = 0.95;
+  const TTS_PITCH = 1.05;
+
+  // Durées (ms)
+  const GOOD_FEEDBACK_MS = 700;      // délai après bonne réponse
+  const ERROR_EXTRA_MS = 2000;       // +2s demandé
+  const ERROR_HIGHLIGHT_MS = 1800 + ERROR_EXTRA_MS; // 3800
+  const ERROR_FALLBACK_MS = 1200 + ERROR_EXTRA_MS;  // 3200
+
+  // État du jeu
+  let correctCount = 0;
+  let totalCount = 0;
+  let consecutiveCorrect = 0;
+  let optionsCount = 2;
+  let currentAnswer = null; // toujours un nombre (1..100)
+  let locked = false;
+  let currentMode = null; // 'C2L' ou 'L2C' ou null
+
+  // DOM
+  const scoreEl = document.getElementById('score');
+  const mainMenu = document.getElementById('mainMenu');
+  const gameArea = document.getElementById('gameArea');
+  const numberEl = document.getElementById('number');
+  const optionsEl = document.getElementById('options');
+  const btnHelp = document.getElementById('btnHelp');
+  const btnMenu = document.getElementById('btnMenu');
+
+  // TTS voix fr-Jacques (robuste)
+  let chosenVoice = null;
+  function getVoices(){ try{ if(window.speechSynthesis && typeof window.speechSynthesis.getVoices==='function'){ const v=window.speechSynthesis.getVoices(); return Array.isArray(v)?v:Array.from(v||[]); } }catch(e){} return []; }
+  function pickFrJacquesVoiceOnce(){ const voices=getVoices(); if(!voices||voices.length===0) return false; let v=voices.find(x=>x&&/fr[-_]?ca/i.test(x.lang)); if(!v) v=voices.find(x=>x&&/^fr/i.test(x.lang)); if(!v) v=voices[0]; chosenVoice=v||null; return true; }
+  function ensurePickFrJacquesVoice(){ if(pickFrJacquesVoiceOnce()) return; if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged = ()=>{ pickFrCaVoiceOnce(); }; } let attempts=0; const maxAttempts=12; const interval=setInterval(()=>{ attempts++; if(pickFrCaVoiceOnce()||attempts>=maxAttempts) clearInterval(interval); },200); }
+  ensurePickFrJacquesVoice();
+  function speak(text){ if(!('speechSynthesis' in window)) return; try{ const u=new SpeechSynthesisUtterance(text); u.rate=TTS_RATE; u.pitch=TTS_PITCH; u.volume=1; if(chosenVoice) u.voice=chosenVoice; u.lang = chosenVoice && chosenVoice.lang ? chosenVoice.lang : 'fr-FR'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }catch(e){ console.warn('TTS error',e); } }
+
+  // utilitaires
+  function numberToWords(n){ if(n<0||n>100) return String(n); const units=['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize']; const tens=['','', 'vingt','trente','quarante','cinquante','soixante']; if(n<=16) return units[n]; if(n<20) return 'dix-'+units[n-10]; if(n<70){ const t=Math.floor(n/10); const u=n%10; if(u===0) return tens[t]; if(u===1&&t!==8) return tens[t]+'-et-un'; return tens[t]+'-'+units[u]; } if(n<80) return 'soixante-'+numberToWords(n-60); if(n<100){ if(n===80) return 'quatre-vingts'; return 'quatre-vingt-'+numberToWords(n-80); } if(n===100) return 'cent'; return String(n); }
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
+  function generateOptions(correct,count){ const s=new Set([correct]); while(s.size<count){ const v=Math.floor(Math.random()*100)+1; if(v!==correct) s.add(v); } const a=Array.from(s); shuffle(a); return a; }
+
+  // affichage score
+  function updateScore(){ scoreEl.textContent = `${correctCount} / ${totalCount}`; }
+
+  // menu
+  function showMenu(){ currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; updateScore(); }
+
+  // démarrer une partie dans le mode demandé
+  function startGame(mode){ currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display='block'; updateScore(); showQuestion(); }
+
+  // Adjust font size of #number to ensure it fits on one line when content is long
+  function adjustNumberFont(){
+    const el = numberEl;
+    // ensure no wrapping
+    el.style.whiteSpace = 'nowrap';
+    // reset font-size to css default (allows recalculation)
+    el.style.fontSize = '';
+    // give the browser one paint cycle to compute sizes
+    requestAnimationFrame(()=>{
+      const parentWidth = el.parentElement ? el.parentElement.clientWidth : el.clientWidth;
+      if(parentWidth <= 0) return;
+      // available width slightly reduced to account for padding
+      const avail = Math.max(20, Math.floor(parentWidth * 0.92));
+      // start from current computed font size
+      let computed = window.getComputedStyle(el).fontSize;
+      let fontSize = parseFloat(computed) || 64; // px
+      const minSize = 18; // px
+      let safety = 0;
+      // reduce progressively until the text fits or we hit the minimum
+      while(el.scrollWidth > avail && fontSize > minSize && safety < 40){
+        fontSize = Math.max(minSize, Math.floor(fontSize * 0.92));
+        el.style.fontSize = fontSize + 'px';
+        safety++;
+      }
+    });
+  }
+
+  // montrer question adaptée au mode
+  function showQuestion(){ if(correctCount>=TARGET_CORRECT){ finish(); return; } locked=false; const n=Math.floor(Math.random()*100)+1; currentAnswer=n; optionsEl.innerHTML='';
+    if(currentMode==='C2L'){
+      // chiffre affiché en haut, options en lettres
+      numberEl.textContent = n;
+      adjustNumberFont();
+      const choices = generateOptions(n, optionsCount);
+      choices.forEach(num=>{
+        const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=numberToWords(num); b.dataset.val=String(num);
+        b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b);
+      });
+    } else if(currentMode==='L2C'){
+      // nombre en toutes lettres affiché en haut, options en chiffres
+      numberEl.textContent = numberToWords(n);
+      adjustNumberFont();
+      const choices = generateOptions(n, optionsCount);
+      choices.forEach(num=>{
+        const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=String(num); b.dataset.val=String(num);
+        b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b);
+      });
+    }
+    updateScore();
+  }
+
+  // gestion du clic selon mode (les dataset.val sont toujours des nombres)
+  function onOptionClicked(e){ if(locked) return; locked=true; const btn=e.currentTarget; const chosen=Number(btn.dataset.val); totalCount++; updateScore();
+    if(chosen===currentAnswer){ correctCount++; updateScore(); consecutiveCorrect++; if(consecutiveCorrect>=2 && optionsCount<4){ optionsCount=Math.min(4, optionsCount+1); consecutiveCorrect=0; }
+      btn.classList.add('highlight-blink'); // feedback
+      // courte annonce : "Bravo"
+      speak('Bravo.');
+      setTimeout(()=>{ btn.classList.remove('highlight-blink'); showQuestion(); }, GOOD_FEEDBACK_MS);
+    } else {
+      consecutiveCorrect=0; optionsCount=Math.max(2, optionsCount-1); btn.classList.add('wrong'); const correctWords = numberToWords(currentAnswer);
+      // Annonce de la bonne réponse : en mode C2L on dira "Non, c'était vingt-cinq" ; en mode L2C on dira également la forme en lettres pour homogénéité
+      speak(`Non, c'était ${correctWords}.`);
+      const childBtns = Array.from(optionsEl.children); const good = childBtns.find(b=>Number(b.dataset.val)===currentAnswer);
+      if(good){ good.classList.add('highlight-blink'); setTimeout(()=>{ good.classList.remove('highlight-blink'); btn.classList.remove('wrong'); showQuestion(); }, ERROR_HIGHLIGHT_MS); }
+      else { setTimeout(()=>{ btn.classList.remove('wrong'); showQuestion(); }, ERROR_FALLBACK_MS); }
+    }
+  }
+
+  // fin de partie -> retour au menu principal (comme demandé)
+  function finish(){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); const finalText = clone.querySelector('#finalText'); finalText.textContent = `Score final : ${correctCount} / ${totalCount}`; document.body.appendChild(overlay); speak(`Félicitations. Vous avez obtenu ${correctCount} réponses justes.`);
+    overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); showMenu(); }); }
+
+  // navigation menu principal depuis la partie (avec confirmation)
+  function askConfirmMenu(){ const tpl = document.getElementById('confirmMenuTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('#confirmOverlay'); document.body.appendChild(overlay);
+    overlay.querySelector('#confirmYes').addEventListener('click', ()=>{ overlay.remove(); showMenu(); });
+    overlay.querySelector('#confirmNo').addEventListener('click', ()=>{ overlay.remove(); }); }
+
+  // événements UI
+  document.getElementById('modeC2L').addEventListener('click', ()=> startGame('C2L'));
+  document.getElementById('modeL2C').addEventListener('click', ()=> startGame('L2C'));
+  btnHelp.addEventListener('click', ()=>{ if(!currentMode) return; /* réciter l'énoncé */ if(currentMode==='C2L'){ speak(numberToWords(currentAnswer)); } else { speak(numberToWords(currentAnswer)); } });
+  btnMenu.addEventListener('click', ()=>{ askConfirmMenu(); });
+
+  // keyboard accessibility
+  document.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ const f=optionsEl.querySelector('.option'); if(f) f.click(); } });
+
+  // adjust font on resize when visible
+  window.addEventListener('resize', ()=>{ if(gameArea.style.display!=='none'){ adjustNumberFont(); } });
+
+  // initial state
+  showMenu();
+  </script>
+</body>
+</html>
