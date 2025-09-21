@@ -16,14 +16,22 @@
     .menu{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
     .menu button{padding:18px 22px;border-radius:14px;font-size:1.25rem;font-weight:900;width:84%;max-width:420px}
 
-    .top{flex:0 0 45%;display:flex;align-items:center;justify-content:center}
-    #number{font-size:8rem;font-weight:900;line-height:1;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .word{font-size:1.6rem;font-weight:700;text-align:center;margin-top:8px;min-height:2rem}
-    .bottom{flex:1 1 55%;display:flex;flex-direction:column;justify-content:flex-start;padding:18px;gap:12px}
-    .options{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+    /* Game area layout: center number + options vertically, controls fixed at bottom */
+    #gameArea{display:flex;flex-direction:column;flex:1;min-height:0}
+    .top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;min-height:0}
+
+    #number{font-size:clamp(56px,12vw,8rem);font-weight:900;line-height:0.9;margin:0;white-space:nowrap;overflow:visible;-webkit-font-smoothing:antialiased;text-align:center;display:block}
+    .word{font-size:1.6rem;font-weight:700;text-align:center;margin-top:0;min-height:2rem}
+
+    .options{display:flex;flex-direction:column;gap:12px;margin-top:0;align-items:stretch;width:100%;max-width:520px;padding:0 18px}
     .option{appearance:none;background:#f7fbff;border-radius:14px;padding:18px;text-align:center;font-size:1.6rem;font-weight:800;border:3px solid transparent;user-select:none}
     .option:active{transform:translateY(1px)}
-    .controls{display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+
+    /* controls fixed at bottom */
+    .controls{position:absolute;left:12px;right:12px;bottom:12px;display:flex;justify-content:space-between;align-items:center;padding:6px 8px}
+    .controls .left{display:flex;align-items:center}
+    .controls .right{display:flex;align-items:center}
+
     button{border-radius:12px;padding:10px 14px;border:none;font-weight:800;font-size:1rem}
     .primary{background:var(--accent);color:white}
     .ghost{background:transparent;border:1px solid rgba(10,30,60,0.06)}
@@ -37,7 +45,7 @@
     .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:40}
     .dialog{background:white;padding:16px;border-radius:10px;text-align:center;max-width:92%}
 
-    @media (max-width:520px){ #number{font-size:5rem} .option{font-size:1.25rem;padding:14px} .menu button{font-size:1.1rem} }
+    @media (max-width:520px){ #number{font-size:5rem} .option{font-size:1.25rem;padding:14px} .menu button{font-size:1.1rem} .controls{left:8px;right:8px;bottom:8px} }
   </style>
 </head>
 <body>
@@ -57,22 +65,18 @@
     <!-- Zone de jeu (masquée tant que menu visible) -->
     <div id="gameArea" style="display:none">
       <div class="top">
-        <div>
-          <div id="number" aria-live="polite">—</div>
-          <div class="word" id="word">&nbsp;</div>
-        </div>
-      </div>
+        <div id="number" aria-live="polite">—</div>
+        <div class="word" id="word">&nbsp;</div>
 
-      <div class="bottom">
         <div class="options" id="options" role="list"></div>
-
-        <div class="controls">
-          <button id="btnHelp" class="ghost">Aide</button>
-          <div style="display:flex;gap:8px">
-            <button id="btnMenu" class="ghost">Menu principal</button>
-          </div>
-        </div>
       </div>
+
+      <!-- controls fixed at bottom (Aide à gauche, Menu principal à droite) -->
+      <div class="controls" aria-hidden="false">
+        <div class="left"><button id="btnHelp" class="ghost">Aide</button></div>
+        <div class="right"><button id="btnMenu" class="ghost">Menu principal</button></div>
+      </div>
+
     </div>
 
     <!-- panneau plages (overlay) -->
@@ -331,7 +335,7 @@
   function showMenu(){ currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; voiceMenu.style.display='none'; rangeMenu.style.display='none'; otherMenu.style.display='none'; updateScore(); }
 
   // démarrer une partie dans le mode demandé
-  function startGame(mode){ computeAllowedNumbers(); currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display='block'; updateScore(); showQuestion(); }
+  function startGame(mode){ computeAllowedNumbers(); currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display = 'flex'; updateScore(); showQuestion(); }
 
   // Adjust font size of #number to ensure it fits on one line when content is long
   function adjustNumberFont(){ const el = numberEl; el.style.whiteSpace = 'nowrap'; el.style.fontSize = ''; requestAnimationFrame(()=>{ const parentWidth = el.parentElement ? el.parentElement.clientWidth : el.clientWidth; if(parentWidth <= 0) return; const avail = Math.max(20, Math.floor(parentWidth * 0.92)); let computed = window.getComputedStyle(el).fontSize; let fontSize = parseFloat(computed) || 64; const minSize = 18; let safety = 0; while(el.scrollWidth > avail && fontSize > minSize && safety < 40){ fontSize = Math.max(minSize, Math.floor(fontSize * 0.92)); el.style.fontSize = fontSize + 'px'; safety++; } }); }
@@ -372,7 +376,7 @@
 
   // training handlers
   openTraining.addEventListener('click', ()=>{ // compute allowedNumbers from settings and start
-    computeAllowedNumbers(); trainIndex = 0; currentMode = 'TRAIN'; mainMenu.style.display='none'; gameArea.style.display='block'; showTrainingStep(); });
+    computeAllowedNumbers(); trainIndex = 0; currentMode = 'TRAIN'; mainMenu.style.display='none'; gameArea.style.display = 'flex'; showTrainingStep(); });
 
   function showTrainingStep(){ if(currentMode !== 'TRAIN') return; if(trainIndex >= allowedNumbers.length){ const tpl = document.getElementById('finishedTpl'); const clone = tpl.content.cloneNode(true); const overlay = clone.querySelector('.overlay'); document.body.appendChild(overlay); overlay.querySelector('#btnBackToMenu').addEventListener('click', ()=>{ overlay.remove(); stopTraining(); showMenu(); }); return; } const n = allowedNumbers[trainIndex]; currentAnswer = n; optionsEl.innerHTML = ''; numberEl.textContent = n; wordEl.textContent = numberToWords(n); // speak twice with 2s interval
     speak(numberToWords(n)); trainTimer = setTimeout(()=>{ speak(numberToWords(n)); trainTimer = setTimeout(()=>{ trainIndex++; showTrainingStep(); }, 2000); }, 2000); }
@@ -395,6 +399,48 @@
 
   // initialize saved voice settings (and attempt to bind chosenVoice)
   (function initVoiceSettings(){ if(localStorage.getItem('ttsRate')) rateRange.value = localStorage.getItem('ttsRate'); if(localStorage.getItem('ttsVolume')) volumeRange.value = localStorage.getItem('ttsVolume'); rateVal && (rateVal.textContent = parseFloat(rateRange.value).toFixed(2)); volumeVal && (volumeVal.textContent = parseFloat(volumeRange.value).toFixed(2)); ensureVoicesLoaded(); setTimeout(()=>{ const all = getVoices(); if(all.length>0){ populateVoiceList(); if(chosenVoiceName){ if(chosenVoiceName==='__mute__'){ chosenVoice = null; } else chosenVoice = all.find(v=>v.name===chosenVoiceName) || chosenVoice; } } }, 400); })();
+
+  // --- dynamic fitting for the large number element ---
+  (function(){
+    function fitNumberElement(){
+      const el = numberEl;
+      if(!el) return;
+      // try single-line fit first
+      el.style.whiteSpace = 'nowrap';
+      el.style.fontSize = '';
+      requestAnimationFrame(()=>{
+        const parentWidth = el.parentElement ? el.parentElement.clientWidth : el.clientWidth;
+        if(parentWidth <= 0) return;
+        let computed = window.getComputedStyle(el).fontSize;
+        let fontSize = parseFloat(computed) || Math.min(64, Math.floor(parentWidth * 0.12));
+        const minSize = 20;
+        let safety = 0;
+        while(el.scrollWidth > parentWidth * 0.95 && fontSize > minSize && safety < 80){
+          fontSize = Math.max(minSize, Math.floor(fontSize * 0.92));
+          el.style.fontSize = fontSize + 'px';
+          safety++;
+        }
+        // if still too wide, allow wrapping and reduce further
+        if(el.scrollWidth > parentWidth * 0.95){
+          el.style.whiteSpace = 'normal';
+          safety = 0;
+          while(el.scrollWidth > parentWidth * 0.95 && fontSize > minSize && safety < 80){
+            fontSize = Math.max(minSize, Math.floor(fontSize * 0.92));
+            el.style.fontSize = fontSize + 'px';
+            safety++;
+          }
+        }
+      });
+    }
+    // observe content changes on the number element
+    try{
+      const observer = new MutationObserver(()=> fitNumberElement());
+      observer.observe(numberEl, { childList: true, characterData: true, subtree: true });
+      window.addEventListener('resize', fitNumberElement);
+      // also call once to initialize
+      setTimeout(fitNumberElement,50);
+    }catch(e){ /* fallback: do nothing */ }
+  })();
 
   // initial compute allowedNumbers
   computeAllowedNumbers();
