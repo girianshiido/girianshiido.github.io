@@ -46,6 +46,7 @@
     .dialog{background:white;padding:16px;border-radius:10px;text-align:center;max-width:92%}
 
     @media (max-width:520px){ #number{font-size:5rem} .option{font-size:1.25rem;padding:14px} .menu button{font-size:1.1rem} .controls{left:8px;right:8px;bottom:8px} }
+  .logo-banner{max-width:64%;height:auto;border-radius:12px;box-shadow:0 6px 18px rgba(6,33,58,0.06);margin-bottom:8px}
   </style>
 </head>
 <body>
@@ -54,6 +55,7 @@
 
     <!-- Menu principal -->
     <div id="mainMenu" class="menu" aria-hidden="false">
+      <img id="logoImg" src="logo.png" alt="Logo" class="logo-banner" style="display:none">
       <div id="activeRange" style="font-weight:700;margin-bottom:6px">Plage : 0–100</div>
       <button id="modeC2L" class="primary">Chiffres → Lettres</button>
       <button id="modeL2C" class="primary">Lettres → Chiffres</button>
@@ -513,6 +515,21 @@
   normalizeRangeSettings();
   computeAllowedNumbers();
   // initial state
+  // attempt to load the optional logo (logo.png) placed next to index.html
+  function loadLogo(){
+    const img = document.getElementById('logoImg');
+    if(!img) return;
+    try{
+      const probe = new Image();
+      probe.onload = ()=>{ img.style.display = 'block'; };
+      probe.onerror = ()=>{ img.style.display = 'none'; };
+      // start loading
+      probe.src = img.src;
+      // also set a timeout fallback in case of slow file system
+      setTimeout(()=>{ if(!probe.complete) { /* leave img hidden until load completes */ } }, 800);
+    }catch(e){ /* ignore */ }
+  }
+  loadLogo();
   showMenu();
   </script>
 </body>
