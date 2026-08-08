@@ -2,39 +2,50 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Apprendre les nombres (0–100)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#5b4bdb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Nombres 0–100" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <title>Les nombres de 0 à 100</title>
   <style>
-    :root{--bg:#ffffff;--good:#16a34a;--bad:#e11d48;--accent:#1f6feb}
-    html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#06213a}
-    .app{height:100vh;display:flex;flex-direction:column;position:relative}
+    :root{--bg:#f5f7ff;--ink:#17214d;--good:#159c6b;--bad:#e54867;--accent:#5b4bdb;--accent-2:#32bfc1;--card:#ffffff;--line:#e4e5f4}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;margin:0;background:radial-gradient(circle at 5% 0,#e4f8ff 0,transparent 32rem),radial-gradient(circle at 100% 100%,#ece8ff 0,transparent 34rem),var(--bg);font-family:ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);overscroll-behavior:none}
+    body{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+    input,select{font:inherit;-webkit-user-select:text;user-select:text}
+    .app{min-height:100dvh;display:flex;flex-direction:column;position:relative;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
 
     /* score en haut à droite */
-    #score{position:absolute;top:12px;right:12px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.9);box-shadow:0 4px 10px rgba(6,33,58,0.06);font-weight:900}
+    #score{position:absolute;top:20px;right:20px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.86);border:1px solid var(--line);box-shadow:0 8px 24px rgba(42,43,103,.10);font-weight:900;color:var(--accent);z-index:2}
 
     /* menu principal */
-    .menu{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-    .menu button{padding:18px 22px;border-radius:14px;font-size:1.25rem;font-weight:900;width:84%;max-width:420px}
+    .menu{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;padding:72px 0 26px}
+    .menu::before{content:'LES NOMBRES';letter-spacing:.18em;font-size:.7rem;font-weight:900;color:var(--accent);margin-bottom:-3px}
+    .menu::after{content:'Choisis une activité pour commencer';font-size:.95rem;color:#62688e;order:-1;margin-top:0}
+    .menu button{padding:16px 20px;border-radius:17px;font-size:1.08rem;font-weight:850;width:min(100%,420px);box-shadow:0 5px 0 rgba(46,39,134,.10);transition:transform .15s ease,box-shadow .15s ease}
 
     /* Game area layout: center number + options vertically, controls fixed at bottom */
     #gameArea{display:flex;flex-direction:column;flex:1;min-height:0}
-    .top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12px;min-height:0}
+    .top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:76px 4px 94px;min-height:0}
 
-    #number{font-size:clamp(56px,12vw,8rem);font-weight:900;line-height:0.9;margin:0;white-space:nowrap;overflow:visible;-webkit-font-smoothing:antialiased;text-align:center;display:block}
-    .word{font-size:1.6rem;font-weight:700;text-align:center;margin-top:0;min-height:2rem}
+    #number{font-size:clamp(56px,12vw,8rem);font-weight:900;line-height:1;margin:0;white-space:nowrap;overflow:visible;-webkit-font-smoothing:antialiased;text-align:center;display:block;color:var(--accent);text-shadow:0 7px 18px rgba(91,75,219,.15)}
+    .word{font-size:1.4rem;font-weight:750;text-align:center;margin-top:0;min-height:2rem;color:#424a75}
 
-    .options{display:flex;flex-direction:column;gap:12px;margin-top:0;align-items:stretch;width:100%;max-width:520px;padding:0 18px}
-    .option{appearance:none;background:#f7fbff;border-radius:14px;padding:18px;text-align:center;font-size:1.6rem;font-weight:800;border:3px solid transparent;user-select:none}
-    .option:active{transform:translateY(1px)}
+    .options{display:flex;flex-direction:column;gap:10px;margin-top:0;align-items:stretch;width:100%;max-width:520px;padding:0 6px}
+    .option{appearance:none;background:var(--card);border-radius:16px;padding:16px;text-align:center;font-size:1.35rem;font-weight:800;border:2px solid var(--line);color:var(--ink);box-shadow:0 5px 0 #dfe1f1;user-select:none;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+    .option:active{transform:translateY(4px);box-shadow:0 1px 0 #dfe1f1}
 
     /* controls fixed at bottom */
-    .controls{position:absolute;left:12px;right:12px;bottom:12px;display:flex;justify-content:space-between;align-items:center;padding:6px 8px}
+    .controls{position:absolute;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:center;padding:6px 0}
     .controls .left{display:flex;align-items:center}
     .controls .right{display:flex;align-items:center}
 
-    button{border-radius:12px;padding:10px 14px;border:none;font-weight:800;font-size:1rem}
-    .primary{background:var(--accent);color:white}
-    .ghost{background:transparent;border:1px solid rgba(10,30,60,0.06)}
+    button{border-radius:12px;padding:10px 14px;border:none;font-weight:800;font-size:1rem;cursor:pointer}
+    .primary{background:linear-gradient(135deg,var(--accent),#7667fa);color:white}
+    .ghost{background:rgba(255,255,255,.72);border:1px solid var(--line);color:var(--ink)}
 
     /* clignotement de bord pour bonne réponse mise en évidence */
     @keyframes blinkOutline { 0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.0); border-color: var(--good);} 50% { box-shadow: 0 0 0 12px rgba(22,163,74,0.10);} 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.0); border-color: var(--good);} }
@@ -42,10 +53,10 @@
     .wrong{ border-color: var(--bad) !important; }
 
     /* overlays */
-    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:40}
-    .dialog{background:white;padding:16px;border-radius:10px;text-align:center;max-width:92%}
+    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(23,33,77,.46);backdrop-filter:blur(5px);z-index:40;padding:20px}
+    .dialog{background:white;padding:22px;border-radius:22px;text-align:center;max-width:min(92%,480px);box-shadow:0 22px 70px rgba(17,22,67,.28)}
 
-    @media (max-width:520px){ #number{font-size:5rem} .option{font-size:1.25rem;padding:14px} .menu button{font-size:1.1rem} .controls{left:8px;right:8px;bottom:8px} }
+    @media (max-width:520px){#score{top:13px;right:13px} #number{font-size:5rem}.option{font-size:1.2rem;padding:14px}.menu button{font-size:1.02rem}.controls{left:14px;right:14px}.dialog{padding:18px 14px}.range-grid button{padding:10px 4px}}
   .logo-banner{max-width:32%;height:auto;background:transparent;box-shadow:none;border-radius:0;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto}
   </style>
 </head>
@@ -214,9 +225,8 @@
     const maxVal = Number.isFinite(Number(rangeSettings.max)) ? Math.floor(Number(rangeSettings.max)) : 100;
     rangeSettings.min = Math.max(0, Math.min(100, minVal));
     rangeSettings.max = Math.max(0, Math.min(100, maxVal));
-    // if bounds invalid or identical (e.g. 0-0) reset to sensible default 0-100
+    // swap reversed bounds; a one-number range (for example 7–7) is valid.
     if(rangeSettings.min > rangeSettings.max) { const t = rangeSettings.min; rangeSettings.min = rangeSettings.max; rangeSettings.max = t; }
-    if(rangeSettings.min === rangeSettings.max){ rangeSettings.min = 0; rangeSettings.max = 100; }
     rangeSettings.name = rangeSettings.name || `${rangeSettings.min}-${rangeSettings.max}`;
   }
   let allowedNumbers = [];
@@ -386,16 +396,16 @@
   }
 
   // menu
-  function showMenu(){ currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; voiceMenu.style.display='none'; rangeMenu.style.display='none'; otherMenu.style.display='none'; updateScore(); updateActiveRangeDisplay(); }
+  function showMenu(){ stopTraining(); window.speechSynthesis && window.speechSynthesis.cancel(); currentMode=null; mainMenu.style.display='flex'; gameArea.style.display='none'; voiceMenu.style.display='none'; rangeMenu.style.display='none'; otherMenu.style.display='none'; updateScore(); updateActiveRangeDisplay(); }
 
   // démarrer une partie dans le mode demandé
-  function startGame(mode){ computeAllowedNumbers(); currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display = 'flex'; updateScore(); showQuestion(); }
+  function startGame(mode){ stopTraining(); computeAllowedNumbers(); currentMode=mode; correctCount=0; totalCount=0; consecutiveCorrect=0; optionsCount=2; mainMenu.style.display='none'; gameArea.style.display = 'flex'; updateScore(); showQuestion(); }
 
   // Adjust font size of #number to ensure it fits on one line when content is long
   function adjustNumberFont(){ const el = numberEl; el.style.whiteSpace = 'nowrap'; el.style.fontSize = ''; requestAnimationFrame(()=>{ const parentWidth = el.parentElement ? el.parentElement.clientWidth : el.clientWidth; if(parentWidth <= 0) return; const avail = Math.max(20, Math.floor(parentWidth * 0.92)); let computed = window.getComputedStyle(el).fontSize; let fontSize = parseFloat(computed) || 64; const minSize = 18; let safety = 0; while(el.scrollWidth > avail && fontSize > minSize && safety < 40){ fontSize = Math.max(minSize, Math.floor(fontSize * 0.92)); el.style.fontSize = fontSize + 'px'; safety++; } }); }
 
   // montrer question adaptée au mode
-  function showQuestion(){ computeAllowedNumbers(); if(correctCount>=targetCorrect){ finish(); return; } if(allowedNumbers.length === 0){ alert('La plage choisie ne contient aucun nombre. Retour au menu.'); showMenu(); return; } locked=false; const n = allowedNumbers[Math.floor(Math.random()*allowedNumbers.length)]; currentAnswer=n; optionsEl.innerHTML=''; if(currentMode==='C2L'){ numberEl.textContent = n; wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=numberToWords(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } else if(currentMode==='L2C'){ numberEl.textContent = numberToWords(n); wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=String(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); b.addEventListener('touchstart', e=>{ e.preventDefault(); b.click(); }); optionsEl.appendChild(b); }); } // adapt font now that content is set
+  function showQuestion(){ computeAllowedNumbers(); if(correctCount>=targetCorrect){ finish(); return; } if(allowedNumbers.length === 0){ alert('La plage choisie ne contient aucun nombre. Retour au menu.'); showMenu(); return; } locked=false; const n = allowedNumbers[Math.floor(Math.random()*allowedNumbers.length)]; currentAnswer=n; optionsEl.innerHTML=''; if(currentMode==='C2L'){ numberEl.textContent = n; wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=numberToWords(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); optionsEl.appendChild(b); }); } else if(currentMode==='L2C'){ numberEl.textContent = numberToWords(n); wordEl.textContent = ' '; const choices = generateOptions(n, optionsCount); choices.forEach(num=>{ const b=document.createElement('button'); b.className='option'; b.type='button'; b.textContent=String(num); b.dataset.val=String(num); b.addEventListener('click', onOptionClicked); optionsEl.appendChild(b); }); } // adapt font now that content is set
     adjustNumberFont();
     updateScore(); }
 
@@ -461,7 +471,7 @@
   btnVoiceBack && btnVoiceBack.addEventListener('click', ()=>{ voiceMenu.style.display='none'; });
 
   // keyboard accessibility
-  document.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ const f=optionsEl.querySelector('.option'); if(f) f.click(); } });
+  document.addEventListener('keydown', e=>{ if((e.key===' '||e.key==='Enter') && document.activeElement === document.body){ const f=optionsEl.querySelector('.option'); if(f) f.click(); } });
 
   // adjust font on resize when visible
   window.addEventListener('resize', ()=>{ if(gameArea.style.display!=='none'){ adjustNumberFont(); } });
@@ -530,6 +540,18 @@
     }catch(e){ /* ignore */ }
   }
   loadLogo();
+  // Block browser-level zoom gestures while keeping ordinary vertical scrolling and controls usable.
+  document.addEventListener('gesturestart', e => e.preventDefault(), { passive:false });
+  document.addEventListener('gesturechange', e => e.preventDefault(), { passive:false });
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(error => console.warn('Service worker non enregistré', error)));
+  }
   showMenu();
   </script>
 </body>

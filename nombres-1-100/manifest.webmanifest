@@ -1,0 +1,14 @@
+{
+  "name": "Les nombres de 0 à 100",
+  "short_name": "Nombres 0–100",
+  "description": "Un jeu pour apprendre à lire et reconnaître les nombres de 0 à 100.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7ff",
+  "theme_color": "#5b4bdb",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
