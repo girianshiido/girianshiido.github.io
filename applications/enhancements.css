@@ -53,8 +53,27 @@
 .project--pixel { --tint: #ffe8ef; }
 .project--veiled { --tint: #dfe3ed; }
 
+/* Keep portrait screenshots inside their card instead of letting their
+   intrinsic height enlarge the grid rows and overlap the next project. */
+.shots {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  height: clamp(360px, 32vw, 520px);
+  min-height: 0;
+}
+
+.shots > img {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+}
+
 @media (max-width: 780px) {
   .collection-heading {
     padding: 3.6rem 1.2rem;
+  }
+
+  .shots {
+    height: min(76vw, 300px);
   }
 }
