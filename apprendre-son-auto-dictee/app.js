@@ -9,6 +9,7 @@ const escapeHTML = (s)=>s.replace(/[&<>"']/g, (c)=>({
 const normalize = (s)=>s.normalize('NFC').replace(/[’‘ʼ]/g, "'").replace(/\s+/g, ' ').trim();
 const tokens = (s)=>normalize(s).match(/[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)*|[^\s\p{L}\p{N}]/gu) || [];
 let dictations = [], current, mode = 'learn', selected = [], bank = [], words = [], draft = '', hidden = false;
+let cursor = 0, activeWord = -1;
 let achievements = {};
 try {
     achievements = JSON.parse(localStorage.getItem('autodictee-stars') || '{}');
@@ -42,7 +43,7 @@ function speak(text, el) {
     }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'fr-FR';
-    u.rate = Number($('#speed') && $('#speed').value);
+    u.rate = Number($('#speed').value);
     const voice = speechSynthesis.getVoices().find((v)=>v.lang.startsWith('fr'));
     if (voice) u.voice = voice;
     u.onstart = ()=>el?.classList.add('reading');
@@ -65,6 +66,8 @@ function shuffle(a) {
 function resetOrder() {
     words = current.sentences.join(' ').split(' ');
     selected = [];
+    cursor = 0;
+    activeWord = -1;
     bank = shuffle(words.map((_, i)=>i));
 }
 function render() {
@@ -91,12 +94,14 @@ function render() {
         };
     }
     if (mode === 'order') {
-        g.innerHTML = '<p class="hint">Touche les mots pour reconstruire toute la dictée. Pour retirer un mot, touche-le dans ta réponse.</p><progress id="progress" max="1" value="0"></progress><p id="count"></p><div id="answer" aria-label="Ma réponse"></div><h3>La réserve de mots</h3><div class="bank" id="bank"></div><div class="actions"><button id="check" class="primary">Vérifier mon texte</button><button id="undo">↶ Annuler le dernier mot</button><button id="reset">↻ Recommencer</button></div>';
+        g.innerHTML = `<p class="hint">Touche les mots de la réserve : ils s’ajoutent dans ton texte. Pour corriger, touche un mot de ta réponse.</p><div class="progress-row"><span id="count"></span><span>Ton texte prend forme ✨</span></div><progress id="progress" max="1" value="0"></progress><div class="puzzle-layout"><section class="composition"><h3>Ma dictée</h3><div id="answer" aria-label="Ma réponse"></div><div id="editbar" class="editbar"></div></section><section class="reserve"><h3>Les mots à placer <span id="remaining"></span></h3><div class="bank" id="bank"></div></section></div><div class="actions"><button id="check" class="primary">✓ Vérifier mon texte</button><button id="undo">↶ Dernier mot</button><button id="reset">↻ Recommencer</button></div>`;
         drawWords();
         $('#check').onclick = checkOrder;
         $('#undo').onclick = ()=>{
             const id = selected.pop();
             if (id !== undefined) bank.push(id);
+            cursor = selected.length;
+            activeWord = -1;
             drawWords();
         };
         $('#reset').onclick = ()=>{
@@ -105,40 +110,82 @@ function render() {
         };
     }
     if (mode === 'write') {
-        g.innerHTML = `<p class="hint">Écris toute la dictée de mémoire. Pense aux majuscules, aux accents et à la ponctuation. Tu peux l’écouter si tu en as besoin.</p><label for="draft">Ma dictée</label><textarea id="draft" placeholder="Aujourd’hui…" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea><div class="actions"><button id="correct" class="primary">Vérifier ma dictée</button><button id="clear">Effacer mon texte</button></div>`;
-        $('#draft').textContent = draft;
-        $('#draft').oninput = ()=>{
-            draft = $('#draft').value;
-            $('#feedback').textContent = '';
-        };
+        g.innerHTML = `<p class="hint">Commence par le titre, puis écris une phrase à la fois. Tout sera vérifié ensemble.</p><div class="writing-pages">${current.sentences.map((s, i)=>`<section class="writing-card"><div class="writing-heading"><label for="draft-${i}"><span class="number">${current.includeTitle && i === 0 ? "T" : current.includeTitle ? i : i + 1}</span> ${current.includeTitle && i === 0 ? "Le titre" : "Phrase " + (current.includeTitle ? i : i + 1)}</label><button class="listen-small" data-read="${i}" aria-label="Écouter ${current.includeTitle && i === 0 ? "le titre" : "la phrase " + (current.includeTitle ? i : i + 1)}">▷ Écouter</button></div><textarea id="draft-${i}" data-part="${i}" rows="${current.includeTitle && i === 0 ? 1 : 3}" placeholder="${current.includeTitle && i === 0 ? "Le titre…" : "Écris la phrase ici…"}" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>${i < current.sentences.length - 1 ? `<button class="next-sentence" data-next="${i + 1}">Phrase suivante ↓</button>` : ''}</section>`).join('')}</div><div class="actions"><button id="correct" class="primary">✓ Vérifier ma dictée</button><button id="clear">Recommencer</button></div>`;
+        const parts = draft.split('\n');
+        g.querySelectorAll('[data-part]').forEach((t, i)=>{
+            t.value = parts[i] || '';
+            t.oninput = ()=>{
+                draft = Array.from(g.querySelectorAll('[data-part]')).map((t)=>t.value.replace(/\n/g, ' ')).join('\n');
+                $('#feedback').textContent = '';
+            };
+        });
+        g.querySelectorAll('[data-read]').forEach((b)=>b.onclick = ()=>speak(current.sentences[Number(b.dataset.read)]));
+        g.querySelectorAll('[data-next]').forEach((b)=>b.onclick = ()=>$('#draft-' + b.dataset.next).focus());
         $('#correct').onclick = checkWriting;
         $('#clear').onclick = ()=>{
-            if (draft && !confirm('Effacer ta dictée pour recommencer ?')) return;
+            if (draft.trim() && !confirm('Effacer ta dictée pour recommencer ?')) return;
             draft = '';
             render();
         };
     }
 }
 function drawWords() {
-    for (const [id, ids] of [
-        [
-            'answer',
-            selected
-        ],
-        [
-            'bank',
-            bank
-        ]
-    ]){
-        $('#' + id).innerHTML = ids.map((n)=>`<button class="word" data-id="${n}" aria-label="${id === 'answer' ? 'Retirer' : 'Ajouter'} ${escapeHTML(words[n])}">${escapeHTML(words[n])}</button>`).join('');
-        $('#' + id).querySelectorAll('button').forEach((b)=>b.onclick = ()=>{
-                const n = Number(b.dataset.id), from = id === 'answer' ? selected : bank, to = id === 'answer' ? bank : selected;
-                from.splice(from.indexOf(n), 1);
-                to.push(n);
-                drawWords();
-            });
+    const answer = $('#answer');
+    answer.innerHTML = selected.length ? '' : '<span class="empty-answer">Ta dictée commence ici…<br><small>Choisis ton premier mot dans la réserve ↓</small></span>';
+    selected.forEach((n, i)=>{
+        if (i === cursor) answer.insertAdjacentHTML('beforeend', '<span class="caret" aria-hidden="true"></span>');
+        answer.insertAdjacentHTML('beforeend', `<button class="word placed ${i === activeWord ? 'chosen' : ''}" data-position="${i}" aria-pressed="${i === activeWord}">${escapeHTML(words[n])}</button>`);
+    });
+    if (selected.length && cursor === selected.length) answer.insertAdjacentHTML('beforeend', '<span class="caret" aria-hidden="true"></span>');
+    answer.querySelectorAll('[data-position]').forEach((b)=>b.onclick = ()=>{
+            activeWord = Number(b.dataset.position);
+            cursor = activeWord + 1;
+            drawWords();
+        });
+    $('#bank').innerHTML = bank.map((n)=>`<button class="word" data-id="${n}" aria-label="Ajouter ${escapeHTML(words[n])}">${escapeHTML(words[n])}<span class="add-mark" aria-hidden="true">+</span></button>`).join('') || '<p class="bank-empty">Tous les mots sont placés. À toi de vérifier !</p>';
+    $('#bank').querySelectorAll('button').forEach((b)=>b.onclick = ()=>{
+            const n = Number(b.dataset.id);
+            bank.splice(bank.indexOf(n), 1);
+            selected.splice(cursor, 0, n);
+            cursor++;
+            activeWord = -1;
+            drawWords();
+        });
+    $('#editbar').innerHTML = activeWord < 0 ? '<span class="hint">Le trait violet indique où arrive le prochain mot.</span>' : `<span class="edit-label">${escapeHTML(words[selected[activeWord]])}</span><button id="left" aria-label="Déplacer le mot à gauche" ${activeWord === 0 ? 'disabled' : ''}>←</button><button id="right" aria-label="Déplacer le mot à droite" ${activeWord === selected.length - 1 ? 'disabled' : ''}>→</button><button id="remove">Retirer</button><button id="end">Ajouter à la fin</button><small>Le prochain mot sera inséré juste après le mot sélectionné.</small>`;
+    if (activeWord >= 0) {
+        for (const [id, delta] of [
+            [
+                'left',
+                -1
+            ],
+            [
+                'right',
+                1
+            ]
+        ])$('#' + id).onclick = ()=>{
+            const next = activeWord + delta;
+            [selected[activeWord], selected[next]] = [
+                selected[next],
+                selected[activeWord]
+            ];
+            activeWord = next;
+            cursor = next + 1;
+            drawWords();
+        };
+        $('#remove').onclick = ()=>{
+            bank.push(selected.splice(activeWord, 1)[0]);
+            cursor = activeWord;
+            activeWord = -1;
+            drawWords();
+        };
+        $('#end').onclick = ()=>{
+            activeWord = -1;
+            cursor = selected.length;
+            drawWords();
+        };
     }
-    $('#count').textContent = `${selected.length} / ${words.length} mots placés`;
+    $('#count').textContent = `${selected.length} / ${words.length} mots`;
+    $('#remaining').textContent = String(bank.length);
     $('#progress').value = selected.length / words.length;
     $('#undo').disabled = !selected.length;
     $('#feedback').textContent = '';
@@ -149,7 +196,7 @@ function checkOrder() {
     if (correct) {
         award();
         $('#feedback').innerHTML = '<span class="success">★★ Bravo ! Tous les mots sont à leur place.</span><br>Prêt à écrire la dictée de mémoire ?';
-    } else $('#feedback').textContent = selected.length < words.length ? 'Il reste des mots dans la réserve. Continue !' : 'Les mots encadrés en rouge sont à revoir. Touche-les pour les déplacer.';
+    } else $('#feedback').textContent = selected.length < words.length ? 'Il reste des mots dans la réserve. Continue !' : 'Touche un mot encadré en rouge : déplace-le avec les flèches, retire-le ou insère un mot après lui.';
 }
 function diff(a, b) {
     const d = Array.from({
@@ -190,6 +237,13 @@ async function init() {
         const r = await fetch('./dictations.json');
         if (!r.ok) throw Error();
         dictations = await r.json();
+        dictations = dictations.map((d)=>({
+                ...d,
+                sentences: d.includeTitle ? [
+                    d.title,
+                    ...d.sentences
+                ] : d.sentences
+            }));
         current = dictations[0];
         $('#dictation').innerHTML = dictations.map((d)=>`<option value="${escapeHTML(d.id)}">${escapeHTML(d.label)}</option>`).join('');
         $('#dictation').onchange = ()=>{
