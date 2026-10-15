@@ -272,9 +272,6 @@ let catalogLoading = false;
 async function refreshDictations(manual = false) {
     if (catalogLoading) return;
     catalogLoading = true;
-    const button = $('#refresh-dictations');
-    button.disabled = true;
-    button.classList.add('refreshing');
     try {
         const r = await fetch('./dictations.json', {
             cache: 'no-store'
@@ -308,16 +305,11 @@ async function refreshDictations(manual = false) {
         if (manual) $('#catalog-status').textContent = 'Actualisation impossible. Les dictées déjà chargées restent disponibles.';
     } finally{
         catalogLoading = false;
-        button.disabled = false;
-        button.classList.remove('refreshing');
     }
 }
 async function init() {
     try {
         await refreshDictations();
-        $('#refresh-dictations').onclick = ()=>{
-            void refreshDictations(true);
-        };
         $('#dictation').onchange = ()=>{
             current = dictations.find((d)=>d.id === $('#dictation').value);
             draft = '';

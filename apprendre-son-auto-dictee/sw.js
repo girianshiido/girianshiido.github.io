@@ -1,5 +1,5 @@
 // Bump this version whenever a published application file changes.
-const CACHE = 'autodictee-pwa-v2';
+const CACHE = 'autodictee-pwa-v3';
 const ROOT = new URL('./', self.location.href);
 const FILES = ['./','index.html','style.css','app.js','pwa.js','dictations.json','manifest.webmanifest','assets/atelier.webp','assets/le-vote.webp','assets/icon-192.png','assets/icon-512.png','assets/apple-touch-icon.png'];
 self.addEventListener('install', event => {

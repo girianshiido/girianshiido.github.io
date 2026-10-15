@@ -54,7 +54,7 @@ let lastCatalogCheck=0;
 let catalogLoading=false;
 async function refreshDictations(manual=false){
 if(catalogLoading)return;catalogLoading=true;
-const button=$<HTMLButtonElement>('#refresh-dictations');button.disabled=true;button.classList.add('refreshing');
+
 try{
 const r=await fetch('./dictations.json',{cache:'no-store'});if(!r.ok)throw Error();
 const raw:Dictation[]=await r.json();if(!Array.isArray(raw)||!raw.length||!raw.every(d=>typeof d.id==='string'&&typeof d.title==='string'&&typeof d.label==='string'&&Array.isArray(d.sentences)&&d.sentences.every(s=>typeof s==='string')))throw Error();
@@ -68,11 +68,11 @@ lastCatalogCheck=Date.now();
 const cached=r.headers.get('X-Autodictee-Offline')==='1';
 if(manual||previousCount&&dictations.length>previousCount)$('#catalog-status').textContent=cached?'Hors connexion : les dictées enregistrées restent disponibles.':dictations.length>previousCount&&previousCount?`${dictations.length-previousCount} nouvelle(s) dictée(s) disponible(s) dans le menu.`:'La liste des dictées est à jour.';
 }catch(error){if(!dictations.length)throw error;if(manual)$('#catalog-status').textContent='Actualisation impossible. Les dictées déjà chargées restent disponibles.'}
-finally{catalogLoading=false;button.disabled=false;button.classList.remove('refreshing')}
+finally{catalogLoading=false}
 }
 async function init(){try{
 await refreshDictations();
-$('#refresh-dictations').onclick=()=>{void refreshDictations(true)};
+
 $('#dictation').onchange=()=>{current=dictations.find(d=>d.id===($('#dictation') as HTMLSelectElement).value)!;draft='';hidden=false;resetOrder();render()};
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode as Mode;render()});
 $('#listen').onclick=()=>speak(current.sentences);$('#stop').onclick=stop;window.addEventListener('pagehide',stop);

@@ -19,4 +19,4 @@ Installer depuis Safari sur iOS (Partager → Sur l’écran d’accueil) ou Chr
 
 À chaque publication modifiant des fichiers du jeu, incrémenter `CACHE` dans `sw.js` et ajouter au précache tout nouvel asset indispensable. Le chargement essaie d’abord le réseau, puis les fichiers conservés. `node build.mjs` compile aussi `pwa.ts`.
 
-Le bouton ↻ recharge `dictations.json` sans cache HTTP. La liste est aussi actualisée à l’ouverture, au retour au premier plan après une minute et au rétablissement de la connexion. Une actualisation conserve le texte saisi et le puzzle en cours ; les nouvelles entrées apparaissent dans le sélecteur. En cas de panne réseau, le service worker rend le catalogue téléchargé et l’interface le signale lors d’une demande manuelle.
+Le catalogue `dictations.json` est chargé sans cache HTTP. La liste est actualisée à l’ouverture, au retour au premier plan après une minute et au rétablissement de la connexion. Une actualisation conserve le texte saisi et le puzzle en cours ; les nouvelles entrées apparaissent dans le sélecteur. En cas de panne réseau, le service worker rend le catalogue téléchargé.
