@@ -46,6 +46,7 @@ function stop() {
 }
 function speak(text, el) {
     stop();
+    if (mode !== 'learn') return;
     if (!('speechSynthesis' in window)) {
         $('#feedback').textContent = 'La lecture vocale n’est pas disponible dans ce navigateur.';
         return;
@@ -103,6 +104,7 @@ function resetOrder() {
 }
 function render() {
     stop();
+    $('.audio').hidden = mode !== 'learn';
     $('#feedback').textContent = '';
     $('#title').textContent = current.title;
     $('#step').textContent = mode === 'learn' ? 'JE LIS, J’ÉCOUTE, JE MÉMORISE' : mode === 'order' ? 'LE PUZZLE DES MOTS' : 'À MOI DE JOUER';
@@ -141,7 +143,7 @@ function render() {
         };
     }
     if (mode === 'write') {
-        g.innerHTML = `<p class="hint">Commence par le titre, puis écris une phrase à la fois. Tout sera vérifié ensemble.</p><div class="writing-pages">${current.sentences.map((s, i)=>`<section class="writing-card"><div class="writing-heading"><label for="draft-${i}"><span class="number">${current.includeTitle && i === 0 ? "T" : current.includeTitle ? i : i + 1}</span> ${current.includeTitle && i === 0 ? "Le titre" : "Phrase " + (current.includeTitle ? i : i + 1)}</label><button class="listen-small" data-read="${i}" aria-label="Écouter ${current.includeTitle && i === 0 ? "le titre" : "la phrase " + (current.includeTitle ? i : i + 1)}">▷ Écouter</button></div><textarea id="draft-${i}" data-part="${i}" rows="${current.includeTitle && i === 0 ? 1 : 3}" placeholder="${current.includeTitle && i === 0 ? "Le titre…" : "Écris la phrase ici…"}" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>${i < current.sentences.length - 1 ? `<button class="next-sentence" data-next="${i + 1}">Phrase suivante ↓</button>` : ''}</section>`).join('')}</div><div class="actions"><button id="correct" class="primary">✓ Vérifier ma dictée</button><button id="clear">Recommencer</button></div>`;
+        g.innerHTML = `<p class="hint">Commence par le titre, puis écris une phrase à la fois. Tout sera vérifié ensemble.</p><div class="writing-pages">${current.sentences.map((s, i)=>`<section class="writing-card"><div class="writing-heading"><label for="draft-${i}"><span class="number">${current.includeTitle && i === 0 ? "T" : current.includeTitle ? i : i + 1}</span> ${current.includeTitle && i === 0 ? "Le titre" : "Phrase " + (current.includeTitle ? i : i + 1)}</label></div><textarea id="draft-${i}" data-part="${i}" rows="${current.includeTitle && i === 0 ? 1 : 3}" placeholder="${current.includeTitle && i === 0 ? "Le titre…" : "Écris la phrase ici…"}" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>${i < current.sentences.length - 1 ? `<button class="next-sentence" data-next="${i + 1}">Phrase suivante ↓</button>` : ''}</section>`).join('')}</div><div class="actions"><button id="correct" class="primary">✓ Vérifier ma dictée</button><button id="clear">Recommencer</button></div>`;
         const parts = draft.split('\n');
         g.querySelectorAll('[data-part]').forEach((t, i)=>{
             t.value = parts[i] || '';
@@ -150,7 +152,6 @@ function render() {
                 $('#feedback').textContent = '';
             };
         });
-        g.querySelectorAll('[data-read]').forEach((b)=>b.onclick = ()=>speak(current.sentences[Number(b.dataset.read)]));
         g.querySelectorAll('[data-next]').forEach((b)=>b.onclick = ()=>$('#draft-' + b.dataset.next).focus());
         $('#correct').onclick = checkWriting;
         $('#clear').onclick = ()=>{

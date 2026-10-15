@@ -11,3 +11,5 @@ Node.js 24 ou ultérieur : `node build.mjs` génère `app.js` depuis `app.ts`. S
 La voix dépend des voix françaises disponibles sur l’appareil. Les apostrophes droites et courbes et les variations d’espacement sont acceptées ; accents, casse et ponctuation sont contrôlés.
 
 `includeTitle: true` intègre le titre à la lecture, au puzzle et au champ dédié du mode écriture. Dans le puzzle, toucher un mot placé permet de le déplacer avec les flèches, de le retirer ou d’insérer le prochain mot après lui. La saisie est répartie entre le titre et les phrases.
+
+Les illustrations originales ont été générées par IA : scène de vote en classe et vignette carnet/crayon à la gouache, palette lavande, abricot et sauge. Versions WebP optimisées dans `assets/` (environ 32 Ko au total). La lecture vocale est limitée au mode apprentissage, avec 850 ms de pause entre le titre et les phrases ; les deux modes d’exercice ne comportent aucun bouton d’écoute.
