@@ -13,3 +13,8 @@ La voix dépend des voix françaises disponibles sur l’appareil. Les apostroph
 `includeTitle: true` intègre le titre à la lecture, au puzzle et au champ dédié du mode écriture. Dans le puzzle, toucher un mot placé permet de le déplacer avec les flèches, de le retirer ou d’insérer le prochain mot après lui. La saisie est répartie entre le titre et les phrases.
 
 Les illustrations originales ont été générées par IA : scène de vote en classe et vignette carnet/crayon à la gouache, palette lavande, abricot et sauge. Versions WebP optimisées dans `assets/` (environ 32 Ko au total). La lecture vocale est limitée au mode apprentissage, avec 850 ms de pause entre le titre et les phrases ; les deux modes d’exercice ne comportent aucun bouton d’écoute.
+
+## Application installable (PWA)
+Installer depuis Safari sur iOS (Partager → Sur l’écran d’accueil) ou Chrome sur Android (Installer l’application). Le manifeste et les icônes ouvrent le jeu en fenêtre autonome. Le service worker, limité à ce dossier, conserve tous les fichiers pour un usage hors connexion après une première ouverture connectée. Les voix de synthèse hors connexion dépendent de l’appareil.
+
+À chaque publication modifiant des fichiers du jeu, incrémenter `CACHE` dans `sw.js` et ajouter au précache tout nouvel asset indispensable. Le chargement essaie d’abord le réseau, puis les fichiers conservés. `node build.mjs` compile aussi `pwa.ts`.
