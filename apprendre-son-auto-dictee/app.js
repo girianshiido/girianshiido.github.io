@@ -1,0 +1,215 @@
+const $ = (s)=>document.querySelector(s);
+const escapeHTML = (s)=>s.replace(/[&<>"']/g, (c)=>({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[c]);
+const normalize = (s)=>s.normalize('NFC').replace(/[’‘ʼ]/g, "'").replace(/\s+/g, ' ').trim();
+const tokens = (s)=>normalize(s).match(/[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)*|[^\s\p{L}\p{N}]/gu) || [];
+let dictations = [], current, mode = 'learn', selected = [], bank = [], words = [], draft = '', hidden = false;
+let achievements = {};
+try {
+    achievements = JSON.parse(localStorage.getItem('autodictee-stars') || '{}');
+} catch  {}
+function award() {
+    const a = achievements[current.id] || [];
+    if (!a.includes(mode)) a.push(mode);
+    achievements[current.id] = a;
+    try {
+        localStorage.setItem('autodictee-stars', JSON.stringify(achievements));
+    } catch  {}
+    stars();
+}
+function stars() {
+    $('#stars').textContent = [
+        'learn',
+        'order',
+        'write'
+    ].map((m)=>(achievements[current.id] || []).includes(m) ? '★' : '☆').join(' ');
+    $('#stars').setAttribute('aria-label', `${(achievements[current.id] || []).length} étoiles sur 3`);
+}
+function stop() {
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    document.querySelectorAll('.reading').forEach((e)=>e.classList.remove('reading'));
+}
+function speak(text, el) {
+    stop();
+    if (!('speechSynthesis' in window)) {
+        $('#feedback').textContent = 'La lecture vocale n’est pas disponible dans ce navigateur.';
+        return;
+    }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR';
+    u.rate = Number($('#speed') && $('#speed').value);
+    const voice = speechSynthesis.getVoices().find((v)=>v.lang.startsWith('fr'));
+    if (voice) u.voice = voice;
+    u.onstart = ()=>el?.classList.add('reading');
+    u.onend = ()=>el?.classList.remove('reading');
+    u.onerror = ()=>{
+        el?.classList.remove('reading');
+    };
+    speechSynthesis.speak(u);
+}
+function shuffle(a) {
+    for(let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [
+            a[j],
+            a[i]
+        ];
+    }
+    return a;
+}
+function resetOrder() {
+    words = current.sentences.join(' ').split(' ');
+    selected = [];
+    bank = shuffle(words.map((_, i)=>i));
+}
+function render() {
+    stop();
+    $('#feedback').textContent = '';
+    $('#title').textContent = current.title;
+    $('#step').textContent = mode === 'learn' ? 'JE LIS, J’ÉCOUTE, JE MÉMORISE' : mode === 'order' ? 'LE PUZZLE DES MOTS' : 'À MOI DE JOUER';
+    document.querySelectorAll('[data-mode]').forEach((b)=>{
+        b.classList.toggle('active', b.dataset.mode === mode);
+        b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+    });
+    stars();
+    const g = $('#game');
+    if (mode === 'learn') {
+        g.innerHTML = `<p class="hint">Lis chaque phrase. Écoute-la, puis essaie de la dire sans regarder.</p><div id="sentences">${current.sentences.map((s, i)=>`<section class="sentence"><span class="text ${hidden ? 'hidden' : ''}">${escapeHTML(s)}</span><button data-sentence="${i}">🔊 Écouter cette phrase</button></section>`).join('')}</div><div class="actions"><button id="hide">${hidden ? '👀 Montrer' : '🙈 Cacher'} le texte</button><button id="learned" class="primary">Je connais ma dictée ★</button></div>`;
+        g.querySelectorAll('[data-sentence]').forEach((b)=>b.onclick = ()=>speak(current.sentences[Number(b.dataset.sentence)], b.parentElement));
+        $('#hide').onclick = ()=>{
+            hidden = !hidden;
+            render();
+        };
+        $('#learned').onclick = ()=>{
+            award();
+            $('#feedback').innerHTML = '<span class="success">★ Première étape réussie !</span><br>Essaie maintenant le puzzle des mots.';
+        };
+    }
+    if (mode === 'order') {
+        g.innerHTML = '<p class="hint">Touche les mots pour reconstruire toute la dictée. Pour retirer un mot, touche-le dans ta réponse.</p><progress id="progress" max="1" value="0"></progress><p id="count"></p><div id="answer" aria-label="Ma réponse"></div><h3>La réserve de mots</h3><div class="bank" id="bank"></div><div class="actions"><button id="check" class="primary">Vérifier mon texte</button><button id="undo">↶ Annuler le dernier mot</button><button id="reset">↻ Recommencer</button></div>';
+        drawWords();
+        $('#check').onclick = checkOrder;
+        $('#undo').onclick = ()=>{
+            const id = selected.pop();
+            if (id !== undefined) bank.push(id);
+            drawWords();
+        };
+        $('#reset').onclick = ()=>{
+            resetOrder();
+            drawWords();
+        };
+    }
+    if (mode === 'write') {
+        g.innerHTML = `<p class="hint">Écris toute la dictée de mémoire. Pense aux majuscules, aux accents et à la ponctuation. Tu peux l’écouter si tu en as besoin.</p><label for="draft">Ma dictée</label><textarea id="draft" placeholder="Aujourd’hui…" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea><div class="actions"><button id="correct" class="primary">Vérifier ma dictée</button><button id="clear">Effacer mon texte</button></div>`;
+        $('#draft').textContent = draft;
+        $('#draft').oninput = ()=>{
+            draft = $('#draft').value;
+            $('#feedback').textContent = '';
+        };
+        $('#correct').onclick = checkWriting;
+        $('#clear').onclick = ()=>{
+            if (draft && !confirm('Effacer ta dictée pour recommencer ?')) return;
+            draft = '';
+            render();
+        };
+    }
+}
+function drawWords() {
+    for (const [id, ids] of [
+        [
+            'answer',
+            selected
+        ],
+        [
+            'bank',
+            bank
+        ]
+    ]){
+        $('#' + id).innerHTML = ids.map((n)=>`<button class="word" data-id="${n}" aria-label="${id === 'answer' ? 'Retirer' : 'Ajouter'} ${escapeHTML(words[n])}">${escapeHTML(words[n])}</button>`).join('');
+        $('#' + id).querySelectorAll('button').forEach((b)=>b.onclick = ()=>{
+                const n = Number(b.dataset.id), from = id === 'answer' ? selected : bank, to = id === 'answer' ? bank : selected;
+                from.splice(from.indexOf(n), 1);
+                to.push(n);
+                drawWords();
+            });
+    }
+    $('#count').textContent = `${selected.length} / ${words.length} mots placés`;
+    $('#progress').value = selected.length / words.length;
+    $('#undo').disabled = !selected.length;
+    $('#feedback').textContent = '';
+}
+function checkOrder() {
+    const correct = selected.length === words.length && selected.every((n, i)=>words[n] === words[i]);
+    $('#answer').querySelectorAll('button').forEach((b, i)=>b.classList.add(words[selected[i]] === words[i] ? 'good' : 'bad'));
+    if (correct) {
+        award();
+        $('#feedback').innerHTML = '<span class="success">★★ Bravo ! Tous les mots sont à leur place.</span><br>Prêt à écrire la dictée de mémoire ?';
+    } else $('#feedback').textContent = selected.length < words.length ? 'Il reste des mots dans la réserve. Continue !' : 'Les mots encadrés en rouge sont à revoir. Touche-les pour les déplacer.';
+}
+function diff(a, b) {
+    const d = Array.from({
+        length: a.length + 1
+    }, ()=>Array(b.length + 1).fill(0));
+    for(let i = 0; i <= a.length; i++)d[i][0] = i;
+    for(let j = 0; j <= b.length; j++)d[0][j] = j;
+    for(let i = 1; i <= a.length; i++)for(let j = 1; j <= b.length; j++)d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + Number(a[i - 1] !== b[j - 1]));
+    let i = a.length, j = b.length;
+    const out = [];
+    while(i || j){
+        if (i && j && d[i][j] === d[i - 1][j - 1] + Number(a[i - 1] !== b[j - 1])) {
+            out.push(a[i - 1] === b[j - 1] ? escapeHTML(a[i - 1]) : `<del>${escapeHTML(a[i - 1])}</del> <ins>${escapeHTML(b[j - 1])}</ins>`);
+            i--;
+            j--;
+        } else if (j && d[i][j] === d[i][j - 1] + 1) {
+            out.push(`<ins>${escapeHTML(b[--j])}</ins>`);
+        } else out.push(`<del>${escapeHTML(a[--i])}</del>`);
+    }
+    return {
+        distance: d[a.length][b.length],
+        html: out.reverse().join(' ')
+    };
+}
+function checkWriting() {
+    if (!draft.trim()) {
+        $('#feedback').textContent = 'Écris ta dictée avant de vérifier.';
+        return;
+    }
+    const result = diff(tokens(draft), tokens(current.sentences.join(' ')));
+    if (!result.distance) {
+        award();
+        $('#feedback').innerHTML = '<span class="success">★★★ Magnifique ! Ta dictée est parfaite.</span>';
+    } else $('#feedback').innerHTML = `<strong>Encore un petit effort : ${result.distance} élément${result.distance > 1 ? 's' : ''} à revoir.</strong><p>En rouge barré : à retirer ou à corriger. En vert : ce qu’il faut écrire.</p><div class="diff">${result.html}</div><details><summary>Voir le texte de référence</summary><p>${escapeHTML(current.sentences.join(' '))}</p></details>`;
+}
+async function init() {
+    try {
+        const r = await fetch('./dictations.json');
+        if (!r.ok) throw Error();
+        dictations = await r.json();
+        current = dictations[0];
+        $('#dictation').innerHTML = dictations.map((d)=>`<option value="${escapeHTML(d.id)}">${escapeHTML(d.label)}</option>`).join('');
+        $('#dictation').onchange = ()=>{
+            current = dictations.find((d)=>d.id === $('#dictation').value);
+            draft = '';
+            hidden = false;
+            resetOrder();
+            render();
+        };
+        document.querySelectorAll('[data-mode]').forEach((b)=>b.onclick = ()=>{
+                mode = b.dataset.mode;
+                render();
+            });
+        $('#listen').onclick = ()=>speak(current.sentences.join(' '));
+        $('#stop').onclick = stop;
+        window.addEventListener('pagehide', stop);
+        resetOrder();
+        render();
+    } catch  {
+        $('#game').textContent = 'Impossible de charger la dictée. Recharge la page pour réessayer.';
+    }
+}
+init();
