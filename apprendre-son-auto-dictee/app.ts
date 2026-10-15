@@ -9,8 +9,25 @@ let cursor=0, activeWord=-1;
 let achievements:Record<string,string[]>={};try{achievements=JSON.parse(localStorage.getItem('autodictee-stars')||'{}')}catch{}
 function award(){const a=achievements[current.id]||[];if(!a.includes(mode))a.push(mode);achievements[current.id]=a;try{localStorage.setItem('autodictee-stars',JSON.stringify(achievements))}catch{}stars()}
 function stars(){$('#stars').textContent=['learn','order','write'].map(m=>(achievements[current.id]||[]).includes(m)?'★':'☆').join(' ');$('#stars').setAttribute('aria-label',`${(achievements[current.id]||[]).length} étoiles sur 3`)}
-function stop(){if('speechSynthesis'in window) speechSynthesis.cancel();document.querySelectorAll('.reading').forEach(e=>e.classList.remove('reading'))}
-function speak(text:string,el?:HTMLElement){stop();if(!('speechSynthesis'in window)){$('#feedback').textContent='La lecture vocale n’est pas disponible dans ce navigateur.';return}const u=new SpeechSynthesisUtterance(text);u.lang='fr-FR';u.rate=Number(($('#speed') as HTMLSelectElement).value);const voice=speechSynthesis.getVoices().find(v=>v.lang.startsWith('fr'));if(voice)u.voice=voice;u.onstart=()=>el?.classList.add('reading');u.onend=()=>el?.classList.remove('reading');u.onerror=()=>{el?.classList.remove('reading')};speechSynthesis.speak(u)}
+let speechTimer:ReturnType<typeof setTimeout>|undefined;
+let speechSession=0;
+let activeUtterance:SpeechSynthesisUtterance|null=null;
+function stop(){speechSession++;if(speechTimer!==undefined){clearTimeout(speechTimer);speechTimer=undefined}if('speechSynthesis'in window)speechSynthesis.cancel();activeUtterance=null;document.querySelectorAll('.reading').forEach(e=>e.classList.remove('reading'))}
+function speak(text:string|string[],el?:HTMLElement){
+stop();if(!('speechSynthesis'in window)){$('#feedback').textContent='La lecture vocale n’est pas disponible dans ce navigateur.';return}
+const session=speechSession,parts=typeof text==='string'?[text]:text.slice();
+const rate=Number(($('#speed') as HTMLSelectElement).value);
+function next(index:number){
+if(session!==speechSession||index>=parts.length)return;
+const u=new SpeechSynthesisUtterance(parts[index]);activeUtterance=u;u.lang='fr-FR';u.rate=rate;
+const voice=speechSynthesis.getVoices().find(v=>v.lang.startsWith('fr'));if(voice)u.voice=voice;
+u.onstart=()=>{if(session===speechSession)el?.classList.add('reading')};
+u.onend=()=>{if(session!==speechSession)return;activeUtterance=null;el?.classList.remove('reading');if(index+1<parts.length)speechTimer=setTimeout(()=>{speechTimer=undefined;next(index+1)},850)};
+u.onerror=()=>{if(session===speechSession){activeUtterance=null;el?.classList.remove('reading')}};
+speechSynthesis.speak(u)
+}
+next(0)
+}
 function shuffle(a:number[]){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function resetOrder(){words=current.sentences.join(' ').split(' ');selected=[];cursor=0;activeWord=-1;bank=shuffle(words.map((_,i)=>i))}
 function render(){stop();$('#feedback').textContent='';$('#title').textContent=current.title;$('#step').textContent=mode==='learn'?'JE LIS, J’ÉCOUTE, JE MÉMORISE':mode==='order'?'LE PUZZLE DES MOTS':'À MOI DE JOUER';document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.mode===mode);b.setAttribute('aria-pressed',String(b.dataset.mode===mode))});stars();const g=$('#game');
@@ -31,5 +48,5 @@ function checkOrder(){const correct=selected.length===words.length&&selected.eve
 // Levenshtein alignment: an omitted word does not mark all subsequent words wrong.
 function diff(a:string[],b:string[]){const d=Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));for(let i=0;i<=a.length;i++)d[i][0]=i;for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+Number(a[i-1]!==b[j-1]));let i=a.length,j=b.length;const out:string[]=[];while(i||j){if(i&&j&&d[i][j]===d[i-1][j-1]+Number(a[i-1]!==b[j-1])){out.push(a[i-1]===b[j-1]?escapeHTML(a[i-1]):`<del>${escapeHTML(a[i-1])}</del> <ins>${escapeHTML(b[j-1])}</ins>`);i--;j--}else if(j&&d[i][j]===d[i][j-1]+1){out.push(`<ins>${escapeHTML(b[--j])}</ins>`)}else out.push(`<del>${escapeHTML(a[--i])}</del>`)}return{distance:d[a.length][b.length],html:out.reverse().join(' ')}}
 function checkWriting(){if(!draft.trim()){$('#feedback').textContent='Écris ta dictée avant de vérifier.';return}const result=diff(tokens(draft),tokens(current.sentences.join(' ')));if(!result.distance){award();$('#feedback').innerHTML='<span class="success">★★★ Magnifique ! Ta dictée est parfaite.</span>'}else $('#feedback').innerHTML=`<strong>Encore un petit effort : ${result.distance} élément${result.distance>1?'s':''} à revoir.</strong><p>En rouge barré : à retirer ou à corriger. En vert : ce qu’il faut écrire.</p><div class="diff">${result.html}</div><details><summary>Voir le texte de référence</summary><p>${escapeHTML(current.sentences.join(' '))}</p></details>`}
-async function init(){try{const r=await fetch('./dictations.json');if(!r.ok)throw Error();dictations=await r.json();dictations=dictations.map(d=>({...d,sentences:d.includeTitle?[d.title,...d.sentences]:d.sentences}));current=dictations[0];$('#dictation').innerHTML=dictations.map(d=>`<option value="${escapeHTML(d.id)}">${escapeHTML(d.label)}</option>`).join('');$('#dictation').onchange=()=>{current=dictations.find(d=>d.id===($('#dictation') as HTMLSelectElement).value)!;draft='';hidden=false;resetOrder();render()};document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode as Mode;render()});$('#listen').onclick=()=>speak(current.sentences.join(' '));$('#stop').onclick=stop;window.addEventListener('pagehide',stop);resetOrder();render()}catch{$('#game').textContent='Impossible de charger la dictée. Recharge la page pour réessayer.'}}
+async function init(){try{const r=await fetch('./dictations.json');if(!r.ok)throw Error();dictations=await r.json();dictations=dictations.map(d=>({...d,sentences:d.includeTitle?[d.title,...d.sentences]:d.sentences}));current=dictations[0];$('#dictation').innerHTML=dictations.map(d=>`<option value="${escapeHTML(d.id)}">${escapeHTML(d.label)}</option>`).join('');$('#dictation').onchange=()=>{current=dictations.find(d=>d.id===($('#dictation') as HTMLSelectElement).value)!;draft='';hidden=false;resetOrder();render()};document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode as Mode;render()});$('#listen').onclick=()=>speak(current.sentences);$('#stop').onclick=stop;window.addEventListener('pagehide',stop);resetOrder();render()}catch{$('#game').textContent='Impossible de charger la dictée. Recharge la page pour réessayer.'}}
 init();

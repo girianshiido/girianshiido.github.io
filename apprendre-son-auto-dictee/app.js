@@ -31,8 +31,17 @@ function stars() {
     ].map((m)=>(achievements[current.id] || []).includes(m) ? '★' : '☆').join(' ');
     $('#stars').setAttribute('aria-label', `${(achievements[current.id] || []).length} étoiles sur 3`);
 }
+let speechTimer;
+let speechSession = 0;
+let activeUtterance = null;
 function stop() {
+    speechSession++;
+    if (speechTimer !== undefined) {
+        clearTimeout(speechTimer);
+        speechTimer = undefined;
+    }
     if ('speechSynthesis' in window) speechSynthesis.cancel();
+    activeUtterance = null;
     document.querySelectorAll('.reading').forEach((e)=>e.classList.remove('reading'));
 }
 function speak(text, el) {
@@ -41,17 +50,39 @@ function speak(text, el) {
         $('#feedback').textContent = 'La lecture vocale n’est pas disponible dans ce navigateur.';
         return;
     }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'fr-FR';
-    u.rate = Number($('#speed').value);
-    const voice = speechSynthesis.getVoices().find((v)=>v.lang.startsWith('fr'));
-    if (voice) u.voice = voice;
-    u.onstart = ()=>el?.classList.add('reading');
-    u.onend = ()=>el?.classList.remove('reading');
-    u.onerror = ()=>{
-        el?.classList.remove('reading');
-    };
-    speechSynthesis.speak(u);
+    const session = speechSession, parts = typeof text === 'string' ? [
+        text
+    ] : text.slice();
+    const rate = Number($('#speed').value);
+    function next(index) {
+        if (session !== speechSession || index >= parts.length) return;
+        const u = new SpeechSynthesisUtterance(parts[index]);
+        activeUtterance = u;
+        u.lang = 'fr-FR';
+        u.rate = rate;
+        const voice = speechSynthesis.getVoices().find((v)=>v.lang.startsWith('fr'));
+        if (voice) u.voice = voice;
+        u.onstart = ()=>{
+            if (session === speechSession) el?.classList.add('reading');
+        };
+        u.onend = ()=>{
+            if (session !== speechSession) return;
+            activeUtterance = null;
+            el?.classList.remove('reading');
+            if (index + 1 < parts.length) speechTimer = setTimeout(()=>{
+                speechTimer = undefined;
+                next(index + 1);
+            }, 850);
+        };
+        u.onerror = ()=>{
+            if (session === speechSession) {
+                activeUtterance = null;
+                el?.classList.remove('reading');
+            }
+        };
+        speechSynthesis.speak(u);
+    }
+    next(0);
 }
 function shuffle(a) {
     for(let i = a.length - 1; i > 0; i--){
@@ -257,7 +288,7 @@ async function init() {
                 mode = b.dataset.mode;
                 render();
             });
-        $('#listen').onclick = ()=>speak(current.sentences.join(' '));
+        $('#listen').onclick = ()=>speak(current.sentences);
         $('#stop').onclick = stop;
         window.addEventListener('pagehide', stop);
         resetOrder();
