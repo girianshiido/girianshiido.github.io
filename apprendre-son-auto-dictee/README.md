@@ -18,3 +18,5 @@ Les illustrations originales ont été générées par IA : scène de vote en cl
 Installer depuis Safari sur iOS (Partager → Sur l’écran d’accueil) ou Chrome sur Android (Installer l’application). Le manifeste et les icônes ouvrent le jeu en fenêtre autonome. Le service worker, limité à ce dossier, conserve tous les fichiers pour un usage hors connexion après une première ouverture connectée. Les voix de synthèse hors connexion dépendent de l’appareil.
 
 À chaque publication modifiant des fichiers du jeu, incrémenter `CACHE` dans `sw.js` et ajouter au précache tout nouvel asset indispensable. Le chargement essaie d’abord le réseau, puis les fichiers conservés. `node build.mjs` compile aussi `pwa.ts`.
+
+Le bouton ↻ recharge `dictations.json` sans cache HTTP. La liste est aussi actualisée à l’ouverture, au retour au premier plan après une minute et au rétablissement de la connexion. Une actualisation conserve le texte saisi et le puzzle en cours ; les nouvelles entrées apparaissent dans le sélecteur. En cas de panne réseau, le service worker rend le catalogue téléchargé et l’interface le signale lors d’une demande manuelle.

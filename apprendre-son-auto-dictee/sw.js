@@ -1,5 +1,5 @@
 // Bump this version whenever a published application file changes.
-const CACHE = 'autodictee-pwa-v1';
+const CACHE = 'autodictee-pwa-v2';
 const ROOT = new URL('./', self.location.href);
 const FILES = ['./','index.html','style.css','app.js','pwa.js','dictations.json','manifest.webmanifest','assets/atelier.webp','assets/le-vote.webp','assets/icon-192.png','assets/icon-512.png','assets/apple-touch-icon.png'];
 self.addEventListener('install', event => {
@@ -20,7 +20,13 @@ self.addEventListener('fetch', event => {
       return response;
     } catch(error) {
       const saved=await cache.match(canonical.href);
-      if(saved)return saved;
+      if(saved){
+        if(url.pathname.endsWith('/dictations.json')){
+          const headers=new Headers(saved.headers);headers.set('X-Autodictee-Offline','1');
+          return new Response(saved.body,{status:saved.status,statusText:saved.statusText,headers});
+        }
+        return saved;
+      }
       if(event.request.mode==='navigate'){
         const home=await cache.match(ROOT.href);
         if(home)return home;

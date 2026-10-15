@@ -50,5 +50,34 @@ function checkOrder(){const correct=selected.length===words.length&&selected.eve
 // Levenshtein alignment: an omitted word does not mark all subsequent words wrong.
 function diff(a:string[],b:string[]){const d=Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));for(let i=0;i<=a.length;i++)d[i][0]=i;for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+Number(a[i-1]!==b[j-1]));let i=a.length,j=b.length;const out:string[]=[];while(i||j){if(i&&j&&d[i][j]===d[i-1][j-1]+Number(a[i-1]!==b[j-1])){out.push(a[i-1]===b[j-1]?escapeHTML(a[i-1]):`<del>${escapeHTML(a[i-1])}</del> <ins>${escapeHTML(b[j-1])}</ins>`);i--;j--}else if(j&&d[i][j]===d[i][j-1]+1){out.push(`<ins>${escapeHTML(b[--j])}</ins>`)}else out.push(`<del>${escapeHTML(a[--i])}</del>`)}return{distance:d[a.length][b.length],html:out.reverse().join(' ')}}
 function checkWriting(){if(!draft.trim()){$('#feedback').textContent='Écris ta dictée avant de vérifier.';return}const result=diff(tokens(draft),tokens(current.sentences.join(' ')));if(!result.distance){award();$('#feedback').innerHTML='<span class="success">★★★ Magnifique ! Ta dictée est parfaite.</span>'}else $('#feedback').innerHTML=`<strong>Encore un petit effort : ${result.distance} élément${result.distance>1?'s':''} à revoir.</strong><p>En rouge barré : à retirer ou à corriger. En vert : ce qu’il faut écrire.</p><div class="diff">${result.html}</div><details><summary>Voir le texte de référence</summary><p>${escapeHTML(current.sentences.join(' '))}</p></details>`}
-async function init(){try{const r=await fetch('./dictations.json');if(!r.ok)throw Error();dictations=await r.json();dictations=dictations.map(d=>({...d,sentences:d.includeTitle?[d.title,...d.sentences]:d.sentences}));current=dictations[0];$('#dictation').innerHTML=dictations.map(d=>`<option value="${escapeHTML(d.id)}">${escapeHTML(d.label)}</option>`).join('');$('#dictation').onchange=()=>{current=dictations.find(d=>d.id===($('#dictation') as HTMLSelectElement).value)!;draft='';hidden=false;resetOrder();render()};document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode as Mode;render()});$('#listen').onclick=()=>speak(current.sentences);$('#stop').onclick=stop;window.addEventListener('pagehide',stop);resetOrder();render()}catch{$('#game').textContent='Impossible de charger la dictée. Recharge la page pour réessayer.'}}
+let lastCatalogCheck=0;
+let catalogLoading=false;
+async function refreshDictations(manual=false){
+if(catalogLoading)return;catalogLoading=true;
+const button=$<HTMLButtonElement>('#refresh-dictations');button.disabled=true;button.classList.add('refreshing');
+try{
+const r=await fetch('./dictations.json',{cache:'no-store'});if(!r.ok)throw Error();
+const raw:Dictation[]=await r.json();if(!Array.isArray(raw)||!raw.length||!raw.every(d=>typeof d.id==='string'&&typeof d.title==='string'&&typeof d.label==='string'&&Array.isArray(d.sentences)&&d.sentences.every(s=>typeof s==='string')))throw Error();
+const previousCount=dictations.length,previousId=current?.id;
+dictations=raw.map(d=>({...d,sentences:d.includeTitle?[d.title,...d.sentences]:d.sentences}));
+const exists=dictations.some(d=>d.id===previousId);
+$('#dictation').innerHTML=dictations.map(d=>`<option value="${escapeHTML(d.id)}">${escapeHTML(d.label)}</option>`).join('');
+if(previousId&&exists)($('#dictation') as HTMLSelectElement).value=previousId;
+if(!current||!exists){current=dictations[0];draft='';hidden=false;resetOrder();if(previousId)render()}
+lastCatalogCheck=Date.now();
+const cached=r.headers.get('X-Autodictee-Offline')==='1';
+if(manual||previousCount&&dictations.length>previousCount)$('#catalog-status').textContent=cached?'Hors connexion : les dictées enregistrées restent disponibles.':dictations.length>previousCount&&previousCount?`${dictations.length-previousCount} nouvelle(s) dictée(s) disponible(s) dans le menu.`:'La liste des dictées est à jour.';
+}catch(error){if(!dictations.length)throw error;if(manual)$('#catalog-status').textContent='Actualisation impossible. Les dictées déjà chargées restent disponibles.'}
+finally{catalogLoading=false;button.disabled=false;button.classList.remove('refreshing')}
+}
+async function init(){try{
+await refreshDictations();
+$('#refresh-dictations').onclick=()=>{void refreshDictations(true)};
+$('#dictation').onchange=()=>{current=dictations.find(d=>d.id===($('#dictation') as HTMLSelectElement).value)!;draft='';hidden=false;resetOrder();render()};
+document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode as Mode;render()});
+$('#listen').onclick=()=>speak(current.sentences);$('#stop').onclick=stop;window.addEventListener('pagehide',stop);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&Date.now()-lastCatalogCheck>60000)void refreshDictations()});
+window.addEventListener('online',()=>{void refreshDictations()});
+resetOrder();render()
+}catch{$('#game').textContent='Impossible de charger la dictée. Recharge la page pour réessayer.'}}
 init();

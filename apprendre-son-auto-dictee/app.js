@@ -267,20 +267,57 @@ function checkWriting() {
         $('#feedback').innerHTML = '<span class="success">★★★ Magnifique ! Ta dictée est parfaite.</span>';
     } else $('#feedback').innerHTML = `<strong>Encore un petit effort : ${result.distance} élément${result.distance > 1 ? 's' : ''} à revoir.</strong><p>En rouge barré : à retirer ou à corriger. En vert : ce qu’il faut écrire.</p><div class="diff">${result.html}</div><details><summary>Voir le texte de référence</summary><p>${escapeHTML(current.sentences.join(' '))}</p></details>`;
 }
-async function init() {
+let lastCatalogCheck = 0;
+let catalogLoading = false;
+async function refreshDictations(manual = false) {
+    if (catalogLoading) return;
+    catalogLoading = true;
+    const button = $('#refresh-dictations');
+    button.disabled = true;
+    button.classList.add('refreshing');
     try {
-        const r = await fetch('./dictations.json');
+        const r = await fetch('./dictations.json', {
+            cache: 'no-store'
+        });
         if (!r.ok) throw Error();
-        dictations = await r.json();
-        dictations = dictations.map((d)=>({
+        const raw = await r.json();
+        if (!Array.isArray(raw) || !raw.length || !raw.every((d)=>typeof d.id === 'string' && typeof d.title === 'string' && typeof d.label === 'string' && Array.isArray(d.sentences) && d.sentences.every((s)=>typeof s === 'string'))) throw Error();
+        const previousCount = dictations.length, previousId = current?.id;
+        dictations = raw.map((d)=>({
                 ...d,
                 sentences: d.includeTitle ? [
                     d.title,
                     ...d.sentences
                 ] : d.sentences
             }));
-        current = dictations[0];
+        const exists = dictations.some((d)=>d.id === previousId);
         $('#dictation').innerHTML = dictations.map((d)=>`<option value="${escapeHTML(d.id)}">${escapeHTML(d.label)}</option>`).join('');
+        if (previousId && exists) $('#dictation').value = previousId;
+        if (!current || !exists) {
+            current = dictations[0];
+            draft = '';
+            hidden = false;
+            resetOrder();
+            if (previousId) render();
+        }
+        lastCatalogCheck = Date.now();
+        const cached = r.headers.get('X-Autodictee-Offline') === '1';
+        if (manual || previousCount && dictations.length > previousCount) $('#catalog-status').textContent = cached ? 'Hors connexion : les dictées enregistrées restent disponibles.' : dictations.length > previousCount && previousCount ? `${dictations.length - previousCount} nouvelle(s) dictée(s) disponible(s) dans le menu.` : 'La liste des dictées est à jour.';
+    } catch (error) {
+        if (!dictations.length) throw error;
+        if (manual) $('#catalog-status').textContent = 'Actualisation impossible. Les dictées déjà chargées restent disponibles.';
+    } finally{
+        catalogLoading = false;
+        button.disabled = false;
+        button.classList.remove('refreshing');
+    }
+}
+async function init() {
+    try {
+        await refreshDictations();
+        $('#refresh-dictations').onclick = ()=>{
+            void refreshDictations(true);
+        };
         $('#dictation').onchange = ()=>{
             current = dictations.find((d)=>d.id === $('#dictation').value);
             draft = '';
@@ -295,6 +332,12 @@ async function init() {
         $('#listen').onclick = ()=>speak(current.sentences);
         $('#stop').onclick = stop;
         window.addEventListener('pagehide', stop);
+        document.addEventListener('visibilitychange', ()=>{
+            if (document.visibilityState === 'visible' && Date.now() - lastCatalogCheck > 60000) void refreshDictations();
+        });
+        window.addEventListener('online', ()=>{
+            void refreshDictations();
+        });
         resetOrder();
         render();
     } catch  {
