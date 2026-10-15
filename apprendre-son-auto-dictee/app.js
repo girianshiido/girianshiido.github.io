@@ -164,9 +164,12 @@ function render() {
 function drawWords() {
     const answer = $('#answer');
     answer.innerHTML = selected.length ? '' : '<span class="empty-answer">Ta dictée commence ici…<br><small>Choisis ton premier mot dans la réserve ↓</small></span>';
+    const titleWords = current.title.trim().split(/\s+/);
+    const titleComplete = !!current.includeTitle && selected.length >= titleWords.length && titleWords.every((w, i)=>words[selected[i]] === w);
     selected.forEach((n, i)=>{
         if (i === cursor) answer.insertAdjacentHTML('beforeend', '<span class="caret" aria-hidden="true"></span>');
         answer.insertAdjacentHTML('beforeend', `<button class="word placed ${i === activeWord ? 'chosen' : ''}" data-position="${i}" aria-pressed="${i === activeWord}">${escapeHTML(words[n])}</button>`);
+        if (titleComplete && i === titleWords.length - 1) answer.insertAdjacentHTML('beforeend', '<span class="title-break" aria-hidden="true"></span>');
     });
     if (selected.length && cursor === selected.length) answer.insertAdjacentHTML('beforeend', '<span class="caret" aria-hidden="true"></span>');
     answer.querySelectorAll('[data-position]').forEach((b)=>b.onclick = ()=>{
