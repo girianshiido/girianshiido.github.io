@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 await mkdir('dist', {recursive:true});
 await cp('public','dist',{recursive:true});
-const files=['./','./index.html','./style.css','./icon.svg','./manifest.webmanifest','./js/main.js','./js/engine.js','./js/art.js','./js/audio.js','./js/storage.js',...['pop','buy','reward','comet','launch'].map(x=>`./audio/${x}.ogg`)];
+const files=['./','./index.html','./style.css','./icon.svg','./icon-192.png','./icon-512.png','./icon-maskable.png','./apple-touch-icon.png','./manifest.webmanifest','./js/main.js','./js/engine.js','./js/art.js','./js/audio.js','./js/storage.js',...['pop','buy','reward','comet','launch'].map(x=>`./audio/${x}.ogg`)];
 const {createHash}=await import('node:crypto');
 const hash=createHash('sha256');
 for(const f of files.filter(x=>x!=='./')) hash.update(await readFile('dist/'+f.slice(2)));

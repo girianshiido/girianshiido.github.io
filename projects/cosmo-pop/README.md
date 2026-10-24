@@ -6,8 +6,8 @@ Jeu incrémental original en français, réalisé en TypeScript strict, HTML, CS
 
 Touchez la planète, recrutez des machines et réalisez les défis. Les combos doublent progressivement les récoltes, les comètes offrent des primes et la Supernova triple temporairement la production. Les expéditions donnent une monnaie permanente ; les renaissances relancent l’économie avec des bonus durables.
 
-- 6 machines, 5 paliers de doublement par machine et 8 améliorations.
-- 7 évolutions visuelles, 3 expéditions, 3 recherches permanentes, 10 défis et 12 succès.
+- 12 machines, 5 paliers de +50 % par machine et 14 améliorations.
+- 13 évolutions visuelles, 3 expéditions, 3 recherches permanentes, 16 défis et 24 succès.
 - Achats par 1, par 10 ou au maximum abordable ; le lot est partiel lorsque la réserve est insuffisante.
 - Gains hors ligne à 75 % de la production de base, plafonnés à 8 heures, puis 28 heures au maximum avec les recherches.
 - Interface adaptée dès 320 px, navigation tactile fixe, clavier, réduction des animations et contrôle du volume.
@@ -65,3 +65,11 @@ Cette commande reconstruit le jeu et copie uniquement les fichiers nécessaires 
 L’affichage des compteurs est limité à 8 mises à jour par seconde et les animations utilisent le moteur CSS. Les formatteurs numériques sont réutilisés. Les particules sont plafonnées ; la boucle d’animation s’arrête lorsque l’onglet est masqué. Les sauvegardes sont regroupées et sérialisées pour éviter les écritures concurrentes.
 
 Les tests couvrent les achats et les lots, les paliers, les gains hors ligne, les récompenses uniques, les recherches, les renaissances, les défis, la Supernova, les formats numériques, les sauvegardes invalides, le chiffrement/déchiffrement, les IV et sels distincts, les mots de passe erronés et les fichiers altérés.
+
+## Version 1.1 : progression et installation
+
+Les six dernières machines et six nouvelles améliorations se débloquent aux renaissances 1, 2, 3, 5, 8 et 12. Le seuil de la renaissance numéro n est `100 millions × 30^(n−1)` de douceurs produites dans cette vie. Chaque renaissance donne +50 % de production, additivement avec les autres bonus de cycle. Le gain de poussière est logarithmique pour éviter de convertir une ancienne réserve énorme en bonus disproportionné. Les sauvegardes à six machines sont étendues automatiquement à douze sans perdre leur progression. Les prix, productions et multiplicateurs sont recalculés selon la nouvelle économie.
+
+`node scripts/simulate.mjs` exécute des scénarios reproductibles avec investissement par rendement, comètes, Supernova, défis, recherches et expéditions. Ce sont des scénarios théoriques, pas des mesures sur des joueurs. Les régressions vérifient qu’une partie rapide de quinze minutes n’épuise pas le contenu, et que la première renaissance d’un scénario actif arrive entre 30 et 90 minutes.
+
+Le jeu est une PWA installable : manifeste, icônes PNG 192 et 512 px, icône maskable, icône Apple 180 px et cache hors ligne. Le bouton Installer déclenche le dialogue du navigateur lorsqu’il est disponible, sinon affiche les instructions iOS et Android. Sur iOS : Safari → Partager → Sur l’écran d’accueil. Aucun compte développeur ni magasin d’applications n’est nécessaire. L’installation sur un appareil réel reste à vérifier par son utilisateur.
