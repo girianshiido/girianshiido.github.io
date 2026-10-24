@@ -1,14 +1,128 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import * as E from '../dist/js/engine.js';
-test('The first machine is affordable after 15 taps and cannot overdraw',()=>{const s=E.fresh(0);for(let i=0;i<15;i++)E.tap(s,0,1);assert.equal(s.sugar,15);assert.equal(E.buyBuilding(s,0,1),1);assert.equal(s.sugar,0);assert.equal(E.buyBuilding(s,0,1),0);assert.equal(E.production(s),.4);});
-test('Bulk prices are precisely the sum of individual rounded prices',()=>{const s=E.fresh();E.earn(s,1e6);const single=structuredClone(s),bulk=structuredClone(s);for(let i=0;i<10;i++)E.buyBuilding(single,1,1);assert.equal(E.buyBuilding(bulk,1,10),10);assert.deepEqual(bulk,single);assert.ok(E.quote(bulk,0,'max').price<=bulk.sugar);});
-test('Milestones double output at every declared threshold',()=>{assert.deepEqual([9,10,24,25,49,50,99,100,199,200].map(E.buildingMultiplier),[1,1.5,1.5,2.25,2.25,3.375,3.375,5.0625,5.0625,7.59375]);});
-test('Offline progress has a hard cap, 75 percent efficiency and no double claim',()=>{const s=E.fresh(1000);s.buildings[0]=10;const rate=E.production(s);const r=E.offline(s,1000+100*3600000);assert.equal(r.seconds,8*3600);assert.equal(r.amount,rate*8*3600*.75);assert.equal(E.offline(s,s.savedAt).amount,0);assert.equal(E.offline(s,s.savedAt-100).amount,0);});
-test('Expedition costs are charged once and its permanent reward is credited once',()=>{const s=E.fresh(0);E.earn(s,1000);assert.equal(E.launch(s,0,0),true);assert.equal(E.launch(s,0,0),false);assert.equal(s.sugar,500);assert.equal(E.finishExpedition(s,59999),0);assert.equal(E.finishExpedition(s,60000),1);assert.equal(E.finishExpedition(s,60001),0);assert.equal(s.totalDust,1);assert.equal(s.expeditions,1);});
-test('Research consumes dust but keeps the lifetime dust multiplier',()=>{const s=E.fresh();s.dust=s.totalDust=10;const before=E.globalMultiplier(s);assert.equal(E.buyResearch(s,'radiance'),true);assert.equal(s.dust,7);assert.equal(s.totalDust,10);assert.equal(E.globalMultiplier(s),before*1.2);});
-test('Prestige clears the current economy and preserves permanent progress',()=>{const s=E.fresh();E.earn(s,1e8);E.buyBuilding(s,0,10);s.research.touch=2;s.achievements=['first'];s.mission=3;assert.equal(E.prestigeGain(s),5);assert.equal(E.prestige(s,1000),true);assert.equal(s.sugar,0);assert.equal(s.run,0);assert.equal(s.total,1e8);assert.equal(s.research.touch,2);assert.equal(s.totalDust,5);assert.equal(s.prestiges,1);assert.equal(s.mission,3);assert.equal(s.buildings.reduce((a,b)=>a+b),0);assert.equal(E.prestige(s,1000),false);});
-test('Missions only grant a reward once and require their actual target',()=>{const s=E.fresh();assert.equal(E.claimMission(s),false);s.clicks=15;assert.equal(E.claimMission(s),true);assert.equal(s.sugar,35);assert.equal(E.claimMission(s),false);});
-test('Save parser rejects tampered economy, huge payloads and unknown schemas',()=>{const s=E.fresh(1000);assert.deepEqual(E.parseSave(JSON.stringify(s),1000),s);for(const override of [{version:9},{sugar:-1},{sugar:10},{buildings:[1.2,0,0,0,0,0]},{research:{radiance:11,touch:0,time:0}},{expedition:{id:5,ends:10}}])assert.throws(()=>E.parseSave(JSON.stringify({...s,...override})));assert.throws(()=>E.parseSave(' '.repeat(100001)));});
-test('All stages can be reached and number notation remains finite',()=>{const s=E.fresh();for(let i=0;i<E.TIERS.length;i++){s.total=E.TIERS[i].at;assert.equal(E.tier(s),i);}for(const n of [0,1,999,1000,1e6,1e30,1e100])assert.ok(!E.fmt(n).includes('undefined'));});
-test('Supernova is gated, lasts 30 seconds and respects its cooldown',()=>{const s=E.fresh(0);assert.equal(E.boost(s,1000),false);E.earn(s,500);s.buildings[0]=1;assert.equal(E.boost(s,1000),true);assert.ok(Math.abs(E.production(s,1001)-1.2)<1e-12);assert.equal(E.production(s,31000),.4);assert.equal(E.boost(s,31000),false);assert.equal(E.boost(s,181000),true);});
+import test from "node:test";
+import assert from "node:assert/strict";
+import * as E from "../dist/js/engine.js";
+test("The first machine is affordable after 15 taps and cannot overdraw", () => {
+  const s = E.fresh(0);
+  for (let i = 0; i < 15; i++) E.tap(s, 0, 1);
+  assert.equal(s.sugar, 15);
+  assert.equal(E.buyBuilding(s, 0, 1), 1);
+  assert.equal(s.sugar, 0);
+  assert.equal(E.buyBuilding(s, 0, 1), 0);
+  assert.equal(E.production(s), 0.4);
+});
+test("Bulk prices are precisely the sum of individual rounded prices", () => {
+  const s = E.fresh();
+  E.earn(s, 1e6);
+  const single = structuredClone(s),
+    bulk = structuredClone(s);
+  for (let i = 0; i < 10; i++) E.buyBuilding(single, 1, 1);
+  assert.equal(E.buyBuilding(bulk, 1, 10), 10);
+  assert.deepEqual(bulk, single);
+  assert.ok(E.quote(bulk, 0, "max").price <= bulk.sugar);
+});
+test("Milestones require a purchase and grant exactly their declared multiplier", () => {
+  const s = E.fresh();
+  s.buildings[0] = 10;
+  assert.equal(E.buildingMultiplier(s, 0), 1);
+  const m = E.MILESTONES.find((m) => m.building === 0 && m.at === 10);
+  E.earn(s, m.price);
+  assert.ok(E.buyMilestone(s, m.id));
+  assert.equal(E.buildingMultiplier(s, 0), m.multiplier);
+  assert.equal(E.buyMilestone(s, m.id), false);
+  assert.equal(s.sugar, 0);
+});
+test("Offline progress has a hard cap, 75 percent efficiency and no double claim", () => {
+  const s = E.fresh(1000);
+  s.buildings[0] = 10;
+  const rate = E.production(s);
+  const r = E.offline(s, 1000 + 100 * 3600000);
+  assert.equal(r.seconds, 8 * 3600);
+  assert.equal(r.amount, rate * 8 * 3600 * 0.75);
+  assert.equal(E.offline(s, s.savedAt).amount, 0);
+  assert.equal(E.offline(s, s.savedAt - 100).amount, 0);
+});
+test("Expedition costs are charged once and its permanent reward is credited once", () => {
+  const s = E.fresh(0);
+  E.earn(s, 1000);
+  assert.equal(E.launch(s, 0, 0), true);
+  assert.equal(E.launch(s, 0, 0), false);
+  assert.equal(s.sugar, 500);
+  assert.equal(E.finishExpedition(s, 59999), 0);
+  assert.equal(E.finishExpedition(s, 60000), 1);
+  assert.equal(E.finishExpedition(s, 60001), 0);
+  assert.equal(s.totalDust, 1);
+  assert.equal(s.expeditions, 1);
+});
+test("Research consumes dust but keeps the lifetime dust multiplier", () => {
+  const s = E.fresh();
+  s.dust = s.totalDust = 10;
+  const before = E.globalMultiplier(s);
+  assert.equal(E.buyResearch(s, "radiance"), true);
+  assert.equal(s.dust, 7);
+  assert.equal(s.totalDust, 10);
+  assert.equal(E.globalMultiplier(s), before * 1.2);
+});
+test("Prestige clears the current economy and preserves permanent progress", () => {
+  const s = E.fresh();
+  E.earn(s, 1e8);
+  E.buyBuilding(s, 0, 10);
+  s.research.touch = 2;
+  s.achievements = ["first"];
+  s.mission = 3;
+  assert.equal(E.prestigeGain(s), 5);
+  assert.equal(E.prestige(s, 1000), true);
+  assert.equal(s.sugar, 0);
+  assert.equal(s.run, 0);
+  assert.equal(s.total, 1e8);
+  assert.equal(s.research.touch, 2);
+  assert.equal(s.totalDust, 5);
+  assert.equal(s.prestiges, 1);
+  assert.equal(s.mission, 3);
+  assert.equal(
+    s.buildings.reduce((a, b) => a + b),
+    0,
+  );
+  assert.equal(E.prestige(s, 1000), false);
+});
+test("Missions only grant a reward once and require their actual target", () => {
+  const s = E.fresh();
+  assert.equal(E.claimMission(s), false);
+  s.clicks = 15;
+  assert.equal(E.claimMission(s), true);
+  assert.equal(s.sugar, 35);
+  assert.equal(E.claimMission(s), false);
+});
+test("Save parser rejects tampered economy, huge payloads and unknown schemas", () => {
+  const s = E.fresh(1000);
+  assert.deepEqual(E.parseSave(JSON.stringify(s), 1000), s);
+  for (const override of [
+    { version: 9 },
+    { sugar: -1 },
+    { sugar: 10 },
+    { buildings: [1.2, 0, 0, 0, 0, 0] },
+    { research: { radiance: 11, touch: 0, time: 0 } },
+    { expedition: { id: 5, ends: 10 } },
+  ])
+    assert.throws(() => E.parseSave(JSON.stringify({ ...s, ...override })));
+  assert.throws(() => E.parseSave(" ".repeat(100001)));
+});
+test("All stages can be reached and number notation remains finite", () => {
+  const s = E.fresh();
+  for (let i = 0; i < E.TIERS.length; i++) {
+    s.total = E.TIERS[i].at;
+    assert.equal(E.tier(s), i);
+  }
+  for (const n of [0, 1, 999, 1000, 1e6, 1e30, 1e100])
+    assert.ok(!E.fmt(n).includes("undefined"));
+});
+test("Supernova is gated, lasts 30 seconds and respects its cooldown", () => {
+  const s = E.fresh(0);
+  assert.equal(E.boost(s, 1000), false);
+  E.earn(s, 500);
+  s.buildings[0] = 1;
+  assert.equal(E.boost(s, 1000), true);
+  assert.ok(Math.abs(E.production(s, 1001) - 1.2) < 1e-12);
+  assert.equal(E.production(s, 31000), 0.4);
+  assert.equal(E.boost(s, 31000), false);
+  assert.equal(E.boost(s, 181000), true);
+});

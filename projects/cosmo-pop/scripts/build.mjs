@@ -1,16 +1,39 @@
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
-await mkdir('dist', {recursive:true});
-await cp('public','dist',{recursive:true});
-const files=['./','./index.html','./style.css','./icon.svg','./icon-192.png','./icon-512.png','./icon-maskable.png','./apple-touch-icon.png','./manifest.webmanifest','./js/main.js','./js/engine.js','./js/art.js','./js/audio.js','./js/storage.js',...['pop','buy','reward','comet','launch'].map(x=>`./audio/${x}.ogg`)];
-const {createHash}=await import('node:crypto');
-const hash=createHash('sha256');
-for(const f of files.filter(x=>x!=='./')) hash.update(await readFile('dist/'+f.slice(2)));
-const version=hash.digest('hex').slice(0,12);
-await writeFile('dist/sw.js',`const CACHE='cosmo-pop-${version}';
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+await mkdir("dist", { recursive: true });
+await cp("public", "dist", { recursive: true });
+const files = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-maskable.png",
+  "./apple-touch-icon.png",
+  "./images/icons.png",
+  "./images/workshops.png",
+  "./images/planet-480.png",
+  "./images/planet-960.png",
+  "./manifest.webmanifest",
+  "./js/main.js",
+  "./js/engine.js",
+  "./js/art.js",
+  "./js/audio.js",
+  "./js/storage.js",
+  ...["pop", "buy", "reward", "comet", "launch"].map((x) => `./audio/${x}.ogg`),
+];
+const { createHash } = await import("node:crypto");
+const hash = createHash("sha256");
+for (const f of files.filter((x) => x !== "./"))
+  hash.update(await readFile("dist/" + f.slice(2)));
+const version = hash.digest("hex").slice(0, 12);
+await writeFile(
+  "dist/sw.js",
+  `const CACHE='cosmo-pop-${version}';
 const FILES=${JSON.stringify(files)};
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES))));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('cosmo-pop-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('message',e=>{if(e.data==='ACTIVATE')self.skipWaiting()});
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;e.respondWith(caches.match(e.request).then(hit=>hit||fetch(e.request)))});
-`);
-console.log('Build prêt — cache '+version);
+`,
+);
+console.log("Build prêt — cache " + version);
