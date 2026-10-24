@@ -1,0 +1,17 @@
+{
+  "name": "cosmo-pop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Un empire de douceurs aux confins du cosmos. Jeu incrémental français en TypeScript.",
+  "scripts": {
+    "build": "tsc && node scripts/build.mjs",
+    "check": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "dev": "node scripts/serve.mjs",
+    "stage:pages": "npm run build && node scripts/stage-pages.mjs"
+  },
+  "devDependencies": {
+    "typescript": "6.0.2"
+  }
+}

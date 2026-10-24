@@ -1,0 +1,67 @@
+# Cosmo Pop — L’atelier des étoiles
+
+Jeu incrémental original en français, réalisé en TypeScript strict, HTML, CSS et SVG. Aucun framework, aucune dépendance d’exécution, aucun serveur, aucune télémétrie.
+
+## Jouer
+
+Touchez la planète, recrutez des machines et réalisez les défis. Les combos doublent progressivement les récoltes, les comètes offrent des primes et la Supernova triple temporairement la production. Les expéditions donnent une monnaie permanente ; les renaissances relancent l’économie avec des bonus durables.
+
+- 6 machines, 5 paliers de doublement par machine et 8 améliorations.
+- 7 évolutions visuelles, 3 expéditions, 3 recherches permanentes, 10 défis et 12 succès.
+- Achats par 1, par 10 ou au maximum abordable ; le lot est partiel lorsque la réserve est insuffisante.
+- Gains hors ligne à 75 % de la production de base, plafonnés à 8 heures, puis 28 heures au maximum avec les recherches.
+- Interface adaptée dès 320 px, navigation tactile fixe, clavier, réduction des animations et contrôle du volume.
+- 5 bruitages OGG/Vorbis originaux, synthétisés pour ce jeu. Illustration SVG originale.
+- Mode hors ligne avec Service Worker ; aucun calcul en arrière-plan quand l’onglet est masqué.
+
+## Sauvegardes chiffrées
+
+Les sauvegardes automatiques et leur copie de secours sont **chiffrées et authentifiées en AES-256-GCM**, avec un IV aléatoire de 96 bits à chaque écriture. La clé locale est un `CryptoKey` non extractible conservé séparément dans IndexedDB. Aucune partie n’est enregistrée en clair dans localStorage.
+
+Les exports `.cosmopop` utilisent un mot de passe d’au moins 10 caractères. Chaque export possède un sel aléatoire de 128 bits ; la clé AES est dérivée avec **PBKDF2-HMAC-SHA-256, 310 000 itérations**. L’import vérifie l’authenticité du fichier, le schéma et la cohérence des valeurs, puis demande confirmation avant de remplacer la partie.
+
+Le chiffrement nécessite un contexte sécurisé (HTTPS ou localhost). La clé locale disparaît avec les données du navigateur : faites un export pour conserver ou transférer une partie. Le mot de passe d’export ne peut pas être récupéré.
+
+Ce mécanisme protège les données au repos et détecte l’altération des fichiers. Il ne constitue pas un système anti-triche : le propriétaire d’un navigateur peut modifier le programme et son état en mémoire. Le jeu ne contient aucune clé secrète globale embarquée.
+
+Les navigateurs compatibles avec Web Locks empêchent deux onglets d’écrire simultanément la même partie. Un onglet secondaire reste consultable et demande de fermer le premier avant de reprendre le jeu.
+
+## Développement
+
+Node.js 22 ou supérieur ; TypeScript est l’unique dépendance de développement.
+
+```sh
+npm ci
+npm test
+npm run dev
+```
+
+`npm test` compile puis lance les tests du moteur et de la cryptographie. Le serveur local utilise le port 5173 par défaut, ou `--port 4173` / la variable `PORT`.
+
+```sh
+npm run check
+npm run build
+```
+
+Le dossier `dist/` est autonome. Il peut être publié sous n’importe quel sous-répertoire grâce à des chemins relatifs. Le cache hors ligne est versionné par l’empreinte SHA-256 de ses ressources ; une mise à jour s’applique après fermeture des anciens onglets.
+
+## Organisation du dépôt GitHub Pages
+
+- `projects/cosmo-pop/` : sources et tests.
+- `cosmo-pop/` : version compilée publiée par GitHub Pages depuis la branche du site.
+
+Depuis `projects/cosmo-pop/`, après les tests :
+
+```sh
+npm run stage:pages
+```
+
+Cette commande reconstruit le jeu et copie uniquement les fichiers nécessaires dans `../../cosmo-pop/`. Commitez les sources et les fichiers compilés ensemble, puis poussez la branche du site. Elle ne modifie aucun autre répertoire.
+
+## Architecture et validation
+
+`src/engine.ts` est un moteur déterministe indépendant du navigateur : économie, progression, expéditions, recherches, renaissances et validation de sauvegarde. `src/storage.ts` traite le chiffrement et la sérialisation des écritures. `src/audio.ts` réutilise les buffers audio décodés. `src/art.ts` fournit les icônes et l’illustration vectorielle. `src/main.ts` gère les vues et les interactions.
+
+L’affichage des compteurs est limité à 8 mises à jour par seconde et les animations utilisent le moteur CSS. Les formatteurs numériques sont réutilisés. Les particules sont plafonnées ; la boucle d’animation s’arrête lorsque l’onglet est masqué. Les sauvegardes sont regroupées et sérialisées pour éviter les écritures concurrentes.
+
+Les tests couvrent les achats et les lots, les paliers, les gains hors ligne, les récompenses uniques, les recherches, les renaissances, les défis, la Supernova, les formats numériques, les sauvegardes invalides, le chiffrement/déchiffrement, les IV et sels distincts, les mots de passe erronés et les fichiers altérés.
