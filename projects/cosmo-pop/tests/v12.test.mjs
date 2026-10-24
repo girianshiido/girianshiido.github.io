@@ -86,15 +86,19 @@ test("Production and notation remain finite and meaningful at 10^80", () => {
   const restored = E.parseSave(JSON.stringify(s));
   assert.equal(restored.sugar, s.sugar);
 });
-test("PNG-only runtime artwork and zoom suppression are included", async () => {
+test("PNG artwork, native pinch zoom and non-selectable interface are included", async () => {
   const html = await readFile("dist/index.html", "utf8"),
     art = await readFile("dist/js/art.js", "utf8"),
     main = await readFile("dist/js/main.js", "utf8");
   assert.ok(!html.includes(".svg"));
   assert.ok(!art.includes("<svg"));
   assert.ok(art.includes("planet-960.png"));
-  assert.ok(html.includes("maximum-scale=1"));
-  assert.ok(main.includes("gesturestart"));
+  assert.ok(!html.includes("maximum-scale=1"));
+  assert.ok(!html.includes("user-scalable=no"));
+  assert.ok(!main.includes("gesturestart"));
+  const css = await readFile("dist/style.css", "utf8");
+  assert.ok(css.includes("touch-action: pan-y pinch-zoom"));
+  assert.ok(css.includes("-webkit-user-select: none"));
   assert.ok(main.includes("update-ready"));
   assert.ok(main.includes("display-mode: standalone"));
 });

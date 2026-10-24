@@ -1,4 +1,4 @@
-# Cosmo Pop 1.4 — L’atelier des étoiles
+# Cosmo Pop 1.5 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -17,13 +17,13 @@ Les sauvegardes des versions à 6, 12 ou 30 machines sont migrées. Les anciens 
 
 ## Interface et application installée
 
-Quatre thèmes persistants : Lavande, Menthe, Aurore et Minuit. Compteurs centrés, production par seconde insécable, navigation mobile fixe et mise en page adaptée dès 320 px. Pincement, gestes Safari, double toucher, zoom par raccourci clavier et Ctrl/molette sont interceptés dans la page. Les fonctions de zoom propres au système d’exploitation et à l’interface du navigateur restent hors du contrôle de la page.
+Quatre thèmes persistants : Lavande, Menthe, Aurore et Minuit. Compteurs centrés, production par seconde insécable, navigation mobile fixe et mise en page adaptée dès 320 px. Le zoom par pincement est autorisé. Les doubles clics de récolte ne déclenchent pas de zoom intempestif. La sélection du texte de l’interface et les menus d’appui long sont désactivés ; les champs restent éditables.
 
 La planète est une illustration PNG originale générée pour ce projet, disponible en 480 et 960 px. Tous les pictogrammes d’exécution et illustrations d’ateliers sont des images PNG : aucun SVG n’est inséré dans l’interface. Les formes des commandes sont dessinées dans `scripts/interface-icons.mjs` ; les illustrations des fonctions sont générées en PNG. Les pictogrammes de navigation et les illustrations de fonctions partagent un atlas PNG couleur. Les 36 ateliers possèdent chacun une illustration PNG originale de 384 × 384 px, chargée à la demande dans les listes et conservée hors ligne. Les images sont distinctes et décrivent le rôle précis de chaque atelier. Les animations respectent la réduction de mouvement de l’appareil et le réglage du jeu.
 
 Le manifeste PWA fournit les icônes 192 et 512 px, une icône maskable et une icône Apple 180 px. Installation : Safari → Partager → Sur l’écran d’accueil sur iOS ; bouton Installer ou menu Chrome sur Android. En mode installé, l’icône d’installation devient un bouton de mise à jour. Il s’éclaire lorsqu’un nouveau Service Worker est prêt ; une activation manuelle sauvegarde la partie avant son application. La détection repose sur le mode standalone iOS/standard et sur le signal d’installation du navigateur, mémorisé sur cet appareil. Une page ne peut pas inventorier universellement les applications installées sur tous les systèmes.
 
-Les ressources PNG, scripts et cinq bruitages OGG sont préchargés dans un cache hors ligne versionné par empreinte SHA-256. Les vérifications automatiques de mise à jour sont espacées de cinq minutes et limitées aux onglets visibles et connectés. Les sauvegardes peuvent être exportées pour transférer une partie entre le navigateur, l’application installée et un autre appareil.
+Les ressources PNG, scripts, cinq bruitages OGG et le thème musical OGG sont préchargés dans un cache hors ligne versionné par empreinte SHA-256. Les vérifications automatiques de mise à jour sont espacées de cinq minutes et limitées aux onglets visibles et connectés. Les sauvegardes peuvent être exportées pour transférer une partie entre le navigateur, l’application installée et un autre appareil.
 
 ## Sauvegardes chiffrées
 
@@ -80,3 +80,9 @@ Les 34 pictogrammes du jeu partagent désormais une palette lavande, rose, menth
 Neuf nouvelles illustrations originales sont produites avec l’outil intégré ImageGen : main stellaire, montre, comète, Supernova, fusée, lune, livre de recettes, intendant et trophée. Les illustrations d’atelier pertinentes sont réemployées pour conserver une identité commune. Les briefs et fichiers sont consignés dans `docs/generation-v14.json`. `scripts/interface-icons.json` fixe l’ordre des 34 cases ; `scripts/interface-icons.mjs` produit `public/images/icons-v14.png`, un atlas de 1 536 × 960 px, avec des cases de 192 px.
 
 Le fichier compressé pèse 275 962 octets (environ 270 Kio). Cet atlas représente 5,625 Mio pour une copie décodée RGBA. Les 34 éléments de l’interface partagent la même ressource : ils ne chargent pas chacun une copie distincte du fichier. Le navigateur peut conserver d’autres copies et textures ; ce chiffre ne représente donc pas la mémoire totale du jeu. L’atlas est statique, mis en cache hors ligne, et n’est pas téléchargé à chaque changement de compteur. Les images des ateliers restent chargées à la demande dans les listes. Le contrôle de fluidité en navigateur de développement ne remplace pas un essai sur un téléphone d’entrée de gamme.
+
+## Musique 1.5
+
+« La ronde des constellations » est une composition originale de 120 secondes, en 3/4 à 96 BPM, rendue avec FluidSynth et MuseScore General HQ. Seul le fichier Vorbis OGG (2 Mo) est distribué et joué. La boucle Web Audio conserve les résonances, sans silence ni fondu final. Un seul buffer musical est décodé à la première interaction lorsque la musique est activée ; il est partagé pendant la session (environ 44 Mio à 48 kHz). Aucun synthétiseur ni SoundFont n’est embarqué.
+
+Les options proposent un interrupteur et un volume musical indépendants des bruitages. Ces choix sont chiffrés avec la partie, conservés lors des renaissances et exportables. Les anciennes sauvegardes reçoivent un volume musical initial de 35 %. Le son démarre après une interaction, se suspend en arrière-plan et reprend à la même position. Les onglets secondaires restent silencieux. Le fichier musical est inclus dans le cache hors ligne ; un codec indisponible ne bloque jamais le jeu.

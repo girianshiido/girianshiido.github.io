@@ -149,6 +149,8 @@ function syncSettings(): void {
   );
   audio.enabled = state.settings.sound;
   audio.volume = state.settings.volume;
+  audio.setActive(initialized && !readOnly && !document.hidden);
+  audio.setMusic(state.settings.music, state.settings.musicVolume);
   document.documentElement.dataset.motion = String(
     state.settings.motion && !reduced.matches,
   );
@@ -591,8 +593,8 @@ function help(): void {
 function settings(): void {
   dialog(
     "Votre petit univers",
-    `<div class="setting-row"><div><strong>Les petits bruitages</strong><p>Des notes douces, au format OGG.</p></div><button class="toggle ${state.settings.sound ? "on" : ""}" data-action="settings-sound" role="switch" aria-checked="${state.settings.sound}" aria-label="Bruitages"><i></i></button></div><label class="volume-control">Volume <input id="volume" type="range" min="0" max="100" value="${state.settings.volume * 100}" aria-label="Volume des bruitages"></label><div class="setting-row"><div><strong>Animations</strong><p>Respecte aussi les réglages de votre appareil.</p></div><button class="toggle ${state.settings.motion ? "on" : ""}" data-action="motion" role="switch" aria-checked="${state.settings.motion}" aria-label="Animations"><i></i></button></div>
-<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.4 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
+    `<div class="setting-row"><div><strong>Les petits bruitages</strong><p>Des notes douces, au format OGG.</p></div><button class="toggle ${state.settings.sound ? "on" : ""}" data-action="settings-sound" role="switch" aria-checked="${state.settings.sound}" aria-label="Bruitages"><i></i></button></div><label class="volume-control">Bruitages <input id="volume" type="range" min="0" max="100" value="${state.settings.volume * 100}" aria-label="Volume des bruitages"></label><div class="setting-row"><div><strong>La musique des étoiles</strong><p>La ronde des constellations · une valse en boucle.</p></div><button class="toggle ${state.settings.music ? "on" : ""}" data-action="music" role="switch" aria-checked="${state.settings.music}" aria-label="Musique"><i></i></button></div><label class="volume-control" for="music-volume">Musique <input id="music-volume" type="range" min="0" max="100" step="1" value="${Math.round(state.settings.musicVolume * 100)}" aria-label="Volume de la musique" aria-valuetext="${Math.round(state.settings.musicVolume * 100)} %"><output id="music-volume-value" for="music-volume">${Math.round(state.settings.musicVolume * 100)} %</output></label><div class="setting-row"><div><strong>Animations</strong><p>Respecte aussi les réglages de votre appareil.</p></div><button class="toggle ${state.settings.motion ? "on" : ""}" data-action="motion" role="switch" aria-checked="${state.settings.motion}" aria-label="Animations"><i></i></button></div>
+<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.5 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
   );
 }
 function stats(): void {
@@ -665,6 +667,13 @@ async function action(target: HTMLElement): Promise<void> {
       await audio.unlock();
       audio.play("pop");
     }
+    queueSave();
+    return;
+  }
+  if (act === "music") {
+    state.settings.music = !state.settings.music;
+    syncSettings();
+    settings();
     queueSave();
     return;
   }
@@ -878,6 +887,14 @@ modal.addEventListener("click", (e) => {
 });
 document.addEventListener("input", (e) => {
   const input = e.target as HTMLInputElement;
+  if (input.id === "music-volume") {
+    state.settings.musicVolume = Number(input.value) / 100;
+    input.setAttribute("aria-valuetext", `${input.value} %`);
+    $("#music-volume-value").textContent = `${input.value} %`;
+    syncSettings();
+    void audio.unlock();
+    queueSave();
+  }
   if (input.id === "volume") {
     state.settings.volume = Number(input.value) / 100;
     syncSettings();
@@ -930,6 +947,7 @@ reduced.addEventListener("change", () => {
 });
 document.addEventListener("visibilitychange", () => {
   if (!initialized) return;
+  audio.setActive(!readOnly && !document.hidden);
   if (document.hidden) {
     cancelAnimationFrame(raf);
     settle(Date.now());
@@ -940,7 +958,11 @@ document.addEventListener("visibilitychange", () => {
     raf = requestAnimationFrame(frame);
   }
 });
+window.addEventListener("pageshow", () => {
+  audio.setActive(initialized && !readOnly && !document.hidden);
+});
 window.addEventListener("pagehide", () => {
+  audio.setActive(false);
   void save();
 });
 async function init(): Promise<void> {
@@ -1078,29 +1100,7 @@ async function checkUpdate(manual: boolean): Promise<void> {
     if (manual) toast("Vérification impossible. Vérifiez votre connexion.");
   }
 }
-// Disable browser zoom gestures while preserving ordinary scrolling and form entry.
-for (const name of ["gesturestart", "gesturechange", "gestureend"])
-  document.addEventListener(name, (e) => e.preventDefault(), {
-    passive: false,
-  });
-document.addEventListener(
-  "touchmove",
-  (e) => {
-    if (e.touches.length > 1) e.preventDefault();
-  },
-  { passive: false },
-);
-document.addEventListener("dblclick", (e) => e.preventDefault(), {
-  passive: false,
-});
-document.addEventListener(
-  "wheel",
-  (e) => {
-    if (e.ctrlKey || e.metaKey) e.preventDefault();
-  },
-  { passive: false },
-);
-document.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key))
-    e.preventDefault();
-});
+// Rapid harvesting should not trigger double-tap zoom; native pinch remains available.
+document.addEventListener("dblclick", (e) => {
+  if (!(e.target as Element).closest('input, textarea, [contenteditable="true"]')) e.preventDefault();
+}, { passive: false });

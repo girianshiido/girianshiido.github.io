@@ -19,6 +19,7 @@ const files = [
   "./js/art.js",
   "./js/audio.js",
   "./js/storage.js",
+  "./audio/constellations-v1.ogg",
   ...["pop", "buy", "reward", "comet", "launch"].map((x) => `./audio/${x}.ogg`),
 ];
 const { createHash } = await import("node:crypto");

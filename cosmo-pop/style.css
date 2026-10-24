@@ -3165,18 +3165,18 @@ body {
     color-mix(in srgb, var(--purple) 12%, transparent) 1px,
     transparent 1px
   );
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   -webkit-text-size-adjust: 100%;
 }
 html {
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 button,
 a {
   touch-action: manipulation;
 }
 input {
-  touch-action: pan-x pan-y;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 .site-header {
   border-color: var(--line);
@@ -4574,3 +4574,21 @@ html[data-theme="minuit"] .stage-label {
 }
 
 .badge { white-space: nowrap; }
+
+.volume-control output {
+  min-width: 3.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Avoid accidental text selection during play, while retaining editable fields. */
+html, body {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}

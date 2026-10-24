@@ -617,6 +617,8 @@ export interface State {
   settings: {
     sound: boolean;
     volume: number;
+    music: boolean;
+    musicVolume: number;
     motion: boolean;
     theme: "lavande" | "menthe" | "aurore" | "minuit";
   };
@@ -646,7 +648,7 @@ export function fresh(now = Date.now()): State {
     boostUntil: 0,
     boostReady: 0,
     savedAt: now,
-    settings: { sound: true, volume: 0.45, motion: true, theme: "lavande" },
+    settings: { sound: true, volume: 0.45, music: true, musicVolume: 0.35, motion: true, theme: "lavande" },
   };
 }
 const numberPrecise = new Intl.NumberFormat("fr-FR", {
@@ -1711,6 +1713,11 @@ export function parseSave(text: string, now = Date.now()): State {
     const o = x.settings as Record<string, unknown>;
     s.settings = {
       sound: typeof o.sound === "boolean" ? o.sound : true,
+      music: typeof o.music === "boolean" ? o.music : true,
+      musicVolume:
+        typeof o.musicVolume === "number" && Number.isFinite(o.musicVolume)
+          ? Math.max(0, Math.min(1, o.musicVolume))
+          : 0.35,
       motion: typeof o.motion === "boolean" ? o.motion : true,
       theme: ["lavande", "menthe", "aurore", "minuit"].includes(String(o.theme))
         ? (o.theme as State["settings"]["theme"])

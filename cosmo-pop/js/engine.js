@@ -611,7 +611,7 @@ export function fresh(now = Date.now()) {
         boostUntil: 0,
         boostReady: 0,
         savedAt: now,
-        settings: { sound: true, volume: 0.45, motion: true, theme: "lavande" },
+        settings: { sound: true, volume: 0.45, music: true, musicVolume: 0.35, motion: true, theme: "lavande" },
     };
 }
 const numberPrecise = new Intl.NumberFormat("fr-FR", {
@@ -1583,6 +1583,10 @@ export function parseSave(text, now = Date.now()) {
         const o = x.settings;
         s.settings = {
             sound: typeof o.sound === "boolean" ? o.sound : true,
+            music: typeof o.music === "boolean" ? o.music : true,
+            musicVolume: typeof o.musicVolume === "number" && Number.isFinite(o.musicVolume)
+                ? Math.max(0, Math.min(1, o.musicVolume))
+                : 0.35,
             motion: typeof o.motion === "boolean" ? o.motion : true,
             theme: ["lavande", "menthe", "aurore", "minuit"].includes(String(o.theme))
                 ? o.theme
