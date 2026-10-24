@@ -9,7 +9,7 @@ const files = [
   "./icon-512-v13.png",
   "./icon-maskable-v13.png",
   "./apple-touch-icon-v13.png",
-  "./images/icons.png",
+  "./images/icons-v14.png",
   ...Array.from({ length: 36 }, (_, i) => `./images/workshops/${i}.png`),
   "./images/planet-480.png",
   "./images/planet-960.png",

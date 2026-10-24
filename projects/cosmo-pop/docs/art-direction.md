@@ -1,8 +1,8 @@
-# Direction graphique — Cosmo Pop 1.3
+# Direction graphique — Cosmo Pop 1.4
 
-La planète est une illustration originale produite avec l’outil intégré ImageGen, sur fond transparent. Les images finales intégrées au jeu sont `public/images/planet-480.png` et `public/images/planet-960.png`. Les pictogrammes de navigation sont réexportés en PNG depuis les sources natives de `scripts/icons.json` par `scripts/assets.mjs`, dans `public/images/icons.png`. Depuis la version 1.3, les 36 ateliers ont chacun une illustration originale produite par l’outil intégré ImageGen, dans `public/images/workshops/0.png` à `35.png` (384 × 384 px avec transparence). L’ancien atlas répétitif est retiré.
+La planète est une illustration originale produite avec l’outil intégré ImageGen, sur fond transparent. Les images finales intégrées au jeu sont `public/images/planet-480.png` et `public/images/planet-960.png`. Les pictogrammes sont réexportés dans l’atlas couleur `public/images/icons-v14.png` par `scripts/interface-icons.mjs`, appelé depuis `scripts/assets.mjs`. Depuis la version 1.3, les 36 ateliers ont chacun une illustration originale produite par l’outil intégré ImageGen, dans `public/images/workshops/0.png` à `35.png` (384 × 384 px avec transparence). L’ancien atlas répétitif est retiré.
 
-Le thème Lavande sert de base ; Menthe, Aurore et Minuit utilisent des variables CSS et conservent la même iconographie. Les icônes monochromes utilisent un masque PNG pour rester colorées selon le thème. L’illustration est une image transparente, sans fond aplati ; le halo et les effets de profondeur appartiennent à l’interface.
+Le thème Lavande sert de base ; Menthe, Aurore et Minuit utilisent des variables CSS et conservent la même iconographie. Les icônes de l’interface utilisent un atlas PNG couleur, commun aux quatre thèmes. Les commandes actives sont signalées par leur fond, leur état et leur libellé. L’illustration est une image transparente, sans fond aplati ; le halo et les effets de profondeur appartiennent à l’interface.
 
 ## Brief de génération de la planète
 
@@ -19,3 +19,9 @@ Chaque sujet a fait l’objet d’un appel individuel à l’outil intégré Ima
 L’icône de lancement est générée séparément sur fond violet opaque, en conservant la planète-confiserie et son anneau doré. Les fichiers versionnés sont `public/icon-192-v13.png`, `public/icon-512-v13.png`, `public/icon-maskable-v13.png` et `public/apple-touch-icon-v13.png`. Les alias historiques servent les nouveaux visuels également ; seules les URL versionnées sont utilisées par l’interface et le manifeste. Le lanceur du téléphone contrôle le renouvellement des icônes des installations existantes.
 
 La capture `preview-v13-mobile.jpg` montre l’interface à 320 × 568 px dans une partie de contrôle : point vert discret, illustrations d’ateliers, et absence des boutons d’amélioration sur les cartes des machines. Les fichiers de contrôle ne sont pas publiés.
+
+## Harmonisation des pictogrammes 1.4
+
+Les captures des recherches, de la comète, de la Supernova et du défi ont mis en évidence l’écart entre les illustrations d’ateliers et les anciens pictogrammes au trait. La version 1.4 remplace entièrement le rendu monochrome par un atlas couleur de 34 pictogrammes, `public/images/icons-v14.png`. Les formes utilitaires sont redessinées directement dans la source native et réexportées en PNG : bords arrondis, aplats en dégradés, détails dorés et ombres légères. Les illustrations de fonctions proviennent de neuf nouvelles créations ImageGen et de huit images déjà intégrées à l’univers du jeu. Les briefs exacts sont dans `generation-v14.json`, les noms et coordonnées dans `interface-icons-catalog.json`.
+
+Les fonctions importantes reçoivent davantage de place (recherches, comète, Supernova, missions et voyages). Les commandes restent compactes et immédiatement reconnaissables ; les succès non obtenus sont désaturés. Le masque CSS monochrome est supprimé. Les PNG générés de 384 px sont conservés dans `public/images/symbols/` ; l’atlas d’exécution les utilise dans des cases de 192 px.

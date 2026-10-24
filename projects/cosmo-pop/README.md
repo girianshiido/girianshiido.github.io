@@ -1,4 +1,4 @@
-# Cosmo Pop 1.3 — L’atelier des étoiles
+# Cosmo Pop 1.4 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -19,7 +19,7 @@ Les sauvegardes des versions à 6, 12 ou 30 machines sont migrées. Les anciens 
 
 Quatre thèmes persistants : Lavande, Menthe, Aurore et Minuit. Compteurs centrés, production par seconde insécable, navigation mobile fixe et mise en page adaptée dès 320 px. Pincement, gestes Safari, double toucher, zoom par raccourci clavier et Ctrl/molette sont interceptés dans la page. Les fonctions de zoom propres au système d’exploitation et à l’interface du navigateur restent hors du contrôle de la page.
 
-La planète est une illustration PNG originale générée pour ce projet, disponible en 480 et 960 px. Tous les pictogrammes d’exécution et illustrations d’ateliers sont des images PNG : aucun SVG n’est inséré dans l’interface. Les sources de pictogrammes restent dans `scripts/icons.json` pour permettre leur réexport. Les pictogrammes de navigation restent dans un atlas. Les 36 ateliers possèdent chacun une illustration PNG originale de 384 × 384 px, chargée à la demande dans les listes et conservée hors ligne. Les images sont distinctes et décrivent le rôle précis de chaque atelier. Les animations respectent la réduction de mouvement de l’appareil et le réglage du jeu.
+La planète est une illustration PNG originale générée pour ce projet, disponible en 480 et 960 px. Tous les pictogrammes d’exécution et illustrations d’ateliers sont des images PNG : aucun SVG n’est inséré dans l’interface. Les formes des commandes sont dessinées dans `scripts/interface-icons.mjs` ; les illustrations des fonctions sont générées en PNG. Les pictogrammes de navigation et les illustrations de fonctions partagent un atlas PNG couleur. Les 36 ateliers possèdent chacun une illustration PNG originale de 384 × 384 px, chargée à la demande dans les listes et conservée hors ligne. Les images sont distinctes et décrivent le rôle précis de chaque atelier. Les animations respectent la réduction de mouvement de l’appareil et le réglage du jeu.
 
 Le manifeste PWA fournit les icônes 192 et 512 px, une icône maskable et une icône Apple 180 px. Installation : Safari → Partager → Sur l’écran d’accueil sur iOS ; bouton Installer ou menu Chrome sur Android. En mode installé, l’icône d’installation devient un bouton de mise à jour. Il s’éclaire lorsqu’un nouveau Service Worker est prêt ; une activation manuelle sauvegarde la partie avant son application. La détection repose sur le mode standalone iOS/standard et sur le signal d’installation du navigateur, mémorisé sur cet appareil. Une page ne peut pas inventorier universellement les applications installées sur tous les systèmes.
 
@@ -51,7 +51,7 @@ npm run stage:pages
 
 Cette commande reconstruit puis copie les ressources dans `../../cosmo-pop/`, en excluant les pages de contrôle QA. Commitez les sources et la version compilée ensemble puis poussez la branche du site.
 
-`node scripts/assets.mjs` réexporte les pictogrammes PNG avec Sharp (dans l’environnement de création ou installé séparément). Avec un chemin PNG en argument, il redimensionne également l’illustration de la planète ; le PNG haute définition original est une création générée, non un rendu vectoriel.
+`node scripts/assets.mjs` réexporte l’atlas couleur avec Sharp (dans l’environnement de création ou installé séparément). Avec un chemin PNG en argument, il redimensionne également l’illustration de la planète ; le PNG haute définition original est une création générée, non un rendu vectoriel.
 
 ## Vérification et architecture
 
@@ -72,3 +72,11 @@ Les notifications affichent leur texte dans un élément indépendant du masque 
 **Intendant des recettes** : achat unique de 1 500 poussières, à partir de huit renaissances, dans Cosmos. Propriété et état actif/pause sont conservés dans la sauvegarde chiffrée et lors des renaissances. Une fois actif, il achète les améliorations générales et les recettes d’ateliers déverrouillées, par prix croissant, au maximum trois par seconde visible. Il applique les mêmes seuils et paiements que les achats manuels. Il dépense uniquement les douceurs ; il n’achète ni machines, ni recherches à poussière et ne lance pas d’expéditions. Pas de simulation rétroactive d’achats pendant l’absence : il reprend au retour. Les nouveaux champs sont facultatifs pour les sauvegardes antérieures.
 
 La nouvelle icône de lancement est fournie en PNG 192/512 px, version Android maskable et Apple 180 px. Le navigateur et le lanceur du téléphone décident quand réactualiser l’icône d’une installation existante ; leur mise à jour peut être différée. Les URL des nouvelles icônes sont versionnées pour permettre leur redécouverte. Le `manifest.id`, le périmètre, l’URL de lancement et les clés de sauvegarde restent stables pour préserver l’identité et les données de l’application.
+
+## Cohérence graphique 1.4
+
+Les 34 pictogrammes du jeu partagent désormais une palette lavande, rose, menthe et or, des volumes arrondis et des reflets doux. Les recherches, la Supernova, la comète, les missions, les recettes, les voyages et les succès utilisent des illustrations pleines. Les commandes usuelles sont redessinées avec des formes pleines et des matières assorties, en conservant leurs symboles reconnaissables. Aucun ancien masque monochrome ne reste dans le rendu.
+
+Neuf nouvelles illustrations originales sont produites avec l’outil intégré ImageGen : main stellaire, montre, comète, Supernova, fusée, lune, livre de recettes, intendant et trophée. Les illustrations d’atelier pertinentes sont réemployées pour conserver une identité commune. Les briefs et fichiers sont consignés dans `docs/generation-v14.json`. `scripts/interface-icons.json` fixe l’ordre des 34 cases ; `scripts/interface-icons.mjs` produit `public/images/icons-v14.png`, un atlas de 1 536 × 960 px, avec des cases de 192 px.
+
+Le fichier compressé pèse 275 962 octets (environ 270 Kio). Cet atlas représente 5,625 Mio pour une copie décodée RGBA. Les 34 éléments de l’interface partagent la même ressource : ils ne chargent pas chacun une copie distincte du fichier. Le navigateur peut conserver d’autres copies et textures ; ce chiffre ne représente donc pas la mémoire totale du jeu. L’atlas est statique, mis en cache hors ligne, et n’est pas téléchargé à chaque changement de compteur. Les images des ateliers restent chargées à la demande dans les listes. Le contrôle de fluidité en navigateur de développement ne remplace pas un essai sur un téléphone d’entrée de gamme.

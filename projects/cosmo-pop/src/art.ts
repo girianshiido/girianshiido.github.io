@@ -32,10 +32,11 @@ const names = [
   "chart",
   "leaf",
   "refresh",
+  "nebula",
 ];
 export function icon(name: string, cls = ""): string {
   const i = Math.max(0, names.indexOf(name));
-  return `<span class="icon ${cls}" aria-hidden="true" style="--ix:${((i % 8) / (8 - 1)) * 100}%;--iy:${(Math.floor(i / 8) / (5 - 1)) * 100}%"></span>`;
+  return `<span class="icon ${cls}" data-icon="${names[i]}" aria-hidden="true" style="--ix:${((i % 8) / (8 - 1)) * 100}%;--iy:${(Math.floor(i / 8) / (5 - 1)) * 100}%"></span>`;
 }
 export function workshopArt(id: number): string {
   return `<img class="workshop-art" src="./images/workshops/${id}.png" width="384" height="384" alt="" draggable="false" decoding="async" loading="lazy">`;

@@ -1,0 +1,68 @@
+{
+  "tool": "image_gen.imagegen — outil intégré",
+  "assets": [
+    {
+      "id": "hand",
+      "name": "Toucher stellaire",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-4b5b12cf-fecc-4fa2-842d-ad54d2b07941.png",
+      "output": "public/images/symbols/hand.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one rounded rose-pink magical pastry glove, open palm with five clear short fingers, a small golden star floating just above the palm. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Toucher stellaire. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "clock",
+      "name": "Poches de temps",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-0db10ded-38f2-4ca3-ace6-1eec3417d828.png",
+      "output": "public/images/symbols/clock.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one ornate round mint-and-lavender pocket watch with a golden rim and a tiny pink hourglass inset, clear readable clock hands, no numerals. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Poches de temps. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "comet",
+      "name": "Comète sucrée",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-d98d1bd0-fd6c-462c-a30a-85d17ec25f6d.png",
+      "output": "public/images/symbols/comet.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one sparkling golden sugar-crystal meteor with a large pink candy core and a sweeping warm gold and lavender comet tail, diagonal dynamic silhouette. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Comète sucrée. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "bolt",
+      "name": "Supernova sucrée",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-9689de4a-3952-4fc4-a3ec-c51481f52f18.png",
+      "output": "public/images/symbols/bolt.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one bright faceted golden four-point star bursting from a rounded lavender and pink nebula, very clear luminous energy silhouette, a few tiny crystalline sparks. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Supernova sucrée. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "rocket",
+      "name": "Fusée des défis et voyages",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-5833884d-653b-4676-8d02-adb00a7965cf.png",
+      "output": "public/images/symbols/rocket.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one adorable upright mint and ivory candy spaceship with a golden round porthole, lavender fins and a soft apricot rocket flame, recognizable simple rocket silhouette. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Fusée des défis et voyages. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "moon",
+      "name": "Lune guimauve",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-42f03ea6-db54-4a52-a53b-feda609ea554.png",
+      "output": "public/images/symbols/moon.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one beautiful rounded crescent moon made of pale pink and ivory marshmallow, a small lavender cloud at the lower tip and two tiny golden stars. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Lune guimauve. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "book",
+      "name": "Livre des recettes",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-4d9666f0-5ec2-46c7-8e07-44bc19d0e0e2.png",
+      "output": "public/images/symbols/book.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one open lavender recipe book with thick creamy pages, golden binding and a single small pink macaron floating over its center, no text or letters. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Livre des recettes. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "bot",
+      "name": "Intendant des recettes",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-555ad1cb-04bc-4517-bcf9-7138a53607de.png",
+      "output": "public/images/symbols/bot.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one friendly mint-green and gold robot steward, rounded body, tiny lavender bow tie, holding a small closed pink recipe book, no chef hat, distinct silhouette. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Intendant des recettes. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    },
+    {
+      "id": "trophy",
+      "name": "Trophée des succès",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-87152e65-5fad-4624-86a8-7ceb8a2d8ff9.png",
+      "output": "public/images/symbols/trophy.png",
+      "prompt": "Use case: stylized-concept. Asset type: ONE HD PNG interface illustration for Cosmo Pop, a premium French candy-space incremental game. Subject: one elegant chunky golden trophy cup with two curved handles, a faceted pastel-pink star at its center and a small lavender pedestal. Match a beautiful polished 3D clay confectionery world: rounded sculpted shapes, lavender, pastel pink, mint and apricot with champagne-gold accents, warm soft studio lighting, gentle glossy highlights, rich tactile materials. Single isolated centered object, genuinely transparent background, square canvas, object occupies 85 percent of the canvas with safe margins. Strong clear silhouette readable at 32 to 64 pixels. Literal representation of Trophée des succès. Delicate attached shadow only. No surrounding tile or badge, no frame, no ground, no text, no letters, no watermark, no multiple variants. Premium mobile game craftsmanship, restrained details."
+    }
+  ]
+}
