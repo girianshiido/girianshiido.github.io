@@ -12,9 +12,27 @@ export const BUILDINGS = [
     { id: 'pulsar', name: 'Pulsar praliné', plural: 'Pulsars', desc: 'Le cœur battant de votre constellation.', cost: 10000000000000.0, rate: 8000000.0, color: 'pink', icon: 'bolt' },
     { id: 'nebula', name: 'Nébuleuse dragée', plural: 'Nébuleuses', desc: 'Des nuages entiers de nouvelles saveurs.', cost: 5000000000000000.0, rate: 300000000.0, color: 'violet', icon: 'spark' },
     { id: 'galaxie', name: 'Galaxie pâtissière', plural: 'Galaxies', desc: 'Un milliard de mondes à faire grandir.', cost: 4e+18, rate: 15000000000.0, color: 'yellow', icon: 'orbit' },
-    { id: 'horizon', name: 'Horizon des délices', plural: 'Horizons', desc: 'La dernière frontière de la gourmandise.', cost: 8e+21, rate: 1000000000000.0, color: 'blue', icon: 'portal' }
+    { id: 'horizon', name: 'Horizon des délices', plural: 'Horizons', desc: 'La dernière frontière de la gourmandise.', cost: 8e+21, rate: 1000000000000.0, color: 'blue', icon: 'portal' },
+    { id: 'era12', name: 'Station nougat', plural: 'Stations', desc: 'Une escale pour toutes vos cargaisons.', cost: 10000000000000000000000000, rate: 1.0000000000000002e+20, color: 'pink', icon: 'bot' },
+    { id: 'era13', name: 'Chantier orbital', plural: 'Chantiers', desc: 'Construisez les routes du commerce cosmique.', cost: 1000000000000000000000000000, rate: 1e+22, color: 'mint', icon: 'mill' },
+    { id: 'era14', name: 'Arche de pistache', plural: 'Arches', desc: 'Un écosystème transporté entre les mondes.', cost: 100000000000000000000000000000, rate: 1e+24, color: 'peach', icon: 'sprout' },
+    { id: 'era15', name: 'Essaim de récolte', plural: 'Essaims', desc: 'Des milliers de butineurs dans le vide.', cost: 10000000000000000000000000000000, rate: 1e+26, color: 'yellow', icon: 'hive' },
+    { id: 'era16', name: 'Relais de chocolat', plural: 'Relais', desc: 'Un réseau qui rapproche vos ateliers.', cost: 1000000000000000000000000000000000, rate: 1e+28, color: 'violet', icon: 'portal' },
+    { id: 'era17', name: 'Dyson au miel', plural: 'Sphères', desc: 'Enveloppez les étoiles de votre savoir-faire.', cost: 100000000000000000000000000000000000, rate: 1e+30, color: 'blue', icon: 'sun' },
+    { id: 'era18', name: 'Imprimerie moléculaire', plural: 'Imprimeries', desc: 'Assemblez vos douceurs atome par atome.', cost: 10000000000000000000000000000000000000, rate: 1e+32, color: 'pink', icon: 'bot' },
+    { id: 'era19', name: 'Tisseur de gravité', plural: 'Tisseurs', desc: 'Les lois de la physique deviennent des outils.', cost: 1000000000000000000000000000000000000000, rate: 1.0000000000000001e+34, color: 'mint', icon: 'orbit' },
+    { id: 'era20', name: 'Jardin quantique', plural: 'Jardins', desc: 'Chaque graine pousse dans plusieurs réalités.', cost: 100000000000000000000000000000000000000000, rate: 1e+36, color: 'peach', icon: 'sprout' },
+    { id: 'era21', name: 'Ruche temporelle', plural: 'Ruches temporelles', desc: 'Ses abeilles rapportent le nectar de demain.', cost: 10000000000000000000000000000000000000000000, rate: 1.0000000000000002e+38, color: 'yellow', icon: 'clock' },
+    { id: 'era22', name: 'Porte des possibles', plural: 'Portes', desc: 'Importez les recettes des autres univers.', cost: 1000000000000000000000000000000000000000000000, rate: 1e+40, color: 'violet', icon: 'portal' },
+    { id: 'era23', name: 'Four à singularité', plural: 'Fours', desc: 'Une chaleur qui déforme l’espace.', cost: 100000000000000000000000000000000000000000000000, rate: 1.0000000000000002e+42, color: 'blue', icon: 'sun' },
+    { id: 'era24', name: 'Architecte de mondes', plural: 'Architectes', desc: 'Dessinez des planètes entières de dessert.', cost: 10000000000000000000000000000000000000000000000000, rate: 1e+44, color: 'pink', icon: 'planet' },
+    { id: 'era25', name: 'Forge des constantes', plural: 'Forges absolues', desc: 'Ajustez les constantes de votre cosmos.', cost: 1000000000000000000000000000000000000000000000000000, rate: 1.0000000000000001e+46, color: 'mint', icon: 'comet' },
+    { id: 'era26', name: 'Arbre des univers', plural: 'Arbres', desc: 'Une branche pour chaque réalité.', cost: 100000000000000000000000000000000000000000000000000000, rate: 1e+48, color: 'peach', icon: 'sprout' },
+    { id: 'era27', name: 'Archive des saveurs', plural: 'Archives', desc: 'Préservez toutes les recettes jamais inventées.', cost: 10000000000000000000000000000000000000000000000000000000, rate: 1e+50, color: 'yellow', icon: 'book' },
+    { id: 'era28', name: 'Matrice originelle', plural: 'Matrices', desc: 'Là où prennent naissance les nouveaux mondes.', cost: 1000000000000000000000000000000000000000000000000000000000, rate: 1.0000000000000001e+52, color: 'violet', icon: 'portal' },
+    { id: 'era29', name: 'Cœur de l’infini', plural: 'Cœurs', desc: 'La gourmandise au-delà du dernier horizon.', cost: 100000000000000000000000000000000000000000000000000000000000, rate: 1e+54, color: 'blue', icon: 'heart' }
 ];
-export const buildingGate = (id) => [0, 0, 0, 0, 0, 0, 1, 2, 3, 5, 8, 12][id] ?? 99;
+export const buildingGate = (id) => [0, 0, 0, 0, 0, 0, 1, 2, 3, 5, 8, 12, ...Array.from({ length: 18 }, (_, i) => i + 13)][id] ?? 99;
 export const upgradeGate = (id) => ({ alloy: 1, tide: 2, pulse: 3, cloud: 5, spiral: 8, infinity: 12 }[id] ?? 0);
 export const prestigeTarget = (s) => 1e8 * 30 ** Math.min(30, s.prestiges);
 export const UPGRADES = [
@@ -76,7 +94,10 @@ export const tier = (s) => { let found = 0; for (let i = 1; i < TIERS.length; i+
         found = i; return found; };
 export function cost(s, id, offset = 0) { const b = BUILDINGS[id]; return b ? Math.min(LIMIT, Math.ceil(b.cost * 1.35 ** ((s.buildings[id] ?? 0) + offset))) : LIMIT; }
 export function buildingMultiplier(count) { return (count >= 10 ? 1.5 : 1) * (count >= 25 ? 1.5 : 1) * (count >= 50 ? 1.5 : 1) * (count >= 100 ? 1.5 : 1) * (count >= 200 ? 1.5 : 1); }
-export function globalMultiplier(s) { return (1 + s.research.radiance * .2) * (1 + s.totalDust * .02) * (1 + s.achievements.length * .02) * (s.upgrades.includes('recipe') ? 1.5 : 1) * (s.upgrades.includes('turbo') ? 2 : 1) * (s.upgrades.includes('galaxy') ? 2 : 1) * 2 ** s.upgrades.filter(id => upgradeGate(id) > 0).length * (1 + s.prestiges * .5); }
+export const CHAPTERS = ['Le petit atelier', 'L’empire stellaire', 'Les routes cosmiques', 'L’ère quantique', 'Les créateurs d’univers'];
+export function synergy(s, chapter) { const counts = s.buildings.slice(chapter * 6, chapter * 6 + 6); return counts.length === 6 ? Math.min(5, Math.floor(Math.min(...counts) / 10)) * .05 : 0; }
+export function synergyMultiplier(s) { return 1 + CHAPTERS.reduce((total, _, i) => total + synergy(s, i), 0); }
+export function globalMultiplier(s) { return synergyMultiplier(s) * (1 + s.research.radiance * .2) * (1 + s.totalDust * .02) * (1 + s.achievements.length * .02) * (s.upgrades.includes('recipe') ? 1.5 : 1) * (s.upgrades.includes('turbo') ? 2 : 1) * (s.upgrades.includes('galaxy') ? 2 : 1) * 2 ** s.upgrades.filter(id => upgradeGate(id) > 0).length * (1 + s.prestiges * .5); }
 export function production(s, now = 0) { return BUILDINGS.reduce((v, b, i) => v + b.rate * (s.buildings[i] ?? 0) * buildingMultiplier(s.buildings[i] ?? 0), 0) * globalMultiplier(s) * (now > 0 && now < s.boostUntil ? 3 : 1); }
 export function tapValue(s, combo = 0) { return ((1 + s.research.touch * .5) * (s.upgrades.includes('gloves') ? 2 : 1) * (s.upgrades.includes('spoon') ? 3 : 1) * (s.upgrades.includes('sugar') ? 5 : 1) * (1 + s.totalDust * .02) * (1 + Math.min(25, combo) / 25) + (s.upgrades.includes('echo') ? production(s) * .05 : 0)); }
 export function earn(s, amount) { if (!Number.isFinite(amount) || amount < 0)
@@ -134,7 +155,12 @@ export const ACHIEVEMENTS = [
     { id: 'cycles12', name: 'Le grand voyage', desc: 'Accomplir 12 renaissances.', icon: 'star', test: (s) => s.prestiges >= 12 },
     { id: 'fleet', name: 'La flotte des étoiles', desc: 'Terminer 50 expéditions.', icon: 'star', test: (s) => s.expeditions >= 50 },
     { id: 'researcher', name: 'La mémoire du cosmos', desc: 'Atteindre le niveau 10 en éclat cosmique.', icon: 'star', test: (s) => s.research.radiance >= 10 },
-    { id: 'beyond', name: 'Au-delà de l’infini', desc: 'Produire 10 puissance 25 douceurs.', icon: 'star', test: (s) => s.total >= 1e25 }
+    { id: 'beyond', name: 'Au-delà de l’infini', desc: 'Produire 10 puissance 25 douceurs.', icon: 'star', test: (s) => s.total >= 1e25 },
+    { id: 'chapter0', name: 'Maître des ateliers', desc: 'Posséder 10 exemplaires de chaque machine du chapitre 1.', icon: 'trophy', test: (s) => synergy(s, 0) > 0 },
+    { id: 'chapter1', name: 'Maître des étoiles', desc: 'Posséder 10 exemplaires de chaque machine du chapitre 2.', icon: 'trophy', test: (s) => synergy(s, 1) > 0 },
+    { id: 'chapter2', name: 'Maître des routes', desc: 'Posséder 10 exemplaires de chaque machine du chapitre 3.', icon: 'trophy', test: (s) => synergy(s, 2) > 0 },
+    { id: 'chapter3', name: 'Maître quantique', desc: 'Posséder 10 exemplaires de chaque machine du chapitre 4.', icon: 'trophy', test: (s) => synergy(s, 3) > 0 },
+    { id: 'chapter4', name: 'Créateur d’univers', desc: 'Posséder 10 exemplaires de chaque machine du chapitre 5.', icon: 'trophy', test: (s) => synergy(s, 4) > 0 }
 ];
 export const MISSIONS = [
     { title: 'Tout commence par un pop', desc: 'Récoltez 15 fois votre planète.', target: 15, read: (s) => s.clicks, reward: 35, dust: 0 },
@@ -152,7 +178,10 @@ export const MISSIONS = [
     { title: 'L’ère : Pulsar praliné', desc: 'Construisez votre premier pulsar praliné.', target: 1, read: (s) => s.buildings[8] ?? 0, reward: 500000000000.0, dust: 15 },
     { title: 'L’ère : Nébuleuse dragée', desc: 'Construisez votre premier nébuleuse dragée.', target: 1, read: (s) => s.buildings[9] ?? 0, reward: 250000000000000.0, dust: 20 },
     { title: 'L’ère : Galaxie pâtissière', desc: 'Construisez votre premier galaxie pâtissière.', target: 1, read: (s) => s.buildings[10] ?? 0, reward: 2e+17, dust: 25 },
-    { title: 'L’ère : Horizon des délices', desc: 'Construisez votre premier horizon des délices.', target: 1, read: (s) => s.buildings[11] ?? 0, reward: 4e+20, dust: 30 }
+    { title: 'L’ère : Horizon des délices', desc: 'Construisez votre premier horizon des délices.', target: 1, read: (s) => s.buildings[11] ?? 0, reward: 4e+20, dust: 30 },
+    { title: 'La maîtrise du chapitre 3', desc: 'Possédez 10 exemplaires des 6 machines de ce chapitre.', target: 1, read: (s) => synergy(s, 2) > 0 ? 1 : 0, reward: 10000000000000000000000000, dust: 200 },
+    { title: 'La maîtrise du chapitre 4', desc: 'Possédez 10 exemplaires des 6 machines de ce chapitre.', target: 1, read: (s) => synergy(s, 3) > 0 ? 1 : 0, reward: 10000000000000000000000000000000000000, dust: 300 },
+    { title: 'La maîtrise du chapitre 5', desc: 'Possédez 10 exemplaires des 6 machines de ce chapitre.', target: 1, read: (s) => synergy(s, 4) > 0 ? 1 : 0, reward: 10000000000000000000000000000000000000000000000000, dust: 400 }
 ];
 export function claimMission(s) { const m = MISSIONS[s.mission]; if (!m || m.read(s) < m.target)
     return false; earn(s, m.reward); s.dust += m.dust; s.totalDust += m.dust; s.mission++; return true; }
@@ -172,7 +201,7 @@ export function parseSave(text, now = Date.now()) {
         s[k] = finite(x[k]);
     if (s.sugar > s.total || s.run > s.total || s.dust > s.totalDust)
         throw Error('Sauvegarde incohérente.');
-    if (!Array.isArray(x.buildings) || ![6, BUILDINGS.length].includes(x.buildings.length))
+    if (!Array.isArray(x.buildings) || ![6, 12, BUILDINGS.length].includes(x.buildings.length))
         throw Error('Machines invalides.');
     s.buildings = x.buildings.map(n => { finite(n, 5000); if (!Number.isInteger(n))
         throw Error('Machines invalides.'); return n; });
