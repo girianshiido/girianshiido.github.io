@@ -11,6 +11,8 @@ for (const f of await readdir(path.join(root, "dist"))) {
   if (f.startsWith("qa")) continue;
   await cp(path.join(root, "dist", f), path.join(target, f), {
     recursive: true,
+    filter: (src) =>
+      !path.basename(src).startsWith("qa") && !src.endsWith("-qa.js"),
   });
 }
 console.log("Version GitHub Pages préparée dans " + target);

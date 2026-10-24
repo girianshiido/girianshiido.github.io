@@ -537,6 +537,11 @@ export const RESEARCH = [
         icon: "clock",
     },
 ];
+export const AUTOMATION = {
+    name: "Intendant des recettes",
+    cost: 1500,
+    gate: 8,
+};
 export const DESTINATIONS = [
     {
         name: "La Lune guimauve",
@@ -595,6 +600,7 @@ export function fresh(now = Date.now()) {
         legacyMilestones: [],
         totalMilestones: 0,
         research: { radiance: 0, touch: 0, time: 0 },
+        automation: { owned: false, enabled: false },
         achievements: [],
         mission: 0,
         clicks: 0,
@@ -869,6 +875,43 @@ export function buyResearch(s, id) {
     s.research[id]++;
     return true;
 }
+/** A one-time permanent purchase. The assistant only spends sweets, never dust. */
+export function buyAutomation(s) {
+    if (s.automation.owned ||
+        s.prestiges < AUTOMATION.gate ||
+        s.dust < AUTOMATION.cost)
+        return false;
+    s.dust -= AUTOMATION.cost;
+    s.automation = { owned: true, enabled: true };
+    return true;
+}
+/** Bounded work per second; cheapest eligible recipes first, using normal purchase rules. */
+export function automateUpgrades(s) {
+    if (!s.automation.owned || !s.automation.enabled)
+        return [];
+    const candidates = [
+        ...UPGRADES.filter((u) => !s.upgrades.includes(u.id) &&
+            s.prestiges >= upgradeGate(u.id) &&
+            s.total >= u.unlock).map((u) => ({
+            price: u.cost,
+            name: u.name,
+            buy: () => buyUpgrade(s, u.id),
+        })),
+        ...MILESTONES.filter((m) => milestoneReady(s, m)).map((m) => ({
+            price: m.price,
+            name: BUILDINGS[m.building].name + " · " + m.name,
+            buy: () => buyMilestone(s, m.id),
+        })),
+    ].sort((a, b) => a.price - b.price);
+    const purchased = [];
+    for (const item of candidates) {
+        if (purchased.length >= 3 || item.price > s.sugar)
+            break;
+        if (item.buy())
+            purchased.push(item.name);
+    }
+    return purchased;
+}
 export function launch(s, id, now) {
     const d = DESTINATIONS[id];
     if (!d || s.expedition || s.sugar < d.cost)
@@ -909,6 +952,7 @@ export function prestige(s, now) {
         dust: s.dust + gain,
         totalDust: s.totalDust + gain,
         research: { ...s.research },
+        automation: { ...s.automation },
         achievements: [...s.achievements],
         clicks: s.clicks,
         expeditions: s.expeditions,
@@ -1448,6 +1492,13 @@ export function parseSave(text, now = Date.now()) {
     if (x.version !== 1)
         throw Error("Version de sauvegarde inconnue.");
     const s = fresh(now);
+    if (x.automation && typeof x.automation === "object") {
+        const a = x.automation;
+        s.automation = {
+            owned: a.owned === true,
+            enabled: a.owned === true && a.enabled === true,
+        };
+    }
     for (const k of [
         "sugar",
         "total",

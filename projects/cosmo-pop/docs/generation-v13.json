@@ -1,0 +1,268 @@
+{
+  "tool": "image_gen.imagegen — outil intégré, sans CLI",
+  "assets": [
+    {
+      "id": "marmiton",
+      "name": "Marmiton cosmique",
+      "output": "public/images/workshops/0.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-80a151ec-ecfd-4d6f-8a41-592d3ba16544.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for the French candy-space incremental game Cosmo Pop. Subject: a friendly tiny pink robot pastry chef with a white chef hat, holding a whisk and a bowl of star-shaped sugar. Style: beautiful polished 3D clay illustration, rounded sculpted forms, lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes and readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest shadow attached to object, true transparent background. Distinct literal representation of Marmiton cosmique; no text, no letters, no badges, no border, no surrounding tile, no second icon. High quality detailed material without clutter."
+    },
+    {
+      "id": "moulin",
+      "name": "Moulin à sucre",
+      "output": "public/images/workshops/1.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-6806bfe1-2b7a-410d-ab47-48983ca53394.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for the French candy-space incremental game Cosmo Pop. Subject: a mint-green sugar windmill with four large crystal blades grinding moon crystals into a little sugar sack. Style: beautiful polished 3D clay illustration, rounded sculpted forms, lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes and readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest shadow attached to object, true transparent background. Distinct literal representation of Moulin à sucre; no text, no letters, no badges, no border, no surrounding tile, no second icon. High quality detailed material without clutter."
+    },
+    {
+      "id": "serre",
+      "name": "Serre lunaire",
+      "output": "public/images/workshops/2.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-9e68c210-1c1c-44ba-a484-04a8faba1efb.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for the French candy-space incremental game Cosmo Pop. Subject: a rounded glass greenhouse on a crescent-moon base, with pink spiral lollipops growing inside. Style: beautiful polished 3D clay illustration, rounded sculpted forms, lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes and readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest shadow attached to object, true transparent background. Distinct literal representation of Serre lunaire; no text, no letters, no badges, no border, no surrounding tile, no second icon. High quality detailed material without clutter."
+    },
+    {
+      "id": "ruche",
+      "name": "Ruche stellaire",
+      "output": "public/images/workshops/3.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-c285991a-8a7a-4349-9b08-8d0b8b88b385.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for the French candy-space incremental game Cosmo Pop. Subject: a golden honeycomb beehive shaped like a small star, with two tiny cosmic bees and one honey drop. Style: beautiful polished 3D clay illustration, rounded sculpted forms, lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes and readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest shadow attached to object, true transparent background. Distinct literal representation of Ruche stellaire; no text, no letters, no badges, no border, no surrounding tile, no second icon. High quality detailed material without clutter."
+    },
+    {
+      "id": "portail",
+      "name": "Portail gourmand",
+      "output": "public/images/workshops/4.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-4d6a6085-4637-4c9b-9c69-5f7ac98e8491.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for the French candy-space incremental game Cosmo Pop. Subject: a purple glazed doughnut dimensional portal with a luminous pink center, a conveyor delivering candy through it. Style: beautiful polished 3D clay illustration, rounded sculpted forms, lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes and readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest shadow attached to object, true transparent background. Distinct literal representation of Portail gourmand; no text, no letters, no badges, no border, no surrounding tile, no second icon. High quality detailed material without clutter."
+    },
+    {
+      "id": "soleil",
+      "name": "Soleil confiseur",
+      "output": "public/images/workshops/5.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-26505933-eeea-44f7-b4ec-30878a49ab8f.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for the French candy-space incremental game Cosmo Pop. Subject: a smiling golden miniature sun wearing a pastry crown, cooking a colorful candy in a copper cauldron. Style: beautiful polished 3D clay illustration, rounded sculpted forms, lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes and readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest shadow attached to object, true transparent background. Distinct literal representation of Soleil confiseur; no text, no letters, no badges, no border, no surrounding tile, no second icon. High quality detailed material without clutter."
+    },
+    {
+      "id": "forge",
+      "name": "Forge de météores",
+      "output": "public/images/workshops/6.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-f8870766-6901-4abe-9667-d586f132f264.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a meteor forge: a copper furnace with glowing star-shaped meteors on a tiny anvil, tongs and lavender chimney. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "ocean",
+      "name": "Océan de caramel",
+      "output": "public/images/workshops/7.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-e5b2ceb4-65fb-46ed-a419-adcc28901132.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a caramel ocean: a golden caramel wave curled around a little pink candy island in a glass planet bowl. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "pulsar",
+      "name": "Pulsar praliné",
+      "output": "public/images/workshops/8.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-6c3b6df7-f482-4697-ae89-67e066b15e52.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a praline pulsar: a polished chocolate and hazelnut star with two luminous pink jets emerging from its poles. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "nebula",
+      "name": "Nébuleuse dragée",
+      "output": "public/images/workshops/9.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-35de3e30-0487-49bb-9ed1-1ea8a6ef8283.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a sugared-almond nebula: a fluffy lavender cosmic cloud swirling around a cluster of pastel dragées, tiny gold stars. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "galaxie",
+      "name": "Galaxie pâtissière",
+      "output": "public/images/workshops/10.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-77ba9b8a-03f3-4434-a777-171352d77747.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a pastry galaxy: a magnificent spiral galaxy whose arms are layers of pink cream, golden croissants and small cakes. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "horizon",
+      "name": "Horizon des délices",
+      "output": "public/images/workshops/11.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-e04a3c3d-6e6d-45a1-8082-ff9802c8f25a.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a dessert event horizon: a deep navy black hole ringed with flowing gold caramel and a pink wafer crossing the edge. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era12",
+      "name": "Station nougat",
+      "output": "public/images/workshops/12.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-cc9487ae-f01f-4f56-b5a6-44e0d8ac2fab.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a nougat space station: a central ivory nougat cube dotted with pistachios, four docking arms, pink solar panels and a tiny cargo pod. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era13",
+      "name": "Chantier orbital",
+      "output": "public/images/workshops/13.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-deda5d32-068c-45cc-945c-672c36f81045.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: an orbital construction yard: a curved space dock with an amber crane assembling a mint spaceship, little construction struts. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era14",
+      "name": "Arche de pistache",
+      "output": "public/images/workshops/14.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-5835ee8f-6c6d-4ef8-9028-e5ba49473d7d.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a pistachio ark: an elegant green spaceship carrying a large glass dome containing a flourishing pistachio tree. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era15",
+      "name": "Essaim de récolte",
+      "output": "public/images/workshops/15.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-26c47c9e-4d05-45b7-95bb-1fa6a4dccb25.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a harvest swarm: five small distinct golden bee-like drones around a central hexagonal nectar collection vessel. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era16",
+      "name": "Relais de chocolat",
+      "output": "public/images/workshops/16.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-166dc994-ae8b-4ec4-bb51-2c49db317e1b.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a chocolate communications relay: a chocolate antenna dish on a small lavender tower, three chocolate cubes linked by glowing signal arcs. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era17",
+      "name": "Dyson au miel",
+      "output": "public/images/workshops/17.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-ecdcf942-ab8a-4788-946b-e58be28089ef.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a honey Dyson sphere: a miniature bright star surrounded by curved honeycomb panels, a partial golden spherical lattice with honey drops. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era18",
+      "name": "Imprimerie moléculaire",
+      "output": "public/images/workshops/18.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-e6492a68-9aaf-43d9-9d44-c85e5ee9916f.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a molecular candy printer: a rounded pink desktop 3D printer with articulated nozzle assembling a candy from colorful molecular balls. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era19",
+      "name": "Tisseur de gravité",
+      "output": "public/images/workshops/19.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-27db3efb-51ee-41b3-af57-ee879e257e11.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a gravity loom: a mint and gold weaving loom bending luminous orbit threads around a suspended dark pearl, recognizable weaving shuttle. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era20",
+      "name": "Jardin quantique",
+      "output": "public/images/workshops/20.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-41e55ef2-c042-40ca-9446-32044cc10d6e.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a quantum garden: three crystalline planters with glowing translucent plants in overlapping lavender, pink and cyan realities. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era21",
+      "name": "Ruche temporelle",
+      "output": "public/images/workshops/21.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-92fbb265-523b-4a75-bd31-de7a28140adc.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a time beehive: a golden hive built around an ornate hourglass, tiny bees carrying glowing nectar, sand flowing upward. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era22",
+      "name": "Porte des possibles",
+      "output": "public/images/workshops/22.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-79e54e8e-10df-4f85-8bff-9e6b61f51b84.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a gate of possibilities: three nested asymmetric lavender doors opening onto three different small colorful worlds. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era23",
+      "name": "Four à singularité",
+      "output": "public/images/workshops/23.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-d902cfc7-883f-4c1e-aa76-a89e476f263c.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a singularity oven: a deep blue round bakery oven whose open door contains a glowing black hole, golden pastries on a tray. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era24",
+      "name": "Architecte de mondes",
+      "output": "public/images/workshops/24.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-5fd421c9-f281-4dfa-b0bf-cf3c45af9a78.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a world architect: a rose-gold drafting compass and a robotic drawing arm sculpting a miniature frosted planet above a blueprint table. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era25",
+      "name": "Forge des constantes",
+      "output": "public/images/workshops/25.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-46176793-6b62-4deb-9f57-551e9218f163.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a forge of universal constants: a heavy emerald anvil with floating crystal dials, a golden hammer forging an orbit-shaped ring. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era26",
+      "name": "Arbre des univers",
+      "output": "public/images/workshops/26.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-1252a8d7-77d4-4b7a-ae3c-b4b053f01545.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a tree of universes: an apricot crystal tree whose branches carry small distinct planets instead of fruit, luminous branching roots. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era27",
+      "name": "Archive des saveurs",
+      "output": "public/images/workshops/27.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-c1ae2236-49d5-448c-924e-254e676bf296.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a flavor archive: a tiny golden library with colorful recipe books, a floating open cookbook with a pink macaroon above its pages. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era28",
+      "name": "Matrice originelle",
+      "output": "public/images/workshops/28.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-932468dd-5569-4c60-a7e8-e43052ccb2af.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: an origin matrix: a glowing lavender geometric cradle of nested crystal frames, a newly forming little world suspended at its center. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "era29",
+      "name": "Cœur de l’infini",
+      "output": "public/images/workshops/29.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-0ae95e33-494c-416e-8e06-2c7dd8e32b56.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a heart of infinity: a translucent azure heart with a luminous pink infinity ribbon inside and golden orbit hoops. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "beyond0",
+      "name": "Observatoire du néant",
+      "output": "public/images/workshops/30.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-e021ef80-0d5a-408c-acd9-47a8bc8f58fc.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: an observatory of the void: a deep violet domed observatory with a large telescope pointing to a dark pearl eclipsed by a thin golden crescent. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "beyond1",
+      "name": "Océan de réalités",
+      "output": "public/images/workshops/31.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-c220b6f4-8050-4de1-9dfb-6f142c307de3.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: an ocean of realities: an iridescent teal wave holding three translucent bubbles, each bubble contains a different tiny world. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "beyond2",
+      "name": "Cathédrale des étoiles",
+      "output": "public/images/workshops/32.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-d319cdc3-66d6-4011-84b4-1c3972c31046.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a cathedral of stars: an elegant golden celestial cathedral with three tall pastel stained-glass spires and a bright star above the nave. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "beyond3",
+      "name": "Semeur de multivers",
+      "output": "public/images/workshops/33.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-05c81aa5-df34-4c8e-8d7f-27e0344b98fc.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a multiverse sower: a small apricot gardener robot with a seed bag sowing glowing seeds that sprout tiny spiral galaxies. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "beyond4",
+      "name": "Atelier de l’éternité",
+      "output": "public/images/workshops/34.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-0e3a41ab-f687-4352-ba43-a90bc11afea1.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: an eternity workshop: a pink clockmaker workbench with a large open pocket watch, fine gold gears and a looping hourglass. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "id": "beyond5",
+      "name": "Source des origines",
+      "output": "public/images/workshops/35.png",
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-5c563b2a-660f-4e69-a075-9f3d05b04475.png",
+      "prompt": "Use case: stylized-concept. Asset type: one premium HD PNG game inventory icon for Cosmo Pop, a French candy-space game. Subject: a source of origins: an elegant blue crystal fountain pouring a rainbow luminous stream into a cosmic pool, a single golden seed at its center. Style: beautiful polished 3D clay illustration, rounded sculpted forms, soft lavender / pastel pink / mint / apricot palette with gold accents, soft studio lighting, crisp silhouettes with readable main object at 72px. Composition: ONE single isolated centered icon, square canvas, object occupies 80% of canvas, modest attached shadow, genuinely transparent background. The object must illustrate this exact subject literally and distinctly. No text, no letters, no badges, no border, no surrounding tile, no second icon. Detailed premium material, uncluttered."
+    },
+    {
+      "name": "Icône de lancement",
+      "outputs": [
+        "public/icon-192-v13.png",
+        "public/icon-512-v13.png",
+        "public/icon-maskable-v13.png",
+        "public/apple-touch-icon-v13.png"
+      ],
+      "source": "/workspace/scratch/06a144793bdd/generated_images/exec-fc33474b-e05a-47f6-ae12-49db0e70e5b8.png",
+      "prompt": "Use case: logo-brand. Asset type: premium home-screen app icon for Cosmo Pop, a charming French candy-space incremental game. Create ONE square full-bleed app icon: a gorgeous smiling peach-and-pink candy planet with creamy golden frosting, a tiny lavender-roof pastry shop on top, and a broad luminous golden Saturn ring. Deep rich violet background with a gentle purple gradient and just three small delicate stars. Beautiful polished 3D clay illustration, charming elegant character, carefully sculpted materials, warm cinematic light, extremely clear silhouette readable at 48 pixels. Center all essential planet, ring, and roof details inside the central 65 percent square safe area, leave full-bleed violet background to edges for Android maskable cropping. No text, no lettering, no external border, no rounded-square silhouette baked into the image, no watermark, no multiple variants. Premium mobile game quality."
+    }
+  ]
+}

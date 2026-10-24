@@ -3231,9 +3231,7 @@ input {
   display: block;
   width: 58px;
   height: 58px;
-  background-image: url("./images/workshops.png");
-  background-size: 600% 600%;
-  background-repeat: no-repeat;
+  object-fit: contain;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 5px #694b7914);
 }
@@ -4380,4 +4378,99 @@ html[data-theme="minuit"] .stage-label {
 .number-help p {
   font-size: 10px;
   line-height: 1.85;
+}
+
+/* Clear, compact feedback: the message must never inherit the icon mask. */
+.toast-message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.toast > .icon {
+  flex-shrink: 0;
+}
+.machine-ready {
+  display: inline-block;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #36b87e;
+  box-shadow: 0 0 0 3px #36b87e18;
+}
+.machine-ready[hidden] {
+  display: none;
+}
+.automation-card {
+  margin: 14px 0 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+  background: var(--paper);
+}
+.automation-toggle {
+  min-width: 80px;
+  min-height: 44px;
+}
+.automation-toggle[aria-pressed="true"] {
+  background: var(--mint);
+  color: var(--ink);
+}
+.automation-card .unlock-hint {
+  display: block;
+  margin-top: 7px;
+}
+@media (max-width: 420px) {
+  .automation-card {
+    padding: 14px 10px;
+  }
+  .automation-card .machine-icon {
+    display: none;
+  }
+  .automation-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .automation-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 17px;
+  }
+  .automation-card .machine-icon {
+    display: none;
+  }
+  .automation-card h3 {
+    font-size: 14px;
+  }
+  .automation-card p {
+    font-size: 12px;
+    line-height: 1.65;
+  }
+  .automation-card > button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .machine .machine-icon.artwork {
+    width: 40px;
+    height: 50px;
+  }
+  .machine .artwork .workshop-art {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+.machine .machine-icon.artwork {
+  position: relative;
+}
+.machine-ready {
+  position: absolute;
+  top: 3px;
+  right: -3px;
+  box-shadow: 0 0 0 3px var(--paper);
 }

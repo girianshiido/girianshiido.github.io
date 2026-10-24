@@ -541,6 +541,11 @@ export const RESEARCH = [
   },
 ] as const;
 export type ResearchId = (typeof RESEARCH)[number]["id"];
+export const AUTOMATION = {
+  name: "Intendant des recettes",
+  cost: 1500,
+  gate: 8,
+} as const;
 export const DESTINATIONS = [
   {
     name: "La Lune guimauve",
@@ -598,6 +603,7 @@ export interface State {
   legacyMilestones: string[];
   totalMilestones: number;
   research: Record<ResearchId, number>;
+  automation: { owned: boolean; enabled: boolean };
   achievements: string[];
   mission: number;
   clicks: number;
@@ -629,6 +635,7 @@ export function fresh(now = Date.now()): State {
     legacyMilestones: [],
     totalMilestones: 0,
     research: { radiance: 0, touch: 0, time: 0 },
+    automation: { owned: false, enabled: false },
     achievements: [],
     mission: 0,
     clicks: 0,
@@ -976,6 +983,45 @@ export function buyResearch(s: State, id: ResearchId): boolean {
   s.research[id]++;
   return true;
 }
+/** A one-time permanent purchase. The assistant only spends sweets, never dust. */
+export function buyAutomation(s: State): boolean {
+  if (
+    s.automation.owned ||
+    s.prestiges < AUTOMATION.gate ||
+    s.dust < AUTOMATION.cost
+  )
+    return false;
+  s.dust -= AUTOMATION.cost;
+  s.automation = { owned: true, enabled: true };
+  return true;
+}
+/** Bounded work per second; cheapest eligible recipes first, using normal purchase rules. */
+export function automateUpgrades(s: State): string[] {
+  if (!s.automation.owned || !s.automation.enabled) return [];
+  const candidates = [
+    ...UPGRADES.filter(
+      (u) =>
+        !s.upgrades.includes(u.id) &&
+        s.prestiges >= upgradeGate(u.id) &&
+        s.total >= u.unlock,
+    ).map((u) => ({
+      price: u.cost,
+      name: u.name,
+      buy: () => buyUpgrade(s, u.id),
+    })),
+    ...MILESTONES.filter((m) => milestoneReady(s, m)).map((m) => ({
+      price: m.price,
+      name: BUILDINGS[m.building]!.name + " · " + m.name,
+      buy: () => buyMilestone(s, m.id),
+    })),
+  ].sort((a, b) => a.price - b.price);
+  const purchased: string[] = [];
+  for (const item of candidates) {
+    if (purchased.length >= 3 || item.price > s.sugar) break;
+    if (item.buy()) purchased.push(item.name);
+  }
+  return purchased;
+}
 export function launch(s: State, id: number, now: number): boolean {
   const d = DESTINATIONS[id];
   if (!d || s.expedition || s.sugar < d.cost) return false;
@@ -1012,6 +1058,7 @@ export function prestige(s: State, now: number): boolean {
     dust: s.dust + gain,
     totalDust: s.totalDust + gain,
     research: { ...s.research },
+    automation: { ...s.automation },
     achievements: [...s.achievements],
     clicks: s.clicks,
     expeditions: s.expeditions,
@@ -1554,6 +1601,13 @@ export function parseSave(text: string, now = Date.now()): State {
   const x = v as Record<string, unknown>;
   if (x.version !== 1) throw Error("Version de sauvegarde inconnue.");
   const s = fresh(now);
+  if (x.automation && typeof x.automation === "object") {
+    const a = x.automation as Record<string, unknown>;
+    s.automation = {
+      owned: a.owned === true,
+      enabled: a.owned === true && a.enabled === true,
+    };
+  }
   for (const k of [
     "sugar",
     "total",
