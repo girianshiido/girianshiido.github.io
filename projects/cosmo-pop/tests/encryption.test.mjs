@@ -38,3 +38,13 @@ test("Malformed envelopes, unsupported KDF settings and short passwords are reje
   e.iterations = 1e12;
   await assert.rejects(importEncrypted(JSON.stringify(e), password));
 });
+
+test("Encrypted legacy exports receive the dust refund once and preserve new research on re-export", async () => {
+  const legacy=fresh();delete legacy.dustEconomy;
+  legacy.research={radiance:3,touch:0,time:0};legacy.dust=10;legacy.totalDust=31;
+  const restored=await importEncrypted(await exportEncrypted(legacy,password),password);
+  assert.equal(restored.dust,13);assert.equal(restored.totalDust,31);
+  restored.research.navigation=2;restored.research.comets=1;restored.research.nova=3;
+  const again=await importEncrypted(await exportEncrypted(restored,password),password);
+  assert.equal(again.dust,13);assert.deepEqual(again.research,restored.research);
+});

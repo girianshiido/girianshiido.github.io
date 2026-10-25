@@ -518,32 +518,17 @@ export const UPGRADES = [
   },
 ] as const;
 export const RESEARCH = [
-  {
-    id: "radiance",
-    name: "Éclat cosmique",
-    desc: "+20 % de production par niveau.",
-    base: 3,
-    icon: "sun",
-  },
-  {
-    id: "touch",
-    name: "Toucher stellaire",
-    desc: "+50 % par récolte par niveau.",
-    base: 2,
-    icon: "hand",
-  },
-  {
-    id: "time",
-    name: "Poches de temps",
-    desc: "+2 h de gains hors ligne par niveau.",
-    base: 2,
-    icon: "clock",
-  },
+  { id: "radiance", name: "Éclat cosmique", desc: "+20 % de production par niveau.", costs: Array.from({length:10}, (_,i)=>3*(i+1)), gate: 0, icon: "sun" },
+  { id: "touch", name: "Toucher stellaire", desc: "+50 % par récolte par niveau.", costs: Array.from({length:10}, (_,i)=>2*(i+1)), gate: 0, icon: "hand" },
+  { id: "time", name: "Poches de temps", desc: "+2 h de gains hors ligne par niveau.", costs: Array.from({length:10}, (_,i)=>2*(i+1)), gate: 0, icon: "clock" },
+  { id: "navigation", name: "Cartographie cosmique", desc: "Voyages plus rapides : −10 %, −20 %, puis −25 % au total. Récompenses inchangées.", costs: [20,45,80], gate: 2, icon: "orbit" },
+  { id: "comets", name: "Veille des comètes", desc: "+5 s pour attraper les comètes par niveau, jusqu’à 33 s. Leur fréquence et leurs récompenses restent identiques.", costs: [10,25,45], gate: 1, icon: "comet" },
+  { id: "nova", name: "Cœur de Supernova", desc: "+5 s de Supernova par niveau, jusqu’à 45 s. Recharge inchangée : 3 min entre deux activations.", costs: [20,45,80], gate: 4, icon: "bolt" },
 ] as const;
 export type ResearchId = (typeof RESEARCH)[number]["id"];
 export const AUTOMATION = {
   name: "Intendant des recettes",
-  cost: 1500,
+  cost: 300,
   gate: 8,
 } as const;
 export const DESTINATIONS = [
@@ -599,6 +584,7 @@ export const TIERS = [
 ] as const;
 export interface State {
   version: 1;
+  dustEconomy: 2;
   sugar: number;
   total: number;
   run: number;
@@ -617,7 +603,7 @@ export interface State {
   expeditions: number;
   prestiges: number;
   playSeconds: number;
-  expedition: { id: number; ends: number } | null;
+  expedition: { id: number; ends: number; duration: number } | null;
   boostUntil: number;
   boostReady: number;
   savedAt: number;
@@ -633,6 +619,7 @@ export interface State {
 export function fresh(now = Date.now()): State {
   return {
     version: 1,
+    dustEconomy: 2,
     sugar: 0,
     total: 0,
     run: 0,
@@ -643,7 +630,7 @@ export function fresh(now = Date.now()): State {
     milestones: [],
     legacyMilestones: [],
     totalMilestones: 0,
-    research: { radiance: 0, touch: 0, time: 0 },
+    research: { radiance: 0, touch: 0, time: 0, navigation: 0, comets: 0, nova: 0 },
     automation: { owned: false, enabled: false },
     achievements: [],
     mission: 0,
@@ -982,10 +969,11 @@ export function buyUpgrade(s: State, id: string): boolean {
 }
 export const researchCost = (s: State, id: ResearchId): number => {
   const r = RESEARCH.find((r) => r.id === id)!;
-  return r.base * 2 ** s.research[id];
+  return r.costs[s.research[id]] ?? Infinity;
 };
 export function buyResearch(s: State, id: ResearchId): boolean {
-  if (!RESEARCH.some((r) => r.id === id) || s.research[id] >= 10) return false;
+  const r = RESEARCH.find((r) => r.id === id);
+  if (!r || s.research[id] >= r.costs.length || s.prestiges < r.gate) return false;
   const c = researchCost(s, id);
   if (s.dust < c) return false;
   s.dust -= c;
@@ -1031,11 +1019,16 @@ export function automateUpgrades(s: State): string[] {
   }
   return purchased;
 }
+export const voyageDuration = (s: State, id: number): number =>
+  Math.round((DESTINATIONS[id]?.duration ?? 0) * [1,0.9,0.8,0.75][s.research.navigation]!);
+export const cometDuration = (s: State): number => 18 + 5 * s.research.comets;
+export const boostDuration = (s: State): number => 30 + 5 * s.research.nova;
 export function launch(s: State, id: number, now: number): boolean {
   const d = DESTINATIONS[id];
   if (!d || s.expedition || s.sugar < d.cost) return false;
   s.sugar -= d.cost;
-  s.expedition = { id, ends: now + d.duration * 1000 };
+  const duration = voyageDuration(s, id);
+  s.expedition = { id, ends: now + duration * 1000, duration };
   return true;
 }
 export function finishExpedition(s: State, now: number): number {
@@ -1050,7 +1043,7 @@ export function finishExpedition(s: State, now: number): number {
 }
 export function boost(s: State, now: number): boolean {
   if (s.total < 500 || now < s.boostReady) return false;
-  s.boostUntil = now + 30000;
+  s.boostUntil = now + boostDuration(s) * 1000;
   s.boostReady = now + 180000;
   return true;
 }
@@ -1692,15 +1685,27 @@ export function parseSave(text: string, now = Date.now()): State {
   if (!x.research || typeof x.research !== "object")
     throw Error("Recherches invalides.");
   for (const r of RESEARCH) {
-    const n = (x.research as Record<string, unknown>)[r.id];
-    finite(n, 10);
+    const raw = (x.research as Record<string, unknown>)[r.id];
+    const n = raw === undefined && r.gate > 0 ? 0 : raw;
+    finite(n, r.costs.length);
     if (!Number.isInteger(n)) throw Error("Recherche invalide.");
     s.research[r.id] = n as number;
+  }
+  if (x.dustEconomy !== undefined && x.dustEconomy !== 1 && x.dustEconomy !== 2)
+    throw Error("Version de l’économie de poussière inconnue.");
+  if (x.dustEconomy !== 2) {
+    // Return the price reduction once, without minting earned dust or increasing its multiplier.
+    let refund = s.automation.owned ? 1200 : 0;
+    for (const [id, base] of [["radiance",3],["touch",2],["time",2]] as const) {
+      const level = s.research[id];
+      refund += base * (2 ** level - 1 - level * (level + 1) / 2);
+    }
+    s.dust += Math.min(refund, Math.max(0, s.totalDust - s.dust));
   }
   s.mission = finite(x.mission, MISSIONS.length);
   if (!Number.isInteger(s.mission)) throw Error("Mission invalide.");
   s.savedAt = Math.min(now, finite(x.savedAt, 1e15));
-  s.boostUntil = Math.min(now + 30000, finite(x.boostUntil, 1e15));
+  s.boostUntil = Math.min(now + boostDuration(s) * 1000, finite(x.boostUntil, 1e15));
   s.boostReady = Math.min(now + 180000, finite(x.boostReady, 1e15));
   if (x.expedition !== null) {
     if (!x.expedition || typeof x.expedition !== "object")
@@ -1708,10 +1713,13 @@ export function parseSave(text: string, now = Date.now()): State {
     const e = x.expedition as Record<string, unknown>;
     const id = finite(e.id, 2);
     if (!Number.isInteger(id)) throw Error("Destination invalide.");
+    const duration = e.duration === undefined ? DESTINATIONS[id]!.duration : finite(e.duration, DESTINATIONS[id]!.duration);
+    if (duration < DESTINATIONS[id]!.duration * 0.75) throw Error("Durée de voyage invalide.");
     s.expedition = {
       id,
+      duration,
       ends: Math.min(
-        now + DESTINATIONS[id]!.duration * 1000,
+        now + duration * 1000,
         finite(e.ends, 1e15),
       ),
     };

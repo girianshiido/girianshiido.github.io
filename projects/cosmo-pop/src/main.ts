@@ -19,6 +19,9 @@ import {
   buyUpgrade,
   buyResearch,
   researchCost,
+  voyageDuration,
+  cometDuration,
+  boostDuration,
   launch,
   finishExpedition,
   boost,
@@ -263,7 +266,7 @@ function renderShop(): void {
 
 function renderVoyages(): void {
   $("#panel").innerHTML =
-    `<div class="panel-heading"><div><span class="eyebrow">L’UNIVERS A BON GOÛT</span><h2>Les grands voyages<span class="title-dot">.</span></h2></div><span class="badge">${icon("rocket")}</span></div><p class="panel-description">Envoyez votre équipage explorer le cosmos.<br>Rapportez de la poussière pour grandir durablement.</p><div id="expedition-status" class="expedition-status"></div><div class="destination-list">${DESTINATIONS.map((d, i) => `<article class="destination"><div class="destination-art ${d.color}">${icon(i === 2 ? "nebula" : d.icon)}<i></i><i></i><i></i><span>0${i + 1}</span></div><div class="destination-body"><h3>${d.name}</h3><p>${d.desc}</p><div class="destination-meta"><span>${icon("clock")} ${timeFmt(d.duration)}</span><span>${icon("star")} +${d.dust} poussière${d.dust > 1 ? "s" : ""}</span></div><button class="wide-buy" data-launch="${i}" id="launch-${i}"><span>Explorer ${icon("arrow")}</span><b>${icon("sugar")}${fmt(d.cost)}</b></button></div></article>`).join("")}</div><div class="shop-tip">${icon("star")}<p>Chaque poussière <strong>gagnée</strong> ajoute définitivement <strong>+2 %</strong> aux récoltes et à la production, même après avoir été dépensée.</p></div>`;
+    `<div class="panel-heading"><div><span class="eyebrow">L’UNIVERS A BON GOÛT</span><h2>Les grands voyages<span class="title-dot">.</span></h2></div><span class="badge">${icon("rocket")}</span></div><p class="panel-description">Envoyez votre équipage explorer le cosmos.<br>Rapportez de la poussière pour grandir durablement.</p><div id="expedition-status" class="expedition-status"></div><div class="destination-list">${DESTINATIONS.map((d, i) => `<article class="destination"><div class="destination-art ${d.color}">${icon(i === 2 ? "nebula" : d.icon)}<i></i><i></i><i></i><span>0${i + 1}</span></div><div class="destination-body"><h3>${d.name}</h3><p>${d.desc}</p><div class="destination-meta"><span>${icon("clock")} ${timeFmt(voyageDuration(state, i))}</span><span>${icon("star")} +${d.dust} poussière${d.dust > 1 ? "s" : ""}</span></div><button class="wide-buy" data-launch="${i}" id="launch-${i}"><span>Explorer ${icon("arrow")}</span><b>${icon("sugar")}${fmt(d.cost)}</b></button></div></article>`).join("")}</div><div class="shop-tip">${icon("star")}<p>Chaque poussière <strong>gagnée</strong> ajoute définitivement <strong>+2 %</strong> aux récoltes et à la production, même après avoir été dépensée.</p></div>`;
 }
 function automationCard(): string {
   const owned = state.automation.owned;
@@ -271,7 +274,7 @@ function automationCard(): string {
 }
 function renderCosmos(): void {
   $("#panel").innerHTML =
-    `<div class="panel-heading"><div><span class="eyebrow">PLUS LOIN, PLUS LONGTEMPS</span><h2>Votre constellation<span class="title-dot">.</span></h2></div><span class="badge peach">${icon("star")} ${fmt(state.dust)}</span></div><div class="cosmos-summary"><span>Bonus permanent de poussière</span><strong>+${fmt(state.totalDust * 2)} %</strong><p>Chaque étoile compte. Même celles déjà dépensées.</p></div><h3 class="subheading">Les recherches permanentes</h3><div class="research-list">${RESEARCH.map((r) => `<article class="research-card"><span class="machine-icon ${r.id === "radiance" ? "yellow" : r.id === "touch" ? "pink" : "mint"}">${icon(r.icon)}</span><div><h3>${r.name}<small>Niv. ${state.research[r.id]} / 10</small></h3><p>${r.desc}</p></div><button data-research="${r.id}" class="buy-button" id="research-${r.id}"><span>${icon("star")} ${state.research[r.id] >= 10 ? "MAX" : researchCost(state, r.id)}</span><small>Rechercher</small></button></article>`).join("")}</div>${automationCard()}<section class="prestige-card"><p>Prochaine étape : ${BUILDINGS.find((_, i) => buildingGate(i) > state.prestiges)?.name ?? "Maîtrise de toutes les machines"}. Seuil : ${fmt(prestigeTarget(state))} douceurs dans cette vie.</p><span class="prestige-visual">${icon("orbit")}</span><h3>Une planète. Un nouveau départ.</h3><p>Recommencez avec une pluie de poussière d’étoile. Vos recherches, succès et bonus permanents vous accompagnent.</p><button class="primary-button" data-action="prestige" id="prestige">${icon("spark")} Renaître <span id="prestige-gain"></span></button><small id="prestige-hint"></small></section><div class="subheading achievement-heading"><h3>Vos petits exploits</h3><span id="achievement-count">0 / ${ACHIEVEMENTS.length}</span></div><p class="achievement-hint">Chaque succès débloqué ajoute +2 % de production.</p><div class="achievement-grid">${ACHIEVEMENTS.map((a) => `<div class="achievement ${state.achievements.includes(a.id) ? "earned" : ""}" id="achievement-${a.id}" title="${a.desc}">${icon(a.icon)}<strong>${a.name}</strong><span>${a.desc}</span></div>`).join("")}</div><button class="text-button" data-action="stats">${icon("chart")} Voir les statistiques</button>`;
+    `<div class="panel-heading"><div><span class="eyebrow">PLUS LOIN, PLUS LONGTEMPS</span><h2>Votre constellation<span class="title-dot">.</span></h2></div><span class="badge peach">${icon("star")} ${fmt(state.dust)}</span></div><div class="cosmos-summary"><span>Bonus permanent de poussière</span><strong>+${fmt(state.totalDust * 2)} %</strong><p>Chaque étoile compte. Même celles déjà dépensées.</p></div><h3 class="subheading">Les recherches permanentes</h3><div class="research-list">${RESEARCH.filter((r) => state.prestiges >= Math.max(0, r.gate - 1)).map((r) => `<article class="research-card"><span class="machine-icon ${r.id === "radiance" ? "yellow" : r.id === "touch" ? "pink" : "mint"}">${icon(r.icon)}</span><div><h3>${r.name}<small>Niv. ${state.research[r.id]} / ${r.costs.length}</small></h3><p>${r.desc}</p>${state.prestiges < r.gate ? `<small class="unlock-hint">À partir de ${r.gate} renaissances</small>` : ""}</div><button data-research="${r.id}" class="buy-button" id="research-${r.id}"><span>${icon("star")} ${state.research[r.id] >= r.costs.length ? "MAX" : researchCost(state, r.id)}</span><small>Rechercher</small></button></article>`).join("")}</div>${automationCard()}<section class="prestige-card"><p>Prochaine étape : ${BUILDINGS.find((_, i) => buildingGate(i) > state.prestiges)?.name ?? "Maîtrise de toutes les machines"}. Seuil : ${fmt(prestigeTarget(state))} douceurs dans cette vie.</p><span class="prestige-visual">${icon("orbit")}</span><h3>Une planète. Un nouveau départ.</h3><p>Recommencez avec une pluie de poussière d’étoile. Vos recherches, succès et bonus permanents vous accompagnent.</p><button class="primary-button" data-action="prestige" id="prestige">${icon("spark")} Renaître <span id="prestige-gain"></span></button><small id="prestige-hint"></small></section><div class="subheading achievement-heading"><h3>Vos petits exploits</h3><span id="achievement-count">0 / ${ACHIEVEMENTS.length}</span></div><p class="achievement-hint">Chaque succès débloqué ajoute +2 % de production.</p><div class="achievement-grid">${ACHIEVEMENTS.map((a) => `<div class="achievement ${state.achievements.includes(a.id) ? "earned" : ""}" id="achievement-${a.id}" title="${a.desc}">${icon(a.icon)}<strong>${a.name}</strong><span>${a.desc}</span></div>`).join("")}</div><button class="text-button" data-action="stats">${icon("chart")} Voir les statistiques</button>`;
 }
 let pendingPlanetForm = -1;
 let planetRetryAt = 0;
@@ -342,7 +345,7 @@ function paint(now: number): void {
         ? "Production triplée · " + timeFmt((state.boostUntil - now) / 1000)
         : now < state.boostReady
           ? "Recharge · " + timeFmt((state.boostReady - now) / 1000)
-          : "30 secondes de production triplée";
+          : `${boostDuration(state)} secondes de production triplée`;
   $("#boost-tag").textContent = boosted ? "ACTIF" : "× 3";
   const mission = MISSIONS[state.mission];
   $("#mission-title").textContent =
@@ -445,7 +448,7 @@ function paint(now: number): void {
   if (view === "voyages") {
     const e = state.expedition;
     $("#expedition-status").innerHTML = e
-      ? `${icon("rocket")}<div><strong>En route vers ${DESTINATIONS[e.id]!.name}</strong><span>Retour dans ${timeFmt((e.ends - now) / 1000)}</span><div class="progress"><i style="width:${Math.max(0, 100 - (e.ends - now) / 10 / DESTINATIONS[e.id]!.duration)}%"></i></div></div>`
+      ? `${icon("rocket")}<div><strong>En route vers ${DESTINATIONS[e.id]!.name}</strong><span>Retour dans ${timeFmt((e.ends - now) / 1000)}</span><div class="progress"><i style="width:${Math.max(0, 100 - (e.ends - now) / 10 / e.duration)}%"></i></div></div>`
       : `${icon("check")}<div><strong>Votre équipage est prêt</strong><span>Choisissez une destination.</span></div>`;
     DESTINATIONS.forEach((d, i) => {
       $<HTMLButtonElement>("#launch-" + i).disabled =
@@ -454,9 +457,11 @@ function paint(now: number): void {
   }
   if (view === "cosmos") {
     RESEARCH.forEach((r) => {
-      $<HTMLButtonElement>("#research-" + r.id).disabled =
-        readOnly ||
-        state.research[r.id] >= 10 ||
+      const button = $<HTMLButtonElement>("#research-" + r.id);
+      if (!button) return;
+      button.disabled =
+        readOnly || state.prestiges < r.gate ||
+        state.research[r.id] >= r.costs.length ||
         state.dust < researchCost(state, r.id);
     });
     const autoButton = $<HTMLButtonElement>("#buy-automation");
@@ -578,7 +583,7 @@ function frame(): void {
   settle(now);
   if (now - lastTap > 1200) combo = 0;
   if (now > nextComet && cometEnds === 0) {
-    cometEnds = now + 18000;
+    cometEnds = now + cometDuration(state) * 1000;
     $("#comet").hidden = false;
     audio.play("comet");
   }
@@ -618,7 +623,7 @@ function settings(): void {
   dialog(
     "Votre petit univers",
     `<div class="setting-row"><div><strong>Les petits bruitages</strong><p>Des notes douces, au format OGG.</p></div><button class="toggle ${state.settings.sound ? "on" : ""}" data-action="settings-sound" role="switch" aria-checked="${state.settings.sound}" aria-label="Bruitages"><i></i></button></div><label class="volume-control">Bruitages <input id="volume" type="range" min="0" max="100" value="${state.settings.volume * 100}" aria-label="Volume des bruitages"></label><div class="setting-row"><div><strong>La musique des étoiles</strong><p>La ronde des constellations · une valse en boucle.</p></div><button class="toggle ${state.settings.music ? "on" : ""}" data-action="music" role="switch" aria-checked="${state.settings.music}" aria-label="Musique"><i></i></button></div><label class="volume-control" for="music-volume">Musique <input id="music-volume" type="range" min="0" max="100" step="1" value="${Math.round(state.settings.musicVolume * 100)}" aria-label="Volume de la musique" aria-valuetext="${Math.round(state.settings.musicVolume * 100)} %"><output id="music-volume-value" for="music-volume">${Math.round(state.settings.musicVolume * 100)} %</output></label><div class="setting-row"><div><strong>Animations</strong><p>Respecte aussi les réglages de votre appareil.</p></div><button class="toggle ${state.settings.motion ? "on" : ""}" data-action="motion" role="switch" aria-checked="${state.settings.motion}" aria-label="Animations"><i></i></button></div>
-<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.7 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
+<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.8 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
   );
 }
 function stats(): void {
@@ -836,7 +841,7 @@ async function action(target: HTMLElement): Promise<void> {
   }
   if (act === "boost" && boost(state, now)) {
     audio.play("launch");
-    toast("Supernova ! Production × 3 pendant 30 secondes.", "success");
+    toast(`Supernova ! Production × 3 pendant ${boostDuration(state)} secondes.`, "success");
   }
   if (act === "comet" && cometEnds > now) {
     const amount = Math.max(

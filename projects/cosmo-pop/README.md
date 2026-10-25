@@ -1,4 +1,4 @@
-# Cosmo Pop 1.7 — L’atelier des étoiles
+# Cosmo Pop 1.8 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -69,7 +69,7 @@ Les unités abrégées couvrent les échelles françaises jusqu’à 10^81. Au-d
 
 Les notifications affichent leur texte dans un élément indépendant du masque de l’icône : nom du succès, du défi ou de la recette achetée. Les achats ordinaires de machines restent silencieux visuellement ; deux notifications au maximum s’affichent simultanément et les confirmations disparaissent après 3,3 secondes. Les cartes des machines affichent un point vert discret lorsqu’une recette de cet atelier est débloquée et payable. Prix et effets détaillés restent dans l’onglet Recettes.
 
-**Intendant des recettes** : achat unique de 1 500 poussières, à partir de huit renaissances, dans Cosmos. Propriété et état actif/pause sont conservés dans la sauvegarde chiffrée et lors des renaissances. Une fois actif, il achète les améliorations générales et les recettes d’ateliers déverrouillées, par prix croissant, au maximum trois par seconde visible. Il applique les mêmes seuils et paiements que les achats manuels. Il dépense uniquement les douceurs ; il n’achète ni machines, ni recherches à poussière et ne lance pas d’expéditions. Pas de simulation rétroactive d’achats pendant l’absence : il reprend au retour. Les nouveaux champs sont facultatifs pour les sauvegardes antérieures.
+**Intendant des recettes** : achat unique de 300 poussières, à partir de huit renaissances, dans Cosmos. Propriété et état actif/pause sont conservés dans la sauvegarde chiffrée et lors des renaissances. Une fois actif, il achète les améliorations générales et les recettes d’ateliers déverrouillées, par prix croissant, au maximum trois par seconde visible. Il applique les mêmes seuils et paiements que les achats manuels. Il dépense uniquement les douceurs ; il n’achète ni machines, ni recherches à poussière et ne lance pas d’expéditions. Pas de simulation rétroactive d’achats pendant l’absence : il reprend au retour. Les nouveaux champs sont facultatifs pour les sauvegardes antérieures.
 
 La nouvelle icône de lancement est fournie en PNG 192/512 px, version Android maskable et Apple 180 px. Le navigateur et le lanceur du téléphone décident quand réactualiser l’icône d’une installation existante ; leur mise à jour peut être différée. Les URL des nouvelles icônes sont versionnées pour permettre leur redécouverte. Le `manifest.id`, le périmètre, l’URL de lancement et les clés de sauvegarde restent stables pour préserver l’identité et les données de l’application.
 
@@ -98,3 +98,21 @@ Sept nouvelles apparences PNG transparentes et cohérentes, se succèdent aux ni
 Chaque apparence existe en 480 et 960 px. Le navigateur choisit une résolution avec srcset ; seule l’apparence courante est présente dans la scène. Au changement, la nouvelle image est décodée avant de remplacer la précédente, sans minuterie ni reconstruction à chaque actualisation des compteurs. Toutes les apparences sont incluses au cache hors ligne. Le manifeste de génération et le script d’import sont dans docs/generation-v17.json et scripts/import-planets.mjs.
 
 L’ancienne illustration reste archivée pour compatibilité, mais n’est plus affichée ni précachée. Ses deux satellites précoces ne convenaient pas à la progression visuelle. Les trois premières apparences n’ont aucun satellite ; ceux-ci apparaissent avec le royaume puis la civilisation cosmique.
+
+## Poussière et recherches 1.8
+
+Les recherches de base conservent leurs effets et leurs dix niveaux. Leur prix est désormais linéaire : 3n poussières pour Éclat cosmique (165 au total), 2n pour Toucher stellaire et Poches de temps (110 chacune), soit 385 au lieu de 7 161. L’Intendant coûte 300 au lieu de 1 500, toujours après huit renaissances.
+
+Trois nouvelles recherches manuelles et permanentes :
+
+| Recherche | Déblocage | Prix des trois niveaux | Effet total au maximum |
+| --- | --- | --- | --- |
+| Cartographie cosmique | 2 renaissances | 20 / 45 / 80 | Durées −10 %, −20 %, −25 % ; poussière par voyage identique |
+| Veille des comètes | 1 renaissance | 10 / 25 / 45 | 18 → 33 secondes de visibilité ; fréquence et gain identiques |
+| Cœur de Supernova | 4 renaissances | 20 / 45 / 80 | 30 → 45 secondes ; multiplicateur ×3 et cycle de recharge de 180 secondes conservés |
+
+Les nouveautés se révèlent une renaissance avant leur déblocage. Le budget complet des six recherches et de l’Intendant est de 1 055 poussières. Les trois voyages sont conservés. La Nébuleuse fournit au maximum 120 poussières/heure avec relance immédiate, contre 90 auparavant ; Cartographie rembourse théoriquement ses 145 poussières en 4 h 50 de voyages continus une fois maximisée. À activations parfaites, la Supernova maximale porte le facteur moyen de 4/3 à 3/2, soit +12,5 % relatif. Ces calculs sont des bornes de rendement, pas une promesse de durée totale de progression.
+
+Les anciennes parties sont migrées une seule fois via dustEconomy=2. La différence de prix des niveaux déjà achetés et les 1 200 poussières de différence pour un Intendant déjà possédé sont rendues au portefeuille. Le remboursement reste limité à la poussière déjà dépensée ; il ne change ni totalDust, ni le bonus permanent associé. Les nouveaux niveaux manquants sont initialisés à zéro. La version des enveloppes chiffrées, les clés et les identifiants existants ne changent pas.
+
+La durée d’une expédition est figée au lancement et sauvegardée : un achat de Cartographie ne modifie pas une expédition en cours. Les anciens voyages gardent leur durée et leur date de retour. La Supernova ne multiplie toujours pas les gains hors ligne. Aucune nouvelle musique n’est créée ou vendue dans cette version.

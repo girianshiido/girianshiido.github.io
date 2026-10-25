@@ -1,6 +1,6 @@
 {
   "name": "cosmo-pop",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
   "description": "Un empire de douceurs aux confins du cosmos. Jeu incrémental français en TypeScript.",

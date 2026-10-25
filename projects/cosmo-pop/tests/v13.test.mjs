@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as E from "../dist/js/engine.js";
 
-test("The permanent assistant requires eight rebirths and 1500 dust, charged once", () => {
+test("The permanent assistant requires eight rebirths and 300 dust, charged once", () => {
   const s = E.fresh();
   s.dust = s.totalDust = E.AUTOMATION.cost;
   assert.equal(E.buyAutomation(s), false);
@@ -52,7 +52,7 @@ test("Automation is bounded, pausable, cannot spend dust or purchase machines/re
   assert.equal(E.automateUpgrades(s).length, 3);
   assert.deepEqual(s.buildings, counts);
   assert.equal(s.dust, 2000);
-  assert.deepEqual(s.research, { radiance: 0, touch: 0, time: 0 });
+  assert.ok(Object.values(s.research).every(level => level === 0));
   assert.ok(s.sugar >= 0);
 });
 
