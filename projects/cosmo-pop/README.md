@@ -1,4 +1,4 @@
-# Cosmo Pop 1.5 — L’atelier des étoiles
+# Cosmo Pop 1.6 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -86,3 +86,7 @@ Le fichier compressé pèse 275 962 octets (environ 270 Kio). Cet atlas représe
 « La ronde des constellations » est une composition originale de 120 secondes, en 3/4 à 96 BPM, rendue avec FluidSynth et MuseScore General HQ. Seul le fichier Vorbis OGG (2 Mo) est distribué et joué. La boucle Web Audio conserve les résonances, sans silence ni fondu final. Un seul buffer musical est décodé à la première interaction lorsque la musique est activée ; il est partagé pendant la session (environ 44 Mio à 48 kHz). Aucun synthétiseur ni SoundFont n’est embarqué.
 
 Les options proposent un interrupteur et un volume musical indépendants des bruitages. Ces choix sont chiffrés avec la partie, conservés lors des renaissances et exportables. Les anciennes sauvegardes reçoivent un volume musical initial de 35 %. Le son démarre après une interaction, se suspend en arrière-plan et reprend à la même position. Les onglets secondaires restent silencieux. Le fichier musical est inclus dans le cache hors ligne ; un codec indisponible ne bloque jamais le jeu.
+
+## Évolutions de la planète 1.6
+
+20 niveaux visuels : nom, teinte et objectif de progression, sans multiplicateur économique ajouté. Les 13 niveaux historiques conservent leurs seuils pour préserver la progression des anciennes parties. Sept étapes supplémentaires jalonnent 10³⁴, 10⁴², 10⁵⁰, 10⁵⁸, 10⁶⁶, 10⁷⁴ et 10⁸² douceurs produites au total. Le niveau 20, « L’atelier de l’infini », est atteint à 10⁸², sans condition d’ateliers ni de durée. Les dépenses et les renaissances ne retirent aucun niveau, puisque la production totale reste acquise. Les statistiques indiquent le niveau actuel sur 20.

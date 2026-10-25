@@ -585,6 +585,13 @@ export const TIERS = [
     { name: "L’ère nébulaire", at: 1e19, color: "#aa9eea" },
     { name: "Dynastie galactique", at: 1e22, color: "#f4ce77" },
     { name: "Au-delà de l’horizon", at: 1e26, color: "#88bff3" },
+    { name: "Archipel des galaxies", at: 1e34, color: "#84d6c7" },
+    { name: "Symphonie des quasars", at: 1e42, color: "#cc9dec" },
+    { name: "Océan des possibles", at: 1e50, color: "#7fbce6" },
+    { name: "Jardin du multivers", at: 1e58, color: "#9bd5ac" },
+    { name: "Les tisseurs d’éternité", at: 1e66, color: "#e9b8d6" },
+    { name: "Aux portes de l’infini", at: 1e74, color: "#edc578" },
+    { name: "L’atelier de l’infini", at: 1e82, color: "#b8a2f0" },
 ];
 export function fresh(now = Date.now()) {
     return {
