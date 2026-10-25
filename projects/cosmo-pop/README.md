@@ -1,4 +1,4 @@
-# Cosmo Pop 1.8 — L’atelier des étoiles
+# Cosmo Pop 1.8.2 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -116,3 +116,11 @@ Les nouveautés se révèlent une renaissance avant leur déblocage. Le budget c
 Les anciennes parties sont migrées une seule fois via dustEconomy=2. La différence de prix des niveaux déjà achetés et les 1 200 poussières de différence pour un Intendant déjà possédé sont rendues au portefeuille. Le remboursement reste limité à la poussière déjà dépensée ; il ne change ni totalDust, ni le bonus permanent associé. Les nouveaux niveaux manquants sont initialisés à zéro. La version des enveloppes chiffrées, les clés et les identifiants existants ne changent pas.
 
 La durée d’une expédition est figée au lancement et sauvegardée : un achat de Cartographie ne modifie pas une expédition en cours. Les anciens voyages gardent leur durée et leur date de retour. La Supernova ne multiplie toujours pas les gains hors ligne. Aucune nouvelle musique n’est créée ou vendue dans cette version.
+
+## Taille stable sur navigateur intégré 1.8.1
+
+La variante compacte dépend désormais de la largeur (moins de 360 px), et non du franchissement de 620 px de hauteur. L’ouverture ou la fermeture des barres du navigateur ne modifie plus la taille de la planète ni les marges de sa scène à largeur constante. Les mouvements de flottement et de récolte sont conservés.
+
+## Son général 1.8.2
+
+Le bouton sonore de l’en-tête coupe simultanément musique et bruitages. Cette sourdine générale est chiffrée avec les réglages et conservée après renaissance. Elle préserve les interrupteurs individuels et les deux volumes, restaurés à la réactivation. Les options indiquent lorsque le son général est coupé et permettent de le réactiver.

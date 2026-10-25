@@ -67,3 +67,10 @@ test('Disabling music while it downloads prevents late playback; offline failure
   const offlineAudio = new AudioManager(); await offlineAudio.unlock(); await tick();
   assert.equal(Context.instances.at(-1).sources.length, 0);
 });
+
+test('Global mute persists through migration and prestige without altering individual audio preferences', () => {
+ const s=fresh();s.settings.muted=true;s.settings.music=true;s.settings.sound=false;s.settings.volume=.2;s.settings.musicVolume=.6;
+ const expected={...s.settings};earn(s,1e9);assert.ok(prestige(s,1000));
+ assert.deepEqual(parseSave(JSON.stringify(s),1000).settings,expected);
+ delete s.settings.muted;assert.equal(parseSave(JSON.stringify(s),1000).settings.muted,false);
+});

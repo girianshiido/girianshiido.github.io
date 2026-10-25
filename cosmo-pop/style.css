@@ -4333,7 +4333,8 @@ html[data-theme="minuit"] {
 html[data-theme="minuit"] .stage-label {
   color: #d1c1e6;
 }
-@media (max-width: 759px) and (max-height: 620px) {
+/* Stable compact layout: browser toolbars must not resize the planet while scrolling. */
+@media (max-width: 359px) {
   .scene > h2 {
     margin-top: 9px;
     font-size: 24px;

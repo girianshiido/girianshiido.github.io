@@ -604,7 +604,7 @@ export function fresh(now = Date.now()) {
         boostUntil: 0,
         boostReady: 0,
         savedAt: now,
-        settings: { sound: true, volume: 0.45, music: true, musicVolume: 0.35, motion: true, theme: "lavande" },
+        settings: { muted: false, sound: true, volume: 0.45, music: true, musicVolume: 0.35, motion: true, theme: "lavande" },
     };
 }
 const numberPrecise = new Intl.NumberFormat("fr-FR", {
@@ -1596,6 +1596,7 @@ export function parseSave(text, now = Date.now()) {
     if (x.settings && typeof x.settings === "object") {
         const o = x.settings;
         s.settings = {
+            muted: typeof o.muted === "boolean" ? o.muted : false,
             sound: typeof o.sound === "boolean" ? o.sound : true,
             music: typeof o.music === "boolean" ? o.music : true,
             musicVolume: typeof o.musicVolume === "number" && Number.isFinite(o.musicVolume)

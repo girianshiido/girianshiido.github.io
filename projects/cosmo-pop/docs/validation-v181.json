@@ -1,0 +1,33 @@
+{
+  "scenario": "Niveau 1, hauteur du navigateur variable, largeur constante",
+  "before": {
+    "375x600": 204,
+    "375x680": 290,
+    "320x600": 204,
+    "320x680": 251
+  },
+  "after": {
+    "375x600": 290,
+    "375x680": 290,
+    "320x600": 204,
+    "320x680": 204
+  },
+  "tests": 50,
+  "limitation": "Vérification dans Chrome avec cadres mobiles ; Messenger natif non testé.",
+  "audio": {
+    "muted": {
+      "effects": false,
+      "music": false,
+      "loop": false
+    },
+    "unmuted": {
+      "effects": true,
+      "music": true,
+      "loop": true
+    },
+    "retainedVolumes": [
+      0.45,
+      0.35
+    ]
+  }
+}

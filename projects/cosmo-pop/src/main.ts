@@ -150,26 +150,26 @@ function syncSettings(): void {
       minuit: "#171d35",
     }[state.settings.theme],
   );
-  audio.enabled = state.settings.sound;
+  audio.enabled = state.settings.sound && !state.settings.muted;
   audio.volume = state.settings.volume;
   audio.setActive(initialized && !readOnly && !document.hidden);
-  audio.setMusic(state.settings.music, state.settings.musicVolume);
+  audio.setMusic(state.settings.music && !state.settings.muted, state.settings.musicVolume);
   document.documentElement.dataset.motion = String(
     state.settings.motion && !reduced.matches,
   );
   const sound = $("#sound");
-  sound.innerHTML = icon(state.settings.sound ? "volume" : "mute");
+  sound.innerHTML = icon(state.settings.muted ? "mute" : "volume");
   sound.setAttribute(
     "aria-label",
-    state.settings.sound ? "Couper les bruitages" : "Activer les bruitages",
+    state.settings.muted ? "Réactiver tous les sons" : "Couper tous les sons",
   );
-  sound.setAttribute("aria-pressed", String(state.settings.sound));
+  sound.setAttribute("aria-pressed", String(!state.settings.muted));
 }
 function shell(): void {
   app.innerHTML = `
 <header class="site-header"><a class="brand" href="./" aria-label="Cosmo Pop, accueil"><img src="./icon-192-v13.png" alt="" width="42" height="42"><span>cosmo<span class="brand-pop">pop</span><small>L’ATELIER DES ÉTOILES</small></span></a>
 <nav class="desktop-nav" aria-label="Navigation principale">${navItems(false)}</nav>
-<div class="header-tools"><button id="app-control" class="icon-button" data-action="install" aria-label="Installer le jeu">${icon("download")}</button><span class="save-status" id="save-status">${icon("lock")} Chiffrée</span><button class="icon-button" id="sound" data-action="sound" aria-label="Couper les bruitages"></button><button class="icon-button" data-action="settings" aria-label="Réglages et sauvegarde">${icon("settings")}</button></div></header>
+<div class="header-tools"><button id="app-control" class="icon-button" data-action="install" aria-label="Installer le jeu">${icon("download")}</button><span class="save-status" id="save-status">${icon("lock")} Chiffrée</span><button class="icon-button" id="sound" data-action="sound" aria-label="Couper tous les sons"></button><button class="icon-button" data-action="settings" aria-label="Réglages et sauvegarde">${icon("settings")}</button></div></header>
 <main id="main" tabindex="-1"><div class="intro"><div><p class="eyebrow">UN PETIT POP. DES POSSIBILITÉS INFINIES.</p><h1>La tête dans les étoiles.<br class="mobile-break"> Les mains dans le sucre.</h1></div><span class="live-pill"><i></i> Votre univers prend vie</span></div>
 <section class="resources" aria-label="Vos ressources"><div class="resource primary"><span class="resource-icon">${icon("sugar")}</span><div><span class="resource-label">Vos douceurs</span><strong id="sugar">0</strong></div><span class="resource-extra">À savourer<br>sans modération.</span></div><div class="resource"><span class="resource-icon mint">${icon("bolt")}</span><div><span class="resource-label">Production</span><strong><span id="rate">0</span><small> / s</small></strong></div></div><div class="resource"><span class="resource-icon peach">${icon("star")}</span><div><span class="resource-label">Poussière d’étoile</span><strong id="dust">0</strong></div><button class="subtle-info" data-action="dust-info" aria-label="À quoi sert la poussière d’étoile ?">${icon("info")}</button></div></section>
 <div class="game-layout"><section class="planet-column" aria-label="Votre planète"><div class="scene"><div class="scene-heading"><span class="section-kicker">${icon("planet")} PLANÈTE <span id="planet-number">01</span></span><span class="stage-label" id="stage-label">Niveau 1</span></div><h2 id="planet-name">Pépite naissante</h2><p class="scene-subtitle" id="scene-subtitle">Les plus grands empires commencent tout petits.</p>
@@ -622,8 +622,8 @@ function help(): void {
 function settings(): void {
   dialog(
     "Votre petit univers",
-    `<div class="setting-row"><div><strong>Les petits bruitages</strong><p>Des notes douces, au format OGG.</p></div><button class="toggle ${state.settings.sound ? "on" : ""}" data-action="settings-sound" role="switch" aria-checked="${state.settings.sound}" aria-label="Bruitages"><i></i></button></div><label class="volume-control">Bruitages <input id="volume" type="range" min="0" max="100" value="${state.settings.volume * 100}" aria-label="Volume des bruitages"></label><div class="setting-row"><div><strong>La musique des étoiles</strong><p>La ronde des constellations · une valse en boucle.</p></div><button class="toggle ${state.settings.music ? "on" : ""}" data-action="music" role="switch" aria-checked="${state.settings.music}" aria-label="Musique"><i></i></button></div><label class="volume-control" for="music-volume">Musique <input id="music-volume" type="range" min="0" max="100" step="1" value="${Math.round(state.settings.musicVolume * 100)}" aria-label="Volume de la musique" aria-valuetext="${Math.round(state.settings.musicVolume * 100)} %"><output id="music-volume-value" for="music-volume">${Math.round(state.settings.musicVolume * 100)} %</output></label><div class="setting-row"><div><strong>Animations</strong><p>Respecte aussi les réglages de votre appareil.</p></div><button class="toggle ${state.settings.motion ? "on" : ""}" data-action="motion" role="switch" aria-checked="${state.settings.motion}" aria-label="Animations"><i></i></button></div>
-<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.8 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
+    `${state.settings.muted ? `<p class="modal-note">Le son général est coupé. <button class="text-button" data-action="sound">Réactiver musique et bruitages</button></p>` : ""}<div class="setting-row"><div><strong>Les petits bruitages</strong><p>Des notes douces, au format OGG.</p></div><button class="toggle ${state.settings.sound ? "on" : ""}" data-action="settings-sound" role="switch" aria-checked="${state.settings.sound}" aria-label="Bruitages"><i></i></button></div><label class="volume-control">Bruitages <input id="volume" type="range" min="0" max="100" value="${state.settings.volume * 100}" aria-label="Volume des bruitages"></label><div class="setting-row"><div><strong>La musique des étoiles</strong><p>La ronde des constellations · une valse en boucle.</p></div><button class="toggle ${state.settings.music ? "on" : ""}" data-action="music" role="switch" aria-checked="${state.settings.music}" aria-label="Musique"><i></i></button></div><label class="volume-control" for="music-volume">Musique <input id="music-volume" type="range" min="0" max="100" step="1" value="${Math.round(state.settings.musicVolume * 100)}" aria-label="Volume de la musique" aria-valuetext="${Math.round(state.settings.musicVolume * 100)} %"><output id="music-volume-value" for="music-volume">${Math.round(state.settings.musicVolume * 100)} %</output></label><div class="setting-row"><div><strong>Animations</strong><p>Respecte aussi les réglages de votre appareil.</p></div><button class="toggle ${state.settings.motion ? "on" : ""}" data-action="motion" role="switch" aria-checked="${state.settings.motion}" aria-label="Animations"><i></i></button></div>
+<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.8.2 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
   );
 }
 function stats(): void {
@@ -689,7 +689,14 @@ async function action(target: HTMLElement): Promise<void> {
     );
     return;
   }
-  if (act === "sound" || act === "settings-sound") {
+  if (act === "sound") {
+    state.settings.muted = !state.settings.muted;
+    syncSettings();
+    if (modal.open) settings();
+    queueSave();
+    return;
+  }
+  if (act === "settings-sound") {
     state.settings.sound = !state.settings.sound;
     syncSettings();
     if (act === "settings-sound") settings();

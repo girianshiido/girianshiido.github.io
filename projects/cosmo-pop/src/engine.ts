@@ -608,6 +608,7 @@ export interface State {
   boostReady: number;
   savedAt: number;
   settings: {
+    muted: boolean;
     sound: boolean;
     volume: number;
     music: boolean;
@@ -642,7 +643,7 @@ export function fresh(now = Date.now()): State {
     boostUntil: 0,
     boostReady: 0,
     savedAt: now,
-    settings: { sound: true, volume: 0.45, music: true, musicVolume: 0.35, motion: true, theme: "lavande" },
+    settings: { muted: false, sound: true, volume: 0.45, music: true, musicVolume: 0.35, motion: true, theme: "lavande" },
   };
 }
 const numberPrecise = new Intl.NumberFormat("fr-FR", {
@@ -1727,6 +1728,7 @@ export function parseSave(text: string, now = Date.now()): State {
   if (x.settings && typeof x.settings === "object") {
     const o = x.settings as Record<string, unknown>;
     s.settings = {
+      muted: typeof o.muted === "boolean" ? o.muted : false,
       sound: typeof o.sound === "boolean" ? o.sound : true,
       music: typeof o.music === "boolean" ? o.music : true,
       musicVolume:
