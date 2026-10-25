@@ -1,4 +1,4 @@
-# Cosmo Pop 1.6 — L’atelier des étoiles
+# Cosmo Pop 1.7 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -90,3 +90,11 @@ Les options proposent un interrupteur et un volume musical indépendants des bru
 ## Évolutions de la planète 1.6
 
 20 niveaux visuels : nom, teinte et objectif de progression, sans multiplicateur économique ajouté. Les 13 niveaux historiques conservent leurs seuils pour préserver la progression des anciennes parties. Sept étapes supplémentaires jalonnent 10³⁴, 10⁴², 10⁵⁰, 10⁵⁸, 10⁶⁶, 10⁷⁴ et 10⁸² douceurs produites au total. Le niveau 20, « L’atelier de l’infini », est atteint à 10⁸², sans condition d’ateliers ni de durée. Les dépenses et les renaissances ne retirent aucun niveau, puisque la production totale reste acquise. Les statistiques indiquent le niveau actuel sur 20.
+
+## Planète évolutive 1.7
+
+Sept nouvelles apparences PNG transparentes et cohérentes, se succèdent aux niveaux 1, 4, 7, 10, 13, 16 et 20 : pépite nue, première maison, village, royaume fleuri, capitale, cité galactique, citadelle de l’infini. Les niveaux économiques et leurs seuils restent inchangés. La production totale détermine l’apparence, qui est conservée après renaissance et restauration de sauvegarde.
+
+Chaque apparence existe en 480 et 960 px. Le navigateur choisit une résolution avec srcset ; seule l’apparence courante est présente dans la scène. Au changement, la nouvelle image est décodée avant de remplacer la précédente, sans minuterie ni reconstruction à chaque actualisation des compteurs. Toutes les apparences sont incluses au cache hors ligne. Le manifeste de génération et le script d’import sont dans docs/generation-v17.json et scripts/import-planets.mjs.
+
+L’ancienne illustration reste archivée pour compatibilité, mais n’est plus affichée ni précachée. Ses deux satellites précoces ne convenaient pas à la progression visuelle. Les trois premières apparences n’ont aucun satellite ; ceux-ci apparaissent avec le royaume puis la civilisation cosmique.

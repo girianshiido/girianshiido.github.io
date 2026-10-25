@@ -92,7 +92,7 @@ test("PNG artwork, native pinch zoom and non-selectable interface are included",
     main = await readFile("dist/js/main.js", "utf8");
   assert.ok(!html.includes(".svg"));
   assert.ok(!art.includes("<svg"));
-  assert.ok(art.includes("planet-960.png"));
+  assert.ok(art.includes("-960.png"));
   assert.ok(!html.includes("maximum-scale=1"));
   assert.ok(!html.includes("user-scalable=no"));
   assert.ok(!main.includes("gesturestart"));

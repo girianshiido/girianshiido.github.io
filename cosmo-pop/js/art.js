@@ -41,6 +41,24 @@ export function icon(name, cls = "") {
 export function workshopArt(id) {
     return `<img class="workshop-art" src="./images/workshops/${id}.png" width="384" height="384" alt="" draggable="false" decoding="async" loading="lazy">`;
 }
-export function planetArt() {
-    return '<img class="planet-art world-body" src="./images/planet-480.png" srcset="./images/planet-480.png 480w, ./images/planet-960.png 960w" sizes="(max-width:759px) 300px, 500px" width="960" height="960" alt="" draggable="false" decoding="async" fetchpriority="high">';
+/** Seven permanent appearances selected by the existing lifetime planet level. */
+export const PLANET_FORMS = [
+    { level: 1, name: "La petite pépite" },
+    { level: 4, name: "La première maison" },
+    { level: 7, name: "Le village gourmand" },
+    { level: 10, name: "Le royaume fleuri" },
+    { level: 13, name: "La capitale des étoiles" },
+    { level: 16, name: "La cité galactique" },
+    { level: 20, name: "La citadelle de l’infini" },
+];
+export function planetForm(level) {
+    let form = 0;
+    for (let i = 1; i < PLANET_FORMS.length; i++)
+        if (level >= PLANET_FORMS[i].level)
+            form = i;
+    return form;
+}
+export function planetArt(level = 1) {
+    const form = planetForm(level);
+    return `<img class="planet-art world-body" data-form="${form}" src="./images/planets/${form}-480.png" srcset="./images/planets/${form}-480.png 480w, ./images/planets/${form}-960.png 960w" sizes="(max-width:759px) 300px, 500px" width="960" height="960" alt="${PLANET_FORMS[form].name}" draggable="false" decoding="async" fetchpriority="high">`;
 }
