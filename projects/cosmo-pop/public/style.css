@@ -4593,3 +4593,41 @@ input, textarea, [contenteditable="true"] {
   -webkit-user-select: text;
   -webkit-touch-callout: default;
 }
+
+/* Keep navigation outside the scrolling/composited document on mobile.
+   No fixed-position layer to drift when browser toolbars expand or collapse. */
+@media (max-width: 759px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+  #app {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .game-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    scroll-padding-block: 12px;
+  }
+  #main {
+    padding-bottom: 24px;
+  }
+  .mobile-nav {
+    position: relative;
+    flex: 0 0 auto;
+    bottom: auto;
+    width: 100%;
+    background: var(--paper);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+}

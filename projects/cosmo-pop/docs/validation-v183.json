@@ -1,0 +1,40 @@
+{
+  "version": "1.8.3",
+  "tests": {
+    "pass": 50,
+    "fail": 0
+  },
+  "browser": "Cloud Chrome, same-origin frame viewports; actual application shell, isolated fresh state and disabled persistence/service worker",
+  "viewports": [
+    [
+      320,
+      568
+    ],
+    [
+      375,
+      568
+    ],
+    [
+      320,
+      680
+    ],
+    [
+      375,
+      680
+    ],
+    [
+      700,
+      340
+    ]
+  ],
+  "checks": [
+    "Navigation bottom equals viewport height before and after scrolling",
+    "Scrollable content bottom equals navigation top",
+    "No horizontal document overflow",
+    "Switching to Voyages resets internal scroll to zero",
+    "Last workshop and footer remain reachable above navigation",
+    "Desktop layout inspected at full browser width"
+  ],
+  "native_phone_verified": false,
+  "limitation": "Safari/Messenger browser toolbar and pinch gestures require a real device; not simulated by iframe resizing."
+}

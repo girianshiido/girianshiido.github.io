@@ -1,4 +1,4 @@
-# Cosmo Pop 1.8.2 — L’atelier des étoiles
+# Cosmo Pop 1.8.3 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -124,3 +124,7 @@ La variante compacte dépend désormais de la largeur (moins de 360 px), et non 
 ## Son général 1.8.2
 
 Le bouton sonore de l’en-tête coupe simultanément musique et bruitages. Cette sourdine générale est chiffrée avec les réglages et conservée après renaissance. Elle préserve les interrupteurs individuels et les deux volumes, restaurés à la réactivation. Les options indiquent lorsque le son général est coupé et permettent de le réactiver.
+
+## Navigation mobile 1.8.3
+
+Sur écran inférieur à 760 px, le cadre du jeu occupe la hauteur dynamique disponible (`100dvh`, repli `100vh`). Seul `#game-scroll` défile ; la navigation est une rangée séparée, sans positionnement fixe ni filtre de fond. La barre reste ainsi hors du contenu défilant, avec une marge pour la zone sûre iOS. Le changement de rubrique remet le conteneur interne en haut. Le zoom par pincement reste autorisé ; aucune boucle JavaScript de repositionnement. À vérifier sur téléphone réel pour les particularités des navigateurs intégrés.
