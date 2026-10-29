@@ -78,7 +78,7 @@ export const BUILDINGS = [
     name: "Forge de météores",
     plural: "Forges",
     desc: "Des recettes qui résistent au vide.",
-    cost: 200000000.0,
+    cost: 600000000,
     rate: 8000,
     color: "peach",
     icon: "comet",
@@ -518,9 +518,11 @@ export const UPGRADES = [
   },
 ] as const;
 export const RESEARCH = [
-  { id: "radiance", name: "Éclat cosmique", desc: "+20 % de production par niveau.", costs: Array.from({length:10}, (_,i)=>3*(i+1)), gate: 0, icon: "sun" },
-  { id: "touch", name: "Toucher stellaire", desc: "+50 % par récolte par niveau.", costs: Array.from({length:10}, (_,i)=>2*(i+1)), gate: 0, icon: "hand" },
-  { id: "time", name: "Poches de temps", desc: "+2 h de gains hors ligne par niveau.", costs: Array.from({length:10}, (_,i)=>2*(i+1)), gate: 0, icon: "clock" },
+  { id: "radiance", name: "Éclat cosmique", desc: "+20 % de production par niveau.", costs: Array.from({length:12}, (_,i)=>3*(i+1)), gate: 0, icon: "sun" },
+  { id: "touch", name: "Toucher stellaire", desc: "+50 % par récolte par niveau.", costs: Array.from({length:12}, (_,i)=>2*(i+1)), gate: 0, icon: "hand" },
+  { id: "time", name: "Poches de temps", desc: "+2 h de gains hors ligne par niveau.", costs: Array.from({length:12}, (_,i)=>2*(i+1)), gate: 0, icon: "clock" },
+  { id: "rhythm", name: "Cadence stellaire", desc: "Plafond du combo : ×4, ×8, puis ×16. Montée progressive : 75, 175, puis 375 clics enchaînés pour atteindre le maximum. Intervalle maximal inchangé : 1,2 s entre deux clics.", costs: [20,50,100], gate: 1, icon: "chart" },
+  { id: "catalogue", name: "Catalogue des recettes", desc: "Débloque le bouton « Acheter tout » dans Recettes : achat groupé des recettes débloquées et abordables, des moins chères aux plus coûteuses.", costs: [60], gate: 2, icon: "book" },
   { id: "navigation", name: "Cartographie cosmique", desc: "Voyages plus rapides : −10 %, −20 %, puis −25 % au total. Récompenses inchangées.", costs: [20,45,80], gate: 2, icon: "orbit" },
   { id: "comets", name: "Veille des comètes", desc: "+5 s pour attraper les comètes par niveau, jusqu’à 33 s. Leur fréquence et leurs récompenses restent identiques.", costs: [10,25,45], gate: 1, icon: "comet" },
   { id: "nova", name: "Cœur de Supernova", desc: "+5 s de Supernova par niveau, jusqu’à 45 s. Recharge inchangée : 3 min entre deux activations.", costs: [20,45,80], gate: 4, icon: "bolt" },
@@ -651,7 +653,7 @@ export function fresh(now = Date.now()): State {
     milestones: [],
     legacyMilestones: [],
     totalMilestones: 0,
-    research: { radiance: 0, touch: 0, time: 0, navigation: 0, comets: 0, nova: 0 },
+    research: { radiance: 0, touch: 0, time: 0, rhythm: 0, catalogue: 0, navigation: 0, comets: 0, nova: 0 },
     automation: { owned: false, enabled: false },
     achievements: [],
     mission: 0,
@@ -917,8 +919,13 @@ export function production(s: State, now = 0): number {
     now > 0 && now < s.boostUntil ? 3 : 1,
   );
 }
+/** Each 25 uninterrupted clicks unlocks one additional multiplier step. */
+export const comboMaximum = (s: State): number => 2 ** (1 + s.research.rhythm);
+export const comboLimit = (s: State): number => 25 * (comboMaximum(s) - 1);
+export const comboMultiplier = (s: State, combo = 0): number =>
+  1 + Math.min(comboLimit(s), Math.max(0, Number.isFinite(combo) ? combo : 0)) / 25;
 export function tapValue(s: State, combo = 0, now = Date.now()): number {
-  return safeProduct(now > 0 && now < s.voyages.tapUntil ? 1.5 : 1, Math.min(
+  return safeProduct(comboMultiplier(s, combo), now > 0 && now < s.voyages.tapUntil ? 1.5 : 1, Math.min(
     LIMIT,
     safeProduct(
       1 + s.research.touch * 0.5,
@@ -926,7 +933,6 @@ export function tapValue(s: State, combo = 0, now = Date.now()): number {
       s.upgrades.includes("spoon") ? 3 : 1,
       s.upgrades.includes("sugar") ? 5 : 1,
       1 + s.totalDust * 0.02,
-      1 + Math.min(25, combo) / 25,
     ) + (s.upgrades.includes("echo") ? production(s) * 0.05 : 0),
   ));
 }
@@ -1020,9 +1026,8 @@ export function buyAutomation(s: State): boolean {
   s.automation = { owned: true, enabled: true };
   return true;
 }
-/** Bounded work per second; cheapest eligible recipes first, using normal purchase rules. */
-export function automateUpgrades(s: State): string[] {
-  if (!s.automation.owned || !s.automation.enabled) return [];
+/** One catalogue pass: normal eligibility and payment rules, cheapest recipes first. */
+function purchaseRecipes(s: State, limit: number): string[] {
   const candidates = [
     ...UPGRADES.filter(
       (u) =>
@@ -1042,10 +1047,22 @@ export function automateUpgrades(s: State): string[] {
   ].sort((a, b) => a.price - b.price);
   const purchased: string[] = [];
   for (const item of candidates) {
-    if (purchased.length >= 3 || item.price > s.sugar) break;
+    if (purchased.length >= limit || item.price > s.sugar) break;
     if (item.buy()) purchased.push(item.name);
   }
   return purchased;
+}
+/** Continuous assistant is still limited to three purchases per second. */
+export function automateUpgrades(s: State): string[] {
+  return s.automation.owned && s.automation.enabled ? purchaseRecipes(s, 3) : [];
+}
+export function availableRecipes(s: State): boolean {
+  return UPGRADES.some(u => !s.upgrades.includes(u.id) && s.prestiges >= upgradeGate(u.id) && s.total >= u.unlock && s.sugar >= u.cost)
+    || MILESTONES.some(m => milestoneReady(s, m) && s.sugar >= m.price);
+}
+/** Explicit manual purchase, never workshops, dust research or undiscovered recipes. */
+export function buyAllRecipes(s: State): string[] {
+  return s.research.catalogue > 0 ? purchaseRecipes(s, UPGRADES.length + MILESTONES.length) : [];
 }
 export const voyageDuration = (s: State, id: number): number =>
   Math.round((DESTINATIONS[id]?.duration ?? 0) * [1,0.9,0.8,0.75][s.research.navigation]!);
@@ -1762,6 +1779,7 @@ export function parseSave(text: string, now = Date.now()): State {
     let refund = s.automation.owned ? 1200 : 0;
     for (const [id, base] of [["radiance",3],["touch",2],["time",2]] as const) {
       const level = s.research[id];
+      if (level > 10) throw Error("Niveau de recherche historique invalide.");
       refund += base * (2 ** level - 1 - level * (level + 1) / 2);
     }
     s.dust += Math.min(refund, Math.max(0, s.totalDust - s.dust));

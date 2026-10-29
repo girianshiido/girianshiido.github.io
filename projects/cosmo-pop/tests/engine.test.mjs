@@ -100,7 +100,7 @@ test("Save parser rejects tampered economy, huge payloads and unknown schemas", 
     { sugar: -1 },
     { sugar: 10 },
     { buildings: [1.2, 0, 0, 0, 0, 0] },
-    { research: { radiance: 11, touch: 0, time: 0 } },
+    { research: { radiance: 13, touch: 0, time: 0 } },
     { expedition: { id: 5, ends: 10 } },
   ])
     assert.throws(() => E.parseSave(JSON.stringify({ ...s, ...override })));

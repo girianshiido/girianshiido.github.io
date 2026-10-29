@@ -4576,6 +4576,18 @@ html[data-theme="minuit"] .stage-label {
 
 .badge { white-space: nowrap; }
 
+.bulk-recipes {
+  background: var(--lavender);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 20px;
+}
+.bulk-recipes button { min-height: 46px; }
+.bulk-recipes p { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+.bulk-recipes #bulk-recipe-feedback { color: var(--purple-dark); font-weight: 700; }
+.bulk-recipes #bulk-recipe-feedback:empty { display: none; }
+
 .volume-control output {
   min-width: 3.5em;
   text-align: right;

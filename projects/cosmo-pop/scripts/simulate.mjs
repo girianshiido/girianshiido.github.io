@@ -8,7 +8,7 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
     E.earn(s, E.production(s, now));
     for (let i = 0; i < tapsPerSecond; i++) {
       seed = (seed * 1664525 + 1013904223) >>> 0;
-      E.tap(s, 25, seed / 2 ** 32, now);
+      E.tap(s, E.comboLimit(s), seed / 2 ** 32, now);
     }
     E.finishExpedition(s, now);
     if (s.voyages.reward !== null) E.claimVoyageBonus(s, now, 0);
@@ -30,14 +30,14 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
     }
     // Greedy return-on-investment strategy, including saving for a better purchase.
     for (let purchase = 0; purchase < 30; purchase++) {
-      const base = E.production(s) + tapsPerSecond * E.tapValue(s, 25, now),
+      const base = E.production(s) + tapsPerSecond * E.tapValue(s, E.comboLimit(s), now),
         options = [];
       for (let i = 0; i < E.BUILDINGS.length; i++)
         if (s.prestiges >= E.buildingGate(i)) {
           const c = E.cost(s, i);
           s.buildings[i]++;
           const delta =
-            E.production(s) + tapsPerSecond * E.tapValue(s, 25, now) - base;
+            E.production(s) + tapsPerSecond * E.tapValue(s, E.comboLimit(s), now) - base;
           s.buildings[i]--;
           if (delta > 0) options.push({ score: c / delta, c, building: i });
         }
@@ -49,7 +49,7 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
         ) {
           s.upgrades.push(u.id);
           const delta =
-            E.production(s) + tapsPerSecond * E.tapValue(s, 25, now) - base;
+            E.production(s) + tapsPerSecond * E.tapValue(s, E.comboLimit(s), now) - base;
           s.upgrades.pop();
           if (delta > 0)
             options.push({ score: u.cost / delta, c: u.cost, upgrade: u.id });
@@ -58,7 +58,7 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
         if (E.milestoneReady(s, m)) {
           s.milestones.push(m.id);
           const delta =
-            E.production(s) + tapsPerSecond * E.tapValue(s, 25, now) - base;
+            E.production(s) + tapsPerSecond * E.tapValue(s, E.comboLimit(s), now) - base;
           s.milestones.pop();
           if (delta > 0)
             options.push({

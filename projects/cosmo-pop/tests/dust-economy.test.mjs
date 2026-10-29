@@ -2,20 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as E from '../dist/js/engine.js';
 
-test('The complete dust budget is 1055, with no increase in earned-dust multipliers', () => {
+test('The complete dust budget is 1446, with no increase in earned-dust multipliers', () => {
   const s=E.fresh(1000);s.dust=s.totalDust=2000;s.prestiges=8;
   const multiplier=E.globalMultiplier(s);
   const costs=Object.fromEntries(E.RESEARCH.map(r=>[r.id,r.costs.reduce((a,b)=>a+b,0)]));
-  assert.deepEqual(costs,{radiance:165,touch:110,time:110,navigation:145,comets:80,nova:145});
+  assert.deepEqual(costs,{radiance:234,touch:156,time:156,rhythm:170,catalogue:60,navigation:145,comets:80,nova:145});
   for(const r of E.RESEARCH) {
     while(E.buyResearch(s,r.id)) {}
     assert.equal(s.research[r.id],r.costs.length);
     assert.equal(E.buyResearch(s,r.id),false);
     assert.equal(E.researchCost(s,r.id),Infinity);
   }
-  assert.ok(E.buyAutomation(s));assert.equal(s.dust,945);assert.equal(s.totalDust,2000);
+  assert.ok(E.buyAutomation(s));assert.equal(s.dust,554);assert.equal(s.totalDust,2000);
   // Only the pre-existing radiance research affects passive production directly.
-  assert.equal(E.globalMultiplier(s),multiplier*3);
+  assert.equal(E.globalMultiplier(s),multiplier*3.4);
 });
 
 test('New research obeys progression gates, exact payments, caps and permanent ownership', () => {

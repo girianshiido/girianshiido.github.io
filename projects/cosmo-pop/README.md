@@ -1,4 +1,4 @@
-# Cosmo Pop 1.9.0 — L’atelier des étoiles
+# Cosmo Pop 1.9.1 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -141,3 +141,16 @@ La poussière est créditée automatiquement au retour, une seule fois. Les avan
 Les avantages, bons, retours non récupérés et surcharges disparaissent à la renaissance ; les recherches restent permanentes. Les anciennes sauvegardes ajoutent ces champs sans frais rétroactifs, sans modifier les échéances des voyages déjà lancés. Le schéma de sauvegarde chiffrée reste compatible. Un rappel volontaire libère l’équipage sans remboursement des frais, sans récompense et sans compter un voyage terminé, pour ne pas bloquer une renaissance pendant deux heures.
 
 Les rendements de poussière théoriques, à relance immédiate et avant Cartographie, sont 60 / 80 / 90 / 80 / 60 par heure. Les routes longues échangent une partie du rendement contre des avantages ou moins de relances. Le jeu ne relance pas automatiquement les voyages pendant les absences.
+
+
+## Recherches et achats groupés 1.9.1
+
+Éclat cosmique, Toucher stellaire et Poches de temps passent de 10 à 12 niveaux. Les dix premiers prix restent inchangés ; les niveaux 11/12 coûtent 33/36 poussières pour Éclat, 22/24 pour Toucher et Poches. Les plafonds sont +240 % de production (×3,4), +600 % au clic fixe (×7) et 32 h de gains hors ligne (base 8 h + 24 h). Les niveaux déjà achetés sont conservés, sans achat automatique des nouveaux rangs.
+
+Cadence stellaire est une recherche permanente en trois niveaux, visible dès le début et achetable après une renaissance, pour 20/50/100 poussières. Le plafond du combo passe de ×2 à ×4, ×8, puis ×16. La pente reste +0,04 par clic enchaîné, avec un intervalle inférieur à 1,2 s ; les plafonds sont atteints à 25/75/175/375 points de combo. La jauge, l'affichage et le calcul partagent les mêmes fonctions de plafond. Le premier clic après une pause démarre à zéro comme auparavant. Le combo multiplie désormais toute la récompense manuelle, Echo compris ; cela corrige son inutilité sur la composante Echo en fin de partie. Aucun effet sur les comètes, la production passive ou les gains hors ligne. Le bonus lunaire s'applique ensuite au clic complet. La limite anti-rebond de 45 ms par récolte reste inchangée.
+
+Catalogue des recettes est un achat permanent unique de 60 poussières après deux renaissances, annoncé dans Cosmos une renaissance avant son accès. Il fait apparaître Acheter tout dans le menu Recettes. Ce bouton achète en une passe bornée les recettes générales et d'ateliers éligibles et abordables, de la moins chère à la plus chère. Il respecte les seuils et gates, ne dépense pas de poussière et n'achète pas de machines ou recherches. Un seul message résume le nombre acquis et les douceurs dépensées ; le bouton est désactivé si aucune recette n'est abordable. L'Intendant conserve son fonctionnement continu limité à trois recettes par seconde ; aucun double achat entre les deux mécanismes.
+
+Les nouvelles recherches se conservent dans les sauvegardes chiffrées et à la renaissance ; les champs manquants des anciennes sauvegardes sont ajoutés au niveau zéro. Le budget total de toutes les recherches et de l'Intendant devient 1446 poussières (546 pour les trois recherches de base, 170 pour Cadence, 60 pour Catalogue, 370 pour les trois recherches spécialisées et 300 pour l'Intendant).
+
+Correction de la progression des prix de base : Soleil confiseur 240 millions, Forge de météores 600 millions (au lieu de 200 millions). Toutes les machines ont un prix de départ strictement croissant ; leurs exemplaires possédés et la réserve restent conservés. Les prix des prochaines unités continuent à dépendre de la quantité possédée et des bons éventuels.

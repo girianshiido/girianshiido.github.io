@@ -1,0 +1,54 @@
+{
+  "version": "1.9.1",
+  "tests": {
+    "pass": 71,
+    "fail": 0
+  },
+  "browser": "Cloud Chrome; real application modules in isolated QA frames, persistence and service worker bypassed",
+  "viewports": [
+    [
+      320,
+      740
+    ],
+    [
+      600,
+      740
+    ]
+  ],
+  "checks": [
+    "Purchased ranks 11 and 12 for radiance, touch and time; MAX at 12/12",
+    "Purchased Cadence at 20, 50 and 100 dust; MAX at 3/3",
+    "Fixture seeded combo just below its maximum; actual final tap handler displayed x16; frame loop reset x1 after interruption",
+    "New combo cap visible as max. x16; full manual gain including Echo multiplied",
+    "Purchased Catalogue at 60 dust after two rebirths; Acheter tout appeared in Recettes",
+    "One Acheter tout click purchased 15 eligible recipes, displayed total spending, then disabled the button",
+    "No horizontal overflow; navigation remains at viewport bottom at 320 and 600 px",
+    "Encrypted saves and prestige retain new ranks; legacy saves add new research at zero",
+    "All workshop base prices strictly increasing; Soleil 240 million, Forge 600 million"
+  ],
+  "native_device_verified": false,
+  "economy": {
+    "basic_research_caps": 12,
+    "offline_cap_hours": 32,
+    "cadence_costs": [
+      20,
+      50,
+      100
+    ],
+    "combo_maxima": [
+      2,
+      4,
+      8,
+      16
+    ],
+    "combo_point_caps": [
+      25,
+      75,
+      175,
+      375
+    ],
+    "catalogue_cost": 60,
+    "catalogue_gate": 2,
+    "total_permanent_dust_budget": 1446
+  }
+}

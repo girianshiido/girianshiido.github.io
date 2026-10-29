@@ -13,6 +13,9 @@ import {
   cost,
   production,
   tapValue,
+  comboLimit,
+  comboMaximum,
+  comboMultiplier,
   tap,
   quote,
   buyBuilding,
@@ -49,6 +52,8 @@ import {
   AUTOMATION,
   buyAutomation,
   automateUpgrades,
+  availableRecipes,
+  buyAllRecipes,
 } from "./engine.js";
 import type { State, ResearchId } from "./engine.js";
 import { Storage, exportEncrypted, importEncrypted } from "./storage.js";
@@ -257,7 +262,7 @@ function renderShop(): void {
      ? `<div class="shop-toolbar"><span>Un peu d’aide pour voir grand.</span><div class="quantity" role="group" aria-label="Quantité à acheter">${[1, 10, "max"].map((q) => `<button data-quantity="${q}" aria-pressed="${quantity === q}" class="${quantity === q ? "active" : ""}">${q === "max" ? "Max" : "×" + q}</button>`).join("")}</div></div>
  <div class="chapter-tabs" role="group" aria-label="Chapitres de l’atelier">${CHAPTERS.map((name, i) => `<button data-family="${i}" aria-pressed="${family === i}" title="${name}" class="${family === i ? "active" : ""}">${i + 1}</button>`).join("")}</div><p class="chapter-description"><strong>${CHAPTERS[family]}</strong> · synergie : +${fmt(synergy(state, family) * 100)} %.<br>10 de chaque machine : +5 % de production globale, jusqu’à +25 %.</p>
  <div class="machine-list">${BUILDINGS.map((b, i) => (Math.floor(i / 6) === family ? `<article class="machine" id="machine-${i}"><div class="machine-icon artwork">${workshopArt(i)}<i class="machine-ready" id="machine-ready-${i}" hidden aria-hidden="true"></i></div><div class="machine-body"><div class="machine-title"><h3>${b.name}</h3><span class="owned" id="owned-${i}">0</span></div><p>${b.desc}</p><div class="machine-meta"><span>${icon("bolt")} <b id="machine-rate-${i}">0</b> / s</span><span class="milestone" id="milestone-${i}"></span></div></div><button class="buy-button" data-buy="${i}" id="buy-${i}" disabled><span>${icon("sugar")} <b id="price-${i}">${fmt(b.cost)}</b></span><small id="buy-label-${i}">Recruter</small></button></article>` : "")).join("")}</div><div class="shop-tip">${icon("book")}<p>Les paliers débloquent des <strong>recettes à acheter</strong>. Les effets varient selon l’atelier ; certaines découvertes redonnent un rôle aux premiers marmitons.</p></div>`
-     : `<p class="panel-description">Les découvertes apparaissent quand vous vous en approchez. Une recette de palier s’achète avec des douceurs et agit sur son atelier jusqu’à la prochaine renaissance.</p>
+     : `${state.research.catalogue ? `<div class="bulk-recipes"><button class="primary-button full" id="buy-all-recipes" data-action="buy-all-recipes">${icon("book")} Acheter tout</button><p>Recettes débloquées et abordables, des moins chères aux plus coûteuses.</p><p id="bulk-recipe-feedback" role="status"></p></div>` : state.prestiges >= 1 ? `<p class="panel-description">Le Catalogue des recettes, dans Cosmos, débloque le bouton « Acheter tout ».</p>` : ""}<p class="panel-description">Les découvertes apparaissent quand vous vous en approchez. Une recette de palier s’achète avec des douceurs et agit sur son atelier jusqu’à la prochaine renaissance.</p>
  ${ideas.length ? '<h3 class="subheading">Les nouvelles idées</h3>' : ""}<div class="upgrade-list">${ideas.map((u) => `<article class="upgrade-card" id="upgrade-${u.id}"><span class="machine-icon violet">${icon(u.icon)}</span><div><h3>${u.name}</h3><p>${u.desc}</p><small class="unlock-hint" id="unlock-${u.id}"></small></div><button class="buy-button" data-upgrade="${u.id}" id="upgrade-buy-${u.id}"><span>${icon("sugar")}${fmt(u.cost)}</span><small>Améliorer</small></button></article>`).join("")}</div>
  ${recipes.length ? '<h3 class="subheading">Le savoir-faire des ateliers</h3>' : ""}<div class="upgrade-list">${recipes.map((m) => `<article class="upgrade-card ${m.revival ? "revival-card" : ""}"><span class="machine-icon artwork">${workshopArt(m.building)}</span><div><h3>${m.name}</h3><p>${BUILDINGS[m.building]!.name} · production × ${fmt(m.multiplier)}</p><small class="unlock-hint">${m.at} exemplaires${m.unlock ? " · " + fmt(m.unlock) + " produites" : ""}${m.revival ? " · bonus limité à " + fmt(m.cap) + "/s avant bonus globaux" : ""}</small></div><button class="buy-button" data-milestone="${m.id}" id="milestone-buy-${m.id}"><span>${icon("sugar")}${fmt(m.price)}</span><small>Acheter</small></button></article>`).join("")}</div>
  ${!ideas.length && !recipes.length ? `<div class="empty-discovery">${icon("spark")}<h3>Une idée est en train de germer…</h3><p>Développez vos ateliers pour découvrir les prochaines recettes.</p></div>` : ""}
@@ -300,7 +305,7 @@ function automationCard(): string {
 }
 function renderCosmos(): void {
   $("#panel").innerHTML =
-    `<div class="panel-heading"><div><span class="eyebrow">PLUS LOIN, PLUS LONGTEMPS</span><h2>Votre constellation<span class="title-dot">.</span></h2></div><span class="badge peach">${icon("star")} ${fmt(state.dust)}</span></div><div class="cosmos-summary"><span>Bonus permanent de poussière</span><strong>+${fmt(state.totalDust * 2)} %</strong><p>Chaque étoile compte. Même celles déjà dépensées.</p></div><h3 class="subheading">Les recherches permanentes</h3><div class="research-list">${RESEARCH.filter((r) => state.prestiges >= Math.max(0, r.gate - 1)).map((r) => `<article class="research-card"><span class="machine-icon ${r.id === "radiance" ? "yellow" : r.id === "touch" ? "pink" : "mint"}">${icon(r.icon)}</span><div><h3>${r.name}<small>Niv. ${state.research[r.id]} / ${r.costs.length}</small></h3><p>${r.desc}</p>${state.prestiges < r.gate ? `<small class="unlock-hint">À partir de ${r.gate} renaissances</small>` : ""}</div><button data-research="${r.id}" class="buy-button" id="research-${r.id}"><span>${icon("star")} ${state.research[r.id] >= r.costs.length ? "MAX" : researchCost(state, r.id)}</span><small>Rechercher</small></button></article>`).join("")}</div>${automationCard()}<section class="prestige-card"><p>Prochaine étape : ${BUILDINGS.find((_, i) => buildingGate(i) > state.prestiges)?.name ?? "Maîtrise de toutes les machines"}. Seuil : ${fmt(prestigeTarget(state))} douceurs dans cette vie.</p><span class="prestige-visual">${icon("orbit")}</span><h3>Une planète. Un nouveau départ.</h3><p>Recommencez avec une pluie de poussière d’étoile. Vos recherches, succès et bonus permanents vous accompagnent.</p><button class="primary-button" data-action="prestige" id="prestige">${icon("spark")} Renaître <span id="prestige-gain"></span></button><small id="prestige-hint"></small></section><div class="subheading achievement-heading"><h3>Vos petits exploits</h3><span id="achievement-count">0 / ${ACHIEVEMENTS.length}</span></div><p class="achievement-hint">Chaque succès débloqué ajoute +2 % de production.</p><div class="achievement-grid">${ACHIEVEMENTS.map((a) => `<div class="achievement ${state.achievements.includes(a.id) ? "earned" : ""}" id="achievement-${a.id}" title="${a.desc}">${icon(a.icon)}<strong>${a.name}</strong><span>${a.desc}</span></div>`).join("")}</div><button class="text-button" data-action="stats">${icon("chart")} Voir les statistiques</button>`;
+    `<div class="panel-heading"><div><span class="eyebrow">PLUS LOIN, PLUS LONGTEMPS</span><h2>Votre constellation<span class="title-dot">.</span></h2></div><span class="badge peach">${icon("star")} ${fmt(state.dust)}</span></div><div class="cosmos-summary"><span>Bonus permanent de poussière</span><strong>+${fmt(state.totalDust * 2)} %</strong><p>Chaque étoile compte. Même celles déjà dépensées.</p></div><h3 class="subheading">Les recherches permanentes</h3><div class="research-list">${RESEARCH.filter((r) => state.prestiges >= Math.max(0, r.gate - 1)).map((r) => `<article class="research-card"><span class="machine-icon ${r.id === "radiance" ? "yellow" : r.id === "touch" ? "pink" : "mint"}">${icon(r.icon)}</span><div><h3>${r.name}<small>${r.costs.length === 1 ? state.research[r.id] ? "Acquis · permanent" : "Achat unique · permanent" : `Niv. ${state.research[r.id]} / ${r.costs.length}`}</small></h3><p>${r.desc}</p>${state.prestiges < r.gate ? `<small class="unlock-hint">À partir de ${r.gate} renaissances</small>` : ""}</div><button data-research="${r.id}" class="buy-button" id="research-${r.id}"><span>${icon("star")} ${state.research[r.id] >= r.costs.length ? r.costs.length === 1 ? "Acquis" : "MAX" : researchCost(state, r.id)}</span><small>${r.costs.length === 1 ? state.research[r.id] ? "Permanent" : "Débloquer" : "Rechercher"}</small></button></article>`).join("")}</div>${automationCard()}<section class="prestige-card"><p>Prochaine étape : ${BUILDINGS.find((_, i) => buildingGate(i) > state.prestiges)?.name ?? "Maîtrise de toutes les machines"}. Seuil : ${fmt(prestigeTarget(state))} douceurs dans cette vie.</p><span class="prestige-visual">${icon("orbit")}</span><h3>Une planète. Un nouveau départ.</h3><p>Recommencez avec une pluie de poussière d’étoile. Vos recherches, succès et bonus permanents vous accompagnent.</p><button class="primary-button" data-action="prestige" id="prestige">${icon("spark")} Renaître <span id="prestige-gain"></span></button><small id="prestige-hint"></small></section><div class="subheading achievement-heading"><h3>Vos petits exploits</h3><span id="achievement-count">0 / ${ACHIEVEMENTS.length}</span></div><p class="achievement-hint">Chaque succès débloqué ajoute +2 % de production.</p><div class="achievement-grid">${ACHIEVEMENTS.map((a) => `<div class="achievement ${state.achievements.includes(a.id) ? "earned" : ""}" id="achievement-${a.id}" title="${a.desc}">${icon(a.icon)}<strong>${a.name}</strong><span>${a.desc}</span></div>`).join("")}</div><button class="text-button" data-action="stats">${icon("chart")} Voir les statistiques</button>`;
 }
 let pendingPlanetForm = -1;
 let planetRetryAt = 0;
@@ -352,15 +357,14 @@ function paint(now: number): void {
   $("#tap-value").textContent =
     "+" + fmt(tapValue(state, combo, now)) + " par récolte";
   const comboPercent =
-    Math.min(100, (combo / 25) * 100) * (now - lastTap < 1200 ? 1 : 0);
+    Math.min(100, (combo / comboLimit(state)) * 100) * (now - lastTap < 1200 ? 1 : 0);
   $("#combo-bar").style.width = comboPercent + "%";
-  $("#combo-value").textContent = "× " + fmt(1 + combo / 25);
+  $("#combo-value").textContent = "× " + fmt(comboMultiplier(state, combo));
   $("#combo-label").textContent =
-    combo >= 25
+    (combo >= comboLimit(state)
       ? "Vous êtes en orbite !"
-      : combo > 0
-        ? "Encore un petit pop…"
-        : "Trouvez votre rythme";
+      : combo > 0 ? "Encore un petit pop…" : "Trouvez votre rythme") +
+    ` · max. ×${comboMaximum(state)}`;
   const boosted = now < state.boostUntil;
   $("#boost-button").classList.toggle("boosting", boosted);
   $<HTMLButtonElement>("#boost-button").disabled =
@@ -448,6 +452,8 @@ function paint(now: number): void {
         $("#machine-" + i).classList.toggle("affordable", q.count > 0);
       });
     else {
+      const allRecipes = $<HTMLButtonElement>("#buy-all-recipes");
+      if (allRecipes) allRecipes.disabled = readOnly || !availableRecipes(state);
       UPGRADES.forEach((u) => {
         if (!$("#upgrade-buy-" + u.id)) return;
         const owned = state.upgrades.includes(u.id),
@@ -655,14 +661,14 @@ function frame(): void {
 function help(): void {
   dialog(
     "Bienvenue dans l’atelier",
-    `<div class="help-intro">${icon("planet")}<p>Une petite planète, des douceurs…<br>et tout un univers à inventer.</p></div><ol class="help-steps"><li><strong>Faites un petit pop.</strong><p>Touchez votre planète. Enchaînez les récoltes à moins de 1,2 seconde d’intervalle pour monter votre combo jusqu’à × 2.</p></li><li><strong>Laissez travailler les marmitons.</strong><p>Achetez des machines. Les paliers révèlent des recettes payantes : ×1,5, ×3 ou de grandes secondes jeunesses plus tardives. L’intendant des recettes pourra les acheter automatiquement plus tard, une fois sa recherche permanente acquise.</p></li><li><strong>Gardez un œil sur le ciel.</strong><p>Attrapez les comètes et activez la Supernova pour accélérer la production.</p></li><li><strong>Voyagez, puis recommencez.</strong><p>Les expéditions et renaissances offrent de la poussière d’étoile. Chaque poussière gagnée donne +2 % à vie. Investissez-la dans les recherches du Cosmos.</p></li></ol><p class="modal-note">Votre atelier continue hors ligne à 75 % de sa production, pendant 8 h au maximum (jusqu’à 28 h avec les recherches). Sur ordinateur : Entrée ou Espace lorsque la planète est sélectionnée.</p><button class="primary-button full" data-action="close">C’est parti ${icon("arrow")}</button>`,
+    `<div class="help-intro">${icon("planet")}<p>Une petite planète, des douceurs…<br>et tout un univers à inventer.</p></div><ol class="help-steps"><li><strong>Faites un petit pop.</strong><p>Touchez votre planète. Enchaînez les récoltes à moins de 1,2 seconde d’intervalle pour monter votre combo jusqu’à ×${comboMaximum(state)}. La recherche permanente Cadence stellaire porte ce plafond successivement à ×4, ×8 puis ×16. La montée conserve le même rythme : un palier de multiplicateur pour 25 clics enchaînés.</p></li><li><strong>Laissez travailler les marmitons.</strong><p>Achetez des machines. Les paliers révèlent des recettes payantes : ×1,5, ×3 ou de grandes secondes jeunesses plus tardives. L’intendant des recettes pourra les acheter automatiquement plus tard, une fois sa recherche permanente acquise.</p></li><li><strong>Gardez un œil sur le ciel.</strong><p>Attrapez les comètes et activez la Supernova pour accélérer la production.</p></li><li><strong>Voyagez, puis recommencez.</strong><p>Les expéditions et renaissances offrent de la poussière d’étoile. Chaque poussière gagnée donne +2 % à vie. Investissez-la dans les recherches du Cosmos.</p></li></ol><p class="modal-note">Votre atelier continue hors ligne à 75 % de sa production, pendant 8 h au maximum (jusqu’à 32 h avec les recherches). Sur ordinateur : Entrée ou Espace lorsque la planète est sélectionnée.</p><button class="primary-button full" data-action="close">C’est parti ${icon("arrow")}</button>`,
   );
 }
 function settings(): void {
   dialog(
     "Votre petit univers",
     `${state.settings.muted ? `<p class="modal-note">Le son général est coupé. <button class="text-button" data-action="sound">Réactiver musique et bruitages</button></p>` : ""}<div class="setting-row"><div><strong>Les petits bruitages</strong><p>Des notes douces, au format OGG.</p></div><button class="toggle ${state.settings.sound ? "on" : ""}" data-action="settings-sound" role="switch" aria-checked="${state.settings.sound}" aria-label="Bruitages"><i></i></button></div><label class="volume-control">Bruitages <input id="volume" type="range" min="0" max="100" value="${state.settings.volume * 100}" aria-label="Volume des bruitages"></label><div class="setting-row"><div><strong>La musique des étoiles</strong><p>La ronde des constellations · une valse en boucle.</p></div><button class="toggle ${state.settings.music ? "on" : ""}" data-action="music" role="switch" aria-checked="${state.settings.music}" aria-label="Musique"><i></i></button></div><label class="volume-control" for="music-volume">Musique <input id="music-volume" type="range" min="0" max="100" step="1" value="${Math.round(state.settings.musicVolume * 100)}" aria-label="Volume de la musique" aria-valuetext="${Math.round(state.settings.musicVolume * 100)} %"><output id="music-volume-value" for="music-volume">${Math.round(state.settings.musicVolume * 100)} %</output></label><div class="setting-row"><div><strong>Animations</strong><p>Respecte aussi les réglages de votre appareil.</p></div><button class="toggle ${state.settings.motion ? "on" : ""}" data-action="motion" role="switch" aria-checked="${state.settings.motion}" aria-label="Animations"><i></i></button></div>
-<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.9.0 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
+<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.9.1 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
   );
 }
 function stats(): void {
@@ -826,6 +832,15 @@ async function action(target: HTMLElement): Promise<void> {
   if (readOnly) return;
   const now = Date.now();
   settle(now);
+  if (act === "buy-all-recipes") {
+    const before = state.sugar, purchased = buyAllRecipes(state);
+    if (purchased.length) {
+      audio.play("reward"); renderPanel();
+      const summary = `${purchased.length} recette${purchased.length > 1 ? "s" : ""} acquise${purchased.length > 1 ? "s" : ""} · ${fmt(before - state.sugar)} douceurs dépensées`;
+      const feedback = $("#bulk-recipe-feedback"); if (feedback) feedback.textContent = summary;
+      toast(summary, "success");
+    }
+  }
   if (act === "voyage-recall" && state.expedition) {
     dialog("Rappeler l’équipage ?", `<p>L’expédition sera abandonnée sans poussière ni avantage. Les frais de départ restent dépensés. Vous pourrez immédiatement repartir ou renaître.</p><div class="save-actions"><button class="secondary-button" data-action="close">Poursuivre le voyage</button><button class="primary-button" data-action="voyage-recall-confirm">Rappeler sans récompense</button></div>`);
     return;
@@ -846,7 +861,7 @@ async function action(target: HTMLElement): Promise<void> {
   }
   if (act === "tap") {
     if (now - lastTap < 45) return;
-    combo = now - lastTap < 1200 ? Math.min(25, combo + 1) : 0;
+    combo = now - lastTap < 1200 ? Math.min(comboLimit(state), combo + 1) : 0;
     lastTap = now;
     const result = tap(state, combo, Math.random(), now);
     particles(result.amount, result.critical);
@@ -900,7 +915,7 @@ async function action(target: HTMLElement): Promise<void> {
     renderPanel();
     const research = RESEARCH.find((r) => r.id === target.dataset.research)!;
     toast(
-      `${research.name} · niveau ${state.research[research.id]} acquis`,
+      research.costs.length === 1 ? `${research.name} débloqué` : `${research.name} · niveau ${state.research[research.id]} acquis`,
       "success",
     );
   }
