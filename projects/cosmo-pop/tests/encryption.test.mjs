@@ -48,3 +48,13 @@ test("Encrypted legacy exports receive the dust refund once and preserve new res
   const again=await importEncrypted(await exportEncrypted(restored,password),password);
   assert.equal(again.dust,13);assert.deepEqual(again.research,restored.research);
 });
+
+
+test("Voyage perks, pending returns and route prices remain inside the encrypted save", async () => {
+  const s=fresh();earn(s,100000);s.voyages.departures=[3,2,0,0,0];
+  s.voyages.reward=0;s.voyages.coupon={building:1,remaining:3};s.voyages.tapUntil=Date.now()+60000;
+  const text=await exportEncrypted(s,password);
+  assert.ok(!text.includes('voyages'));assert.ok(!text.includes('coupon'));
+  const restored=await importEncrypted(text,password);
+  assert.deepEqual(restored.voyages,s.voyages);
+});

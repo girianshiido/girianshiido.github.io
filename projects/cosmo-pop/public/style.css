@@ -4631,3 +4631,69 @@ input, textarea, [contenteditable="true"] {
     padding-right: max(8px, env(safe-area-inset-right));
   }
 }
+
+.voyage-perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -10px 0 20px;
+  font-size: 12px;
+  color: var(--purple-dark);
+}
+.voyage-perks > * {
+  padding: 8px 12px;
+  background: var(--lavender);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.voyage-perks button { font-weight: 700; text-align: left; }
+.voyage-perks .icon { width: 14px; height: 14px; }
+.voyage-reward {
+  background: linear-gradient(130deg, var(--lavender), var(--paper));
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  margin: 18px 0;
+  display: grid;
+  gap: 12px;
+}
+.voyage-reward .section-kicker { font-size: 10px; }
+.voyage-reward p { line-height: 1.6; }
+.voyage-reward small, .voyage-pricing p, .voyage-fare {
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 12px;
+}
+.voyage-reward label { font-size: 13px; font-weight: 700; }
+.voyage-reward select {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+}
+.destination .voyage-benefit {
+  color: var(--purple-dark);
+  background: var(--lavender);
+  padding: 9px 11px;
+  border-radius: 10px;
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.destination-locked .destination-art { opacity: .55; }
+.voyage-fare { display: block; margin-top: 8px; font-size: 10px; }
+.voyage-pricing { padding: 16px; margin-top: 18px; border: 1px solid var(--line); border-radius: 14px; }
+.voyage-pricing summary { cursor: pointer; font-size: 13px; font-weight: 700; }
+.voyage-pricing p { margin-top: 10px; }
+.nav-item.reward-ready::after { content: ""; position: absolute; right: 8px; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: #42b589; }
+@media (max-width: 359px) {
+  .voyage-reward { padding: 15px; }
+  .voyage-reward .section-kicker { letter-spacing: .5px; }
+  .voyage-perks { font-size: 10px; }
+}

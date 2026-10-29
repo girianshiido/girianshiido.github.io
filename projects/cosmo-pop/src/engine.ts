@@ -533,6 +533,7 @@ export const AUTOMATION = {
 } as const;
 export const DESTINATIONS = [
   {
+    gate: 0, fuel: 5, benefit: "+50 % aux récoltes manuelles pendant 15 min.",
     name: "La Lune guimauve",
     desc: "Un petit pas pour un marmiton…",
     cost: 500,
@@ -542,6 +543,7 @@ export const DESTINATIONS = [
     color: "pink",
   },
   {
+    gate: 0, fuel: 15, benefit: "−20 % sur les cinq prochaines unités d’un atelier choisi.",
     name: "Les Anneaux acidulés",
     desc: "Une traversée pétillante.",
     cost: 8000,
@@ -551,6 +553,7 @@ export const DESTINATIONS = [
     color: "mint",
   },
   {
+    gate: 0, fuel: 30, benefit: "Le meilleur rendement en poussière pour des départs réguliers.",
     name: "La Nébuleuse vanille",
     desc: "Là où naissent les nouvelles recettes.",
     cost: 100000,
@@ -558,6 +561,16 @@ export const DESTINATIONS = [
     dust: 15,
     icon: "spark",
     color: "violet",
+  },
+  {
+    name: "Les Jardins des comètes", desc: "Un détour pour récolter les étoiles filantes.",
+    cost: 1e8, duration: 1800, dust: 40, gate: 3, fuel: 60,
+    benefit: "+25 % aux douceurs des comètes pendant 20 min.", icon: "comet", color: "mint",
+  },
+  {
+    name: "La Grande traversée", desc: "Le grand large, pour les longues absences.",
+    cost: 1e12, duration: 7200, dust: 120, gate: 6, fuel: 120,
+    benefit: "Un long voyage, beaucoup de poussière et moins de relances.", icon: "rocket", color: "violet",
   },
 ] as const;
 export const TIERS = [
@@ -604,6 +617,13 @@ export interface State {
   prestiges: number;
   playSeconds: number;
   expedition: { id: number; ends: number; duration: number } | null;
+  voyages: {
+    departures: number[];
+    reward: number | null;
+    tapUntil: number;
+    cometUntil: number;
+    coupon: { building: number; remaining: number } | null;
+  };
   boostUntil: number;
   boostReady: number;
   savedAt: number;
@@ -640,6 +660,7 @@ export function fresh(now = Date.now()): State {
     prestiges: 0,
     playSeconds: 0,
     expedition: null,
+    voyages: { departures: DESTINATIONS.map(() => 0), reward: null, tapUntil: 0, cometUntil: 0, coupon: null },
     boostUntil: 0,
     boostReady: 0,
     savedAt: now,
@@ -712,7 +733,7 @@ export function cost(s: State, id: number, offset = 0): number {
   return b
     ? Math.min(
         LIMIT,
-        Math.ceil(b.cost * 1.35 ** ((s.buildings[id] ?? 0) + offset)),
+        Math.ceil(Math.min(LIMIT, Math.ceil(b.cost * 1.35 ** ((s.buildings[id] ?? 0) + offset))) * (s.voyages.coupon?.building === id && offset < s.voyages.coupon.remaining ? 0.8 : 1)),
       )
     : LIMIT;
 }
@@ -896,8 +917,8 @@ export function production(s: State, now = 0): number {
     now > 0 && now < s.boostUntil ? 3 : 1,
   );
 }
-export function tapValue(s: State, combo = 0): number {
-  return Math.min(
+export function tapValue(s: State, combo = 0, now = Date.now()): number {
+  return safeProduct(now > 0 && now < s.voyages.tapUntil ? 1.5 : 1, Math.min(
     LIMIT,
     safeProduct(
       1 + s.research.touch * 0.5,
@@ -907,7 +928,7 @@ export function tapValue(s: State, combo = 0): number {
       1 + s.totalDust * 0.02,
       1 + Math.min(25, combo) / 25,
     ) + (s.upgrades.includes("echo") ? production(s) * 0.05 : 0),
-  );
+  ));
 }
 export function earn(s: State, amount: number): void {
   if (!Number.isFinite(amount) || amount < 0) return;
@@ -919,9 +940,10 @@ export function tap(
   s: State,
   combo: number,
   random = Math.random(),
+  now = Date.now(),
 ): { amount: number; critical: boolean } {
   const critical = s.upgrades.includes("lucky") && random < 0.15;
-  const amount = safeProduct(tapValue(s, combo), critical ? 5 : 1);
+  const amount = safeProduct(tapValue(s, combo, now), critical ? 5 : 1);
   earn(s, amount);
   s.clicks++;
   return { amount, critical };
@@ -952,6 +974,11 @@ export function buyBuilding(
   const q = quote(s, id, quantity);
   s.sugar = Math.max(0, s.sugar - q.price);
   s.buildings[id] = (s.buildings[id] ?? 0) + q.count;
+  const coupon = s.voyages.coupon;
+  if (coupon?.building === id) {
+    coupon.remaining = Math.max(0, coupon.remaining - q.count);
+    if (!coupon.remaining) s.voyages.coupon = null;
+  }
   return q.count;
 }
 export function buyUpgrade(s: State, id: string): boolean {
@@ -1024,22 +1051,58 @@ export const voyageDuration = (s: State, id: number): number =>
   Math.round((DESTINATIONS[id]?.duration ?? 0) * [1,0.9,0.8,0.75][s.research.navigation]!);
 export const cometDuration = (s: State): number => 18 + 5 * s.research.comets;
 export const boostDuration = (s: State): number => 30 + 5 * s.research.nova;
+/** Prices use normal production, never Supernova, stock size or temporary perks.
+ * Each route's departure surcharge is linear (+2%), capped at +50%, reset on rebirth. */
+export function voyageCost(s: State, id: number): number {
+  const d = DESTINATIONS[id];
+  if (!d) return LIMIT;
+  return Math.min(LIMIT, Math.ceil(safeProduct(
+    Math.max(d.cost, safeProduct(production(s), d.fuel)),
+    1 + Math.min(25, s.voyages.departures[id] ?? 0) * 0.02,
+  )));
+}
+export function claimVoyageBonus(s: State, now: number, building = 0): boolean {
+  const id = s.voyages.reward;
+  if (id === null) return false;
+  if (id === 1) {
+    if (!Number.isInteger(building) || !BUILDINGS[building] || s.prestiges < buildingGate(building)) return false;
+    s.voyages.coupon = { building, remaining: 5 };
+  } else if (id === 0) s.voyages.tapUntil = now + 15 * 60000;
+  else if (id === 3) s.voyages.cometUntil = now + 20 * 60000;
+  else return false;
+  s.voyages.reward = null;
+  return true;
+}
+export function cometReward(s: State, now: number): number {
+  return safeProduct(Math.max(30, production(s, now) * 35 + tapValue(s, 0, 0) * 15),
+    now < s.voyages.cometUntil ? 1.25 : 1);
+}
 export function launch(s: State, id: number, now: number): boolean {
   const d = DESTINATIONS[id];
-  if (!d || s.expedition || s.sugar < d.cost) return false;
-  s.sugar -= d.cost;
+  if (!d || !Number.isInteger(id) || s.prestiges < d.gate || s.expedition || s.voyages.reward !== null) return false;
+  const price = voyageCost(s, id);
+  if (s.sugar < price) return false;
+  s.sugar -= price;
+  s.voyages.departures[id] = Math.min(25, (s.voyages.departures[id] ?? 0) + 1);
   const duration = voyageDuration(s, id);
   s.expedition = { id, ends: now + duration * 1000, duration };
   return true;
 }
+export function recallExpedition(s: State): boolean {
+  if (!s.expedition) return false;
+  s.expedition = null;
+  return true; // Departure fees stay spent; no dust, no advantage, no completed-trip credit.
+}
 export function finishExpedition(s: State, now: number): number {
   if (!s.expedition || now < s.expedition.ends) return 0;
-  const d = DESTINATIONS[s.expedition.id];
+  const id = s.expedition.id;
+  const d = DESTINATIONS[id];
   s.expedition = null;
   if (!d) return 0;
   s.dust += d.dust;
   s.totalDust += d.dust;
   s.expeditions++;
+  if (id === 0 || id === 1 || id === 3) s.voyages.reward = id;
   return d.dust;
 }
 export function boost(s: State, now: number): boolean {
@@ -1712,7 +1775,7 @@ export function parseSave(text: string, now = Date.now()): State {
     if (!x.expedition || typeof x.expedition !== "object")
       throw Error("Expédition invalide.");
     const e = x.expedition as Record<string, unknown>;
-    const id = finite(e.id, 2);
+    const id = finite(e.id, DESTINATIONS.length - 1);
     if (!Number.isInteger(id)) throw Error("Destination invalide.");
     const duration = e.duration === undefined ? DESTINATIONS[id]!.duration : finite(e.duration, DESTINATIONS[id]!.duration);
     if (duration < DESTINATIONS[id]!.duration * 0.75) throw Error("Durée de voyage invalide.");
@@ -1724,6 +1787,29 @@ export function parseSave(text: string, now = Date.now()): State {
         finite(e.ends, 1e15),
       ),
     };
+  }
+  if (x.voyages !== undefined) {
+    if (!x.voyages || typeof x.voyages !== "object") throw Error("Voyages invalides.");
+    const v = x.voyages as Record<string, unknown>;
+    if (!Array.isArray(v.departures) || v.departures.length !== DESTINATIONS.length) throw Error("Départs invalides.");
+    s.voyages.departures = v.departures.map(n => {
+      const count = finite(n, 25);
+      if (!Number.isInteger(count)) throw Error("Départs invalides.");
+      return count;
+    });
+    if (v.reward !== null) {
+      if (![0, 1, 3].includes(v.reward as number) || s.expedition) throw Error("Retour de voyage invalide.");
+      s.voyages.reward = v.reward as number;
+    }
+    s.voyages.tapUntil = Math.min(now + 15 * 60000, finite(v.tapUntil, 1e15));
+    s.voyages.cometUntil = Math.min(now + 20 * 60000, finite(v.cometUntil, 1e15));
+    if (v.coupon !== null) {
+      if (!v.coupon || typeof v.coupon !== "object") throw Error("Bon invalide.");
+      const c = v.coupon as Record<string, unknown>;
+      const building = finite(c.building, BUILDINGS.length - 1), remaining = finite(c.remaining, 5);
+      if (!Number.isInteger(building) || !Number.isInteger(remaining) || remaining < 1 || s.prestiges < buildingGate(building)) throw Error("Bon invalide.");
+      s.voyages.coupon = { building, remaining };
+    }
   }
   if (x.settings && typeof x.settings === "object") {
     const o = x.settings as Record<string, unknown>;

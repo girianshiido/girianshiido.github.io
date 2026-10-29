@@ -8,12 +8,13 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
     E.earn(s, E.production(s, now));
     for (let i = 0; i < tapsPerSecond; i++) {
       seed = (seed * 1664525 + 1013904223) >>> 0;
-      E.tap(s, 25, seed / 2 ** 32);
+      E.tap(s, 25, seed / 2 ** 32, now);
     }
     E.finishExpedition(s, now);
+    if (s.voyages.reward !== null) E.claimVoyageBonus(s, now, 0);
     E.boost(s, now);
     if (second % 75 === 35)
-      E.earn(s, Math.max(30, E.production(s, now) * 35 + E.tapValue(s) * 15));
+      E.earn(s, E.cometReward(s, now));
     for (const a of E.ACHIEVEMENTS)
       if (!s.achievements.includes(a.id) && a.test(s))
         s.achievements.push(a.id);
@@ -29,14 +30,14 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
     }
     // Greedy return-on-investment strategy, including saving for a better purchase.
     for (let purchase = 0; purchase < 30; purchase++) {
-      const base = E.production(s) + tapsPerSecond * E.tapValue(s, 25),
+      const base = E.production(s) + tapsPerSecond * E.tapValue(s, 25, now),
         options = [];
       for (let i = 0; i < E.BUILDINGS.length; i++)
         if (s.prestiges >= E.buildingGate(i)) {
           const c = E.cost(s, i);
           s.buildings[i]++;
           const delta =
-            E.production(s) + tapsPerSecond * E.tapValue(s, 25) - base;
+            E.production(s) + tapsPerSecond * E.tapValue(s, 25, now) - base;
           s.buildings[i]--;
           if (delta > 0) options.push({ score: c / delta, c, building: i });
         }
@@ -48,7 +49,7 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
         ) {
           s.upgrades.push(u.id);
           const delta =
-            E.production(s) + tapsPerSecond * E.tapValue(s, 25) - base;
+            E.production(s) + tapsPerSecond * E.tapValue(s, 25, now) - base;
           s.upgrades.pop();
           if (delta > 0)
             options.push({ score: u.cost / delta, c: u.cost, upgrade: u.id });
@@ -57,7 +58,7 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
         if (E.milestoneReady(s, m)) {
           s.milestones.push(m.id);
           const delta =
-            E.production(s) + tapsPerSecond * E.tapValue(s, 25) - base;
+            E.production(s) + tapsPerSecond * E.tapValue(s, 25, now) - base;
           s.milestones.pop();
           if (delta > 0)
             options.push({
@@ -73,10 +74,11 @@ export function simulate(tapsPerSecond = 2, duration = 86400) {
       else if (best.upgrade) E.buyUpgrade(s, best.upgrade);
       else E.buyBuilding(s, best.building, 1);
     }
-    // Expeditions are launched only from a reserve; no future timers are accelerated.
+    // Active strategy keeps the three short routes; the two long routes trade yield for fewer relaunches.
+    // Fares use actual production and surcharges; no future timers are accelerated.
     if (!s.expedition)
       for (let i = 2; i >= 0; i--)
-        if (s.sugar > E.DESTINATIONS[i].cost * 4) {
+        if (s.sugar > E.voyageCost(s, i) * 4) {
           E.launch(s, i, now);
           break;
         }

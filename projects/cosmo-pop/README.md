@@ -1,4 +1,4 @@
-# Cosmo Pop 1.8.3 — L’atelier des étoiles
+# Cosmo Pop 1.9.0 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -128,3 +128,16 @@ Le bouton sonore de l’en-tête coupe simultanément musique et bruitages. Cett
 ## Navigation mobile 1.8.3
 
 Sur écran inférieur à 760 px, le cadre du jeu occupe la hauteur dynamique disponible (`100dvh`, repli `100vh`). Seul `#game-scroll` défile ; la navigation est une rangée séparée, sans positionnement fixe ni filtre de fond. La barre reste ainsi hors du contenu défilant, avec une marge pour la zone sûre iOS. Le changement de rubrique remet le conteneur interne en haut. Le zoom par pincement reste autorisé ; aucune boucle JavaScript de repositionnement. À vérifier sur téléphone réel pour les particularités des navigateurs intégrés.
+
+
+## Voyages 1.9.0
+
+Cinq routes : Lune 60 s / 1 poussière / récoltes manuelles +50 % pendant 15 min ; Anneaux 180 s / 4 poussières / bon de −20 % sur 5 unités d’un atelier ; Nébuleuse 600 s / 15 poussières ; Jardins 1800 s / 40 poussières / comètes +25 % pendant 20 min (3 renaissances) ; Grande traversée 7200 s / 120 poussières (6 renaissances). La Cartographie réduit toutes les durées jusqu’à −25 %.
+
+Les frais sont `ceil(max(minimum, production_normale × secondes) × (1 + 0.02 × min(départs_route, 25)))`, saturés à 10^300. Les minima sont 500 / 8000 / 100000 / 10^8 / 10^12, les secondes 5 / 15 / 30 / 60 / 120. Le stock, la Supernova et les avantages temporaires ne modifient pas le tarif. La production normale comprend les bonus permanents. Seuls les départs réussis augmentent les frais ; leur surcharge est propre à chaque route, plafonnée à +50 % et remise à zéro à chaque renaissance.
+
+La poussière est créditée automatiquement au retour, une seule fois. Les avantages des routes 0, 1 et 3 attendent leur récupération manuelle ; aucun nouveau départ tant que le retour n’est pas récupéré. Le délai d’un bonus commence à cette récupération, y compris après une absence. Un avantage de même type renouvelle sa durée au lieu de l’additionner. Le bon remplace tout bon restant ; achats ×1/×10/Max appliquent la remise aux seules unités restantes et consomment le bon exactement. La Lune ne bonifie que les clics (Echo compris), jamais les comètes ni la production passive. Les Jardins ne modifient ni la fréquence des comètes, ni la poussière, ni les gains hors ligne.
+
+Les avantages, bons, retours non récupérés et surcharges disparaissent à la renaissance ; les recherches restent permanentes. Les anciennes sauvegardes ajoutent ces champs sans frais rétroactifs, sans modifier les échéances des voyages déjà lancés. Le schéma de sauvegarde chiffrée reste compatible. Un rappel volontaire libère l’équipage sans remboursement des frais, sans récompense et sans compter un voyage terminé, pour ne pas bloquer une renaissance pendant deux heures.
+
+Les rendements de poussière théoriques, à relance immédiate et avant Cartographie, sont 60 / 80 / 90 / 80 / 60 par heure. Les routes longues échangent une partie du rendement contre des avantages ou moins de relances. Le jeu ne relance pas automatiquement les voyages pendant les absences.

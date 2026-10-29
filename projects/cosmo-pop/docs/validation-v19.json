@@ -1,0 +1,54 @@
+{
+  "version": "1.9.0",
+  "tests": {
+    "pass": 61,
+    "fail": 0
+  },
+  "browser": "Cloud Chrome, isolated fresh-state fixtures of the real application modules, persistence and service worker bypassed",
+  "viewports": [
+    [
+      320,
+      700
+    ],
+    [
+      600,
+      700
+    ]
+  ],
+  "checks": [
+    "No horizontal overflow; navigation bottom remains at 700 px",
+    "Ring departure, arrival, atelier selection, coupon activation; first Moulin unit quoted at 200 instead of 250",
+    "Bulk purchase of 10 Moulin units consumes only 5 discounted units and removes coupon",
+    "Moon bonus activated on demand and visible with countdown",
+    "Garden departure, arrival and +25% comet bonus activation alongside lunar bonus",
+    "Long crossing launched with 2-hour countdown",
+    "Crew recalled using confirmation dialog; idle crew restored without reward",
+    "Late routes gate at 3 and 6 rebirths; engine tests verify these gates",
+    "Legacy saves and in-flight trips keep their state; encryption round-trip includes perks",
+    "Fares use normal production, cap at +50%, and reset on rebirth"
+  ],
+  "native_device_verified": false,
+  "economy": {
+    "base_dust_per_hour": [
+      60,
+      80,
+      90,
+      80,
+      60
+    ],
+    "maximum_navigation_dust_per_hour": [
+      80,
+      106.6666666667,
+      120,
+      106.6666666667,
+      80
+    ],
+    "surcharge_per_departure": 0.02,
+    "maximum_surcharge": 0.5,
+    "survives_rebirth": false,
+    "comet_bonus": 0.25,
+    "manual_bonus": 0.5,
+    "coupon_discount": 0.2,
+    "coupon_units": 5
+  }
+}

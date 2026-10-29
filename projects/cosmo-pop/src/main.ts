@@ -20,10 +20,14 @@ import {
   buyResearch,
   researchCost,
   voyageDuration,
+  voyageCost,
+  claimVoyageBonus,
+  cometReward,
   cometDuration,
   boostDuration,
   launch,
   finishExpedition,
+  recallExpedition,
   boost,
   prestige,
   prestigeGain,
@@ -173,6 +177,7 @@ function shell(): void {
 <div class="header-tools"><button id="app-control" class="icon-button" data-action="install" aria-label="Installer le jeu">${icon("download")}</button><span class="save-status" id="save-status">${icon("lock")} Chiffrée</span><button class="icon-button" id="sound" data-action="sound" aria-label="Couper tous les sons"></button><button class="icon-button" data-action="settings" aria-label="Réglages et sauvegarde">${icon("settings")}</button></div></header>
 <main id="main" tabindex="-1"><div class="intro"><div><p class="eyebrow">UN PETIT POP. DES POSSIBILITÉS INFINIES.</p><h1>La tête dans les étoiles.<br class="mobile-break"> Les mains dans le sucre.</h1></div><span class="live-pill"><i></i> Votre univers prend vie</span></div>
 <section class="resources" aria-label="Vos ressources"><div class="resource primary"><span class="resource-icon">${icon("sugar")}</span><div><span class="resource-label">Vos douceurs</span><strong id="sugar">0</strong></div><span class="resource-extra">À savourer<br>sans modération.</span></div><div class="resource"><span class="resource-icon mint">${icon("bolt")}</span><div><span class="resource-label">Production</span><strong><span id="rate">0</span><small> / s</small></strong></div></div><div class="resource"><span class="resource-icon peach">${icon("star")}</span><div><span class="resource-label">Poussière d’étoile</span><strong id="dust">0</strong></div><button class="subtle-info" data-action="dust-info" aria-label="À quoi sert la poussière d’étoile ?">${icon("info")}</button></div></section>
+<div id="voyage-perks" class="voyage-perks" hidden></div>
 <div class="game-layout"><section class="planet-column" aria-label="Votre planète"><div class="scene"><div class="scene-heading"><span class="section-kicker">${icon("planet")} PLANÈTE <span id="planet-number">01</span></span><span class="stage-label" id="stage-label">Niveau 1</span></div><h2 id="planet-name">Pépite naissante</h2><p class="scene-subtitle" id="scene-subtitle">Les plus grands empires commencent tout petits.</p>
 <div class="planet-stage"><button id="planet" class="planet-button" data-action="tap" aria-label="Récolter des douceurs">${planetArt(tier(state) + 1)}</button><div id="particles" aria-hidden="true"></div><button class="comet" id="comet" data-action="comet" hidden>${icon("comet")}<span>Une comète !<small>Attrapez-moi</small></span></button><div class="orbit-note note-left">${icon("heart")} 100 % fait avec amour</div><div class="orbit-note note-right">${icon("spark")} Un univers à croquer</div></div>
 <div class="tap-caption"><span>Touchez la planète pour récolter</span><b id="tap-value">+1 douceur</b></div><div class="combo"><div class="combo-top"><span>${icon("bolt")} <span id="combo-label">Trouvez votre rythme</span></span><strong id="combo-value">× 1</strong></div><div class="progress combo-progress"><i id="combo-bar"></i></div></div>
@@ -265,9 +270,29 @@ function renderShop(): void {
  }`;
 }
 
+function voyageRewardCard(): string {
+  const id = state.voyages.reward;
+  if (id === null) return "";
+  return `<section class="voyage-reward"><span class="section-kicker">${icon("spark")} VOTRE ESCALE A PORTÉ SES FRUITS</span><h3>${DESTINATIONS[id]!.name}</h3><p>${DESTINATIONS[id]!.benefit}</p>${id === 1 ? `<label for="voyage-building">Choisissez l’atelier bénéficiaire</label><select id="voyage-building">${BUILDINGS.map((b, i) => state.prestiges >= buildingGate(i) ? `<option value="${i}">${b.name} · ${state.buildings[i]} unités</option>` : "").join("")}</select><small>Le bon remplace tout bon restant. Les lots ×10 et Max n’appliquent la réduction qu’aux cinq unités concernées.</small>` : `<small>La durée commence à l’activation. Un nouveau bonus de même type renouvelle sa durée, sans la cumuler.</small>`}<button class="primary-button full" data-action="voyage-claim" ${readOnly ? "disabled" : ""}>${id === 1 ? "Récupérer le bon" : "Activer l’avantage"} ${icon("arrow")}</button><small>La poussière a déjà été ajoutée à votre réserve.</small></section>`;
+}
 function renderVoyages(): void {
-  $("#panel").innerHTML =
-    `<div class="panel-heading"><div><span class="eyebrow">L’UNIVERS A BON GOÛT</span><h2>Les grands voyages<span class="title-dot">.</span></h2></div><span class="badge">${icon("rocket")}</span></div><p class="panel-description">Envoyez votre équipage explorer le cosmos.<br>Rapportez de la poussière pour grandir durablement.</p><div id="expedition-status" class="expedition-status"></div><div class="destination-list">${DESTINATIONS.map((d, i) => `<article class="destination"><div class="destination-art ${d.color}">${icon(i === 2 ? "nebula" : d.icon)}<i></i><i></i><i></i><span>0${i + 1}</span></div><div class="destination-body"><h3>${d.name}</h3><p>${d.desc}</p><div class="destination-meta"><span>${icon("clock")} ${timeFmt(voyageDuration(state, i))}</span><span>${icon("star")} +${d.dust} poussière${d.dust > 1 ? "s" : ""}</span></div><button class="wide-buy" data-launch="${i}" id="launch-${i}"><span>Explorer ${icon("arrow")}</span><b>${icon("sugar")}${fmt(d.cost)}</b></button></div></article>`).join("")}</div><div class="shop-tip">${icon("star")}<p>Chaque poussière <strong>gagnée</strong> ajoute définitivement <strong>+2 %</strong> aux récoltes et à la production, même après avoir été dépensée.</p></div>`;
+  $("#panel").innerHTML = `<div class="panel-heading"><div><span class="eyebrow">CINQ ROUTES, CINQ FAÇONS DE GRANDIR</span><h2>Les grands voyages<span class="title-dot">.</span></h2></div><span class="badge">${icon("rocket")}</span></div><p class="panel-description">Un seul équipage, des escales à choisir selon vos projets.<br>Les avantages attendent votre retour ; activez-les quand vous êtes prêt.</p><div id="expedition-status" class="expedition-status"></div>${voyageRewardCard()}<div class="destination-list">${DESTINATIONS.map((d, i) => `<article class="destination ${state.prestiges < d.gate ? "destination-locked" : ""}"><div class="destination-art ${d.color}">${icon(i === 2 ? "nebula" : d.icon)}<i></i><i></i><i></i><span>0${i + 1}</span></div><div class="destination-body"><h3>${d.name}</h3><p>${d.desc}</p><div class="destination-meta"><span>${icon("clock")} ${timeFmt(voyageDuration(state, i))}</span><span>${icon("star")} +${d.dust} poussière${d.dust > 1 ? "s" : ""}</span></div><p class="voyage-benefit">${d.benefit}</p>${state.prestiges < d.gate ? `<p class="unlock-hint">${icon("lock")} Après ${d.gate} renaissances · encore ${d.gate - state.prestiges}</p>` : ""}<button class="wide-buy" data-launch="${i}" id="launch-${i}"><span>${state.prestiges < d.gate ? "À découvrir" : "Explorer"} ${icon("arrow")}</span><b>${icon("sugar")}<span id="voyage-price-${i}">${fmt(voyageCost(state, i))}</span></b></button><small class="voyage-fare" id="voyage-fare-${i}"></small></div></article>`).join("")}</div><details class="voyage-pricing"><summary>Comment sont calculés les frais de départ ?</summary><p>Chaque route coûte au minimum son tarif initial, ou l’équivalent de ${DESTINATIONS.map(d => d.fuel).join(" / ")} secondes de production normale si ce montant est supérieur. Les bonus temporaires et votre stock ne modifient pas ce calcul.</p><p>Chaque départ sur une route ajoute 2 % à ses frais, jusqu’à +50 %. Cette hausse est remise à zéro à chaque renaissance. Les durées bénéficient de la Cartographie cosmique.</p></details><div class="shop-tip">${icon("star")}<p>Chaque poussière <strong>gagnée</strong> ajoute définitivement <strong>+2 %</strong> aux récoltes et à la production. Les avantages de voyage et les bons sont temporaires ; ils disparaissent à la renaissance.</p></div>`;
+}
+let voyagePerksSignature = "";
+function paintVoyagePerks(now: number): void {
+  const v = state.voyages, parts: string[] = [];
+  if (v.tapUntil > now) parts.push(`Récoltes +50 % · ${timeFmt((v.tapUntil - now) / 1000)}`);
+  if (v.cometUntil > now) parts.push(`Comètes +25 % · ${timeFmt((v.cometUntil - now) / 1000)}`);
+  if (v.coupon) parts.push(`${BUILDINGS[v.coupon.building]!.name} · −20 % sur ${v.coupon.remaining} unité${v.coupon.remaining > 1 ? "s" : ""}`);
+  const html = parts.map(text => `<span>${text}</span>`).join("") + (v.reward !== null ? `<button data-action="voyage-open">Un avantage de voyage vous attend ${icon("arrow")}</button>` : "");
+  const box = $("#voyage-perks");
+  if (box && (html !== voyagePerksSignature || (!box.innerHTML && html))) {
+    box.innerHTML = html; box.hidden = !html; voyagePerksSignature = html;
+  }
+  document.querySelectorAll<HTMLElement>('.nav-item[data-view="voyages"]').forEach(n => {
+    n.classList.toggle("reward-ready", v.reward !== null);
+    n.title = v.reward !== null ? "Un avantage de voyage est à récupérer" : "Voyages";
+  });
 }
 function automationCard(): string {
   const owned = state.automation.owned;
@@ -302,6 +327,7 @@ function syncPlanetArt(level: number): void {
 }
 function paint(now: number): void {
   if (!initialized) return;
+  paintVoyagePerks(now);
   $("#sugar").textContent = fmt(state.sugar);
   $("#rate").textContent = fmt(production(state, now));
   $("#dust").textContent = fmt(state.dust);
@@ -324,7 +350,7 @@ function paint(now: number): void {
   $("#evolution-name").innerHTML =
     (next?.name ?? "Évolution maximale") + " " + icon("arrow");
   $("#tap-value").textContent =
-    "+" + fmt(tapValue(state, combo)) + " par récolte";
+    "+" + fmt(tapValue(state, combo, now)) + " par récolte";
   const comboPercent =
     Math.min(100, (combo / 25) * 100) * (now - lastTap < 1200 ? 1 : 0);
   $("#combo-bar").style.width = comboPercent + "%";
@@ -448,12 +474,23 @@ function paint(now: number): void {
   }
   if (view === "voyages") {
     const e = state.expedition;
-    $("#expedition-status").innerHTML = e
-      ? `${icon("rocket")}<div><strong>En route vers ${DESTINATIONS[e.id]!.name}</strong><span>Retour dans ${timeFmt((e.ends - now) / 1000)}</span><div class="progress"><i style="width:${Math.max(0, 100 - (e.ends - now) / 10 / e.duration)}%"></i></div></div>`
-      : `${icon("check")}<div><strong>Votre équipage est prêt</strong><span>Choisissez une destination.</span></div>`;
+    const status = $("#expedition-status");
+    const key = e ? `${e.id}:${e.ends}` : state.voyages.reward !== null ? "reward" : "idle";
+    if (status.dataset.route !== key) {
+      status.dataset.route = key;
+      status.innerHTML = e
+        ? `${icon("rocket")}<div><strong>En route vers ${DESTINATIONS[e.id]!.name}</strong><span id="voyage-countdown"></span><div class="progress"><i id="voyage-progress"></i></div><button class="text-button" data-action="voyage-recall" ${readOnly ? "disabled" : ""}>Rappeler l’équipage</button></div>`
+        : `${icon("check")}<div><strong>${state.voyages.reward !== null ? "Votre avantage vous attend" : "Votre équipage est prêt"}</strong><span>${state.voyages.reward !== null ? "Récupérez-le avant le prochain départ." : "Choisissez une destination."}</span></div>`;
+    }
+    if (e) {
+      $("#voyage-countdown").textContent = `Retour dans ${timeFmt((e.ends - now) / 1000)}`;
+      $("#voyage-progress").style.width = `${Math.max(0, 100 - (e.ends - now) / 10 / e.duration)}%`;
+    }
     DESTINATIONS.forEach((d, i) => {
       $<HTMLButtonElement>("#launch-" + i).disabled =
-        readOnly || Boolean(e) || state.sugar < d.cost;
+        readOnly || Boolean(e) || state.voyages.reward !== null || state.prestiges < d.gate || state.sugar < voyageCost(state, i);
+      $("#voyage-price-" + i).textContent = fmt(voyageCost(state, i));
+      $("#voyage-fare-" + i).textContent = `Frais de cette route : +${Math.min(25, state.voyages.departures[i] ?? 0) * 2} % · remis à zéro à la renaissance`;
     });
   }
   if (view === "cosmos") {
@@ -574,9 +611,10 @@ function settle(now: number): void {
   }
   const dust = finishExpedition(state, now);
   if (dust) {
-    toast(`L’équipage est rentré ! +${dust} poussière d’étoile`, "success");
+    toast(`L’équipage est rentré ! +${dust} poussière${dust > 1 ? "s" : ""}${state.voyages.reward !== null ? " · avantage à récupérer dans Voyages" : ""}`, "success");
     audio.play("reward");
     queueSave();
+    if (view === "voyages") renderVoyages();
   }
 }
 function frame(): void {
@@ -624,7 +662,7 @@ function settings(): void {
   dialog(
     "Votre petit univers",
     `${state.settings.muted ? `<p class="modal-note">Le son général est coupé. <button class="text-button" data-action="sound">Réactiver musique et bruitages</button></p>` : ""}<div class="setting-row"><div><strong>Les petits bruitages</strong><p>Des notes douces, au format OGG.</p></div><button class="toggle ${state.settings.sound ? "on" : ""}" data-action="settings-sound" role="switch" aria-checked="${state.settings.sound}" aria-label="Bruitages"><i></i></button></div><label class="volume-control">Bruitages <input id="volume" type="range" min="0" max="100" value="${state.settings.volume * 100}" aria-label="Volume des bruitages"></label><div class="setting-row"><div><strong>La musique des étoiles</strong><p>La ronde des constellations · une valse en boucle.</p></div><button class="toggle ${state.settings.music ? "on" : ""}" data-action="music" role="switch" aria-checked="${state.settings.music}" aria-label="Musique"><i></i></button></div><label class="volume-control" for="music-volume">Musique <input id="music-volume" type="range" min="0" max="100" step="1" value="${Math.round(state.settings.musicVolume * 100)}" aria-label="Volume de la musique" aria-valuetext="${Math.round(state.settings.musicVolume * 100)} %"><output id="music-volume-value" for="music-volume">${Math.round(state.settings.musicVolume * 100)} %</output></label><div class="setting-row"><div><strong>Animations</strong><p>Respecte aussi les réglages de votre appareil.</p></div><button class="toggle ${state.settings.motion ? "on" : ""}" data-action="motion" role="switch" aria-checked="${state.settings.motion}" aria-label="Animations"><i></i></button></div>
-<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.8.3 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
+<details class="number-help"><summary>Lire les très grandes quantités</summary><p>k = mille ; M = million ; Md = milliard. Les grandes unités nommées vont jusqu’à 10⁸¹. Au-delà, la notation devient scientifique : 2,5×10⁸⁴ représente 2,5 multiplié par 10 puissance 84, jusqu’à 10³⁰⁰.</p></details><section class="theme-section"><h3>Les couleurs de votre univers</h3><div class="theme-picker" role="group" aria-label="Thème de couleurs">${(["lavande", "menthe", "aurore", "minuit"] as const).map((t) => `<button data-theme="${t}" aria-pressed="${state.settings.theme === t}" class="theme-option ${t}"><i></i><span>${{ lavande: "Lavande", menthe: "Menthe", aurore: "Aurore", minuit: "Minuit" }[t]}</span>${state.settings.theme === t ? icon("check") : ""}</button>`).join("")}</div></section><section class="save-section"><h3>${icon("lock")} Sauvegarde chiffrée</h3><p>Enregistrement automatique AES-256-GCM sur cet appareil. Pour transférer votre partie, exportez une copie protégée par un mot de passe.</p><label class="input-label" for="password">Mot de passe de l’export ou de l’import</label><input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" placeholder="Au moins 10 caractères"><p class="field-help">Conservez ce mot de passe : il ne peut pas être récupéré.</p><div class="save-actions"><button class="secondary-button" data-action="export">${icon("download")} Exporter</button><button class="secondary-button" data-action="import">${icon("upload")} Importer</button></div><input type="file" id="import-file" accept=".cosmopop,application/json" hidden><p id="save-feedback" class="save-feedback" role="status"></p></section><button class="secondary-button full" data-action="update">Vérifier les mises à jour</button><div class="settings-links"><button class="text-button" data-action="help">${icon("info")} Comment jouer</button><button class="text-button" data-action="stats">${icon("chart")} Statistiques</button></div><p class="modal-note">Cosmo Pop · 1.9.0 · Sans publicité ni suivi. Vos données restent sur votre appareil.</p>`,
   );
 }
 function stats(): void {
@@ -765,6 +803,7 @@ async function action(target: HTMLElement): Promise<void> {
     renderPanel();
     return;
   }
+  if (act === "voyage-open") { setView("voyages"); return; }
   if (target.dataset.view) {
     setView(target.dataset.view);
     return;
@@ -787,11 +826,29 @@ async function action(target: HTMLElement): Promise<void> {
   if (readOnly) return;
   const now = Date.now();
   settle(now);
+  if (act === "voyage-recall" && state.expedition) {
+    dialog("Rappeler l’équipage ?", `<p>L’expédition sera abandonnée sans poussière ni avantage. Les frais de départ restent dépensés. Vous pourrez immédiatement repartir ou renaître.</p><div class="save-actions"><button class="secondary-button" data-action="close">Poursuivre le voyage</button><button class="primary-button" data-action="voyage-recall-confirm">Rappeler sans récompense</button></div>`);
+    return;
+  }
+  if (act === "voyage-recall-confirm") {
+    const recalled = recallExpedition(state);
+    modal.close(); renderPanel();
+    toast(recalled ? "L’équipage est revenu sans récompense." : "L’équipage est déjà rentré. Votre récompense est conservée.");
+  }
+  if (act === "voyage-claim") {
+    const id = state.voyages.reward;
+    const building = Number($<HTMLSelectElement>("#voyage-building")?.value ?? 0);
+    if (claimVoyageBonus(state, now, building)) {
+      audio.play("reward");
+      toast(id === 1 ? `Bon récupéré : ${BUILDINGS[building]!.name} · 5 unités à −20 %` : id === 0 ? "Élan lunaire : récoltes +50 % pendant 15 min" : "Chasse aux comètes : douceurs +25 % pendant 20 min", "success");
+      renderPanel(); queueSave();
+    }
+  }
   if (act === "tap") {
     if (now - lastTap < 45) return;
     combo = now - lastTap < 1200 ? Math.min(25, combo + 1) : 0;
     lastTap = now;
-    const result = tap(state, combo);
+    const result = tap(state, combo, Math.random(), now);
     particles(result.amount, result.critical);
     audio.play("pop");
     const planet = $("#planet");
@@ -852,10 +909,7 @@ async function action(target: HTMLElement): Promise<void> {
     toast(`Supernova ! Production × 3 pendant ${boostDuration(state)} secondes.`, "success");
   }
   if (act === "comet" && cometEnds > now) {
-    const amount = Math.max(
-      30,
-      production(state, now) * 35 + tapValue(state) * 15,
-    );
+    const amount = cometReward(state, now);
     earn(state, amount);
     particles(amount, true);
     cometEnds = 0;
@@ -888,7 +942,7 @@ async function action(target: HTMLElement): Promise<void> {
     if (gain < 5 || state.expedition) return;
     dialog(
       "Un nouveau ciel vous attend",
-      `<div class="help-intro">${icon("orbit")}<p>Cette renaissance vous offre <strong>${gain} poussières d’étoile</strong>, soit <strong>+${gain * 2} %</strong> de bonus de poussière, et un bonus permanent de cycle de <strong>+50 %</strong>. Les nouveaux ateliers s’ouvrent progressivement jusqu’au cycle 36.</p></div><p>Votre réserve de douceurs, vos machines et les améliorations de l’atelier repartent de zéro. Les recherches, les succès, les défis accomplis et toute votre poussière sont conservés.</p><div class="save-actions"><button class="secondary-button" data-action="close">Continuer cette vie</button><button class="primary-button" data-action="confirm-prestige">Renaître ${icon("spark")}</button></div>`,
+      `<div class="help-intro">${icon("orbit")}<p>Cette renaissance vous offre <strong>${gain} poussières d’étoile</strong>, soit <strong>+${gain * 2} %</strong> de bonus de poussière, et un bonus permanent de cycle de <strong>+50 %</strong>. Les nouveaux ateliers s’ouvrent progressivement jusqu’au cycle 36.</p></div><p>Votre réserve de douceurs, vos machines et les améliorations de l’atelier repartent de zéro. Les recherches, les succès, les défis accomplis et toute votre poussière sont conservés. Les avantages de voyage et les bons disparaissent ; les frais supplémentaires de départ reviennent à zéro.</p><div class="save-actions"><button class="secondary-button" data-action="close">Continuer cette vie</button><button class="primary-button" data-action="confirm-prestige">Renaître ${icon("spark")}</button></div>`,
     );
     return;
   }
