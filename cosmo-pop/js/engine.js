@@ -611,6 +611,7 @@ export function fresh(now = Date.now()) {
         automation: { owned: false, enabled: false },
         achievements: [],
         mission: 0,
+        completedMissions: [],
         clicks: 0,
         expeditions: 0,
         prestiges: 0,
@@ -1022,6 +1023,7 @@ export function prestige(s, now) {
     const gain = prestigeGain(s);
     if (gain < 5 || s.expedition)
         return false;
+    refreshMissions(s);
     const n = fresh(now);
     Object.assign(n, {
         total: s.total,
@@ -1034,6 +1036,7 @@ export function prestige(s, now) {
         expeditions: s.expeditions,
         prestiges: s.prestiges + 1,
         mission: s.mission,
+        completedMissions: [...s.completedMissions],
         playSeconds: s.playSeconds,
         totalMilestones: s.totalMilestones,
         settings: { ...s.settings },
@@ -1472,7 +1475,7 @@ export const MISSIONS = [
     },
     {
         title: "L’ère : Forge de météores",
-        desc: "Construisez votre premier forge de météores.",
+        desc: "Construisez votre première forge de météores.",
         target: 1,
         read: (s) => s.buildings[6] ?? 0,
         reward: 10000000.0,
@@ -1496,7 +1499,7 @@ export const MISSIONS = [
     },
     {
         title: "L’ère : Nébuleuse dragée",
-        desc: "Construisez votre premier nébuleuse dragée.",
+        desc: "Construisez votre première nébuleuse dragée.",
         target: 1,
         read: (s) => s.buildings[9] ?? 0,
         reward: 250000000000000.0,
@@ -1504,7 +1507,7 @@ export const MISSIONS = [
     },
     {
         title: "L’ère : Galaxie pâtissière",
-        desc: "Construisez votre premier galaxie pâtissière.",
+        desc: "Construisez votre première galaxie pâtissière.",
         target: 1,
         read: (s) => s.buildings[10] ?? 0,
         reward: 2e17,
@@ -1543,9 +1546,25 @@ export const MISSIONS = [
         dust: 400,
     },
 ];
+/** Latch achieved objectives independently of reward collection or the current life. */
+export function refreshMissions(s) {
+    let changed = false;
+    for (let i = s.mission; i < MISSIONS.length; i++) {
+        if (!s.completedMissions.includes(i) && MISSIONS[i].read(s) >= MISSIONS[i].target) {
+            s.completedMissions.push(i);
+            changed = true;
+        }
+    }
+    return changed;
+}
+export function missionReady(s, id = s.mission) {
+    const m = MISSIONS[id];
+    return Boolean(m && id >= s.mission && (s.completedMissions.includes(id) || m.read(s) >= m.target));
+}
 export function claimMission(s) {
+    refreshMissions(s);
     const m = MISSIONS[s.mission];
-    if (!m || m.read(s) < m.target)
+    if (!m || !missionReady(s))
         return false;
     earn(s, m.reward);
     s.dust += m.dust;
@@ -1654,6 +1673,18 @@ export function parseSave(text, now = Date.now()) {
     s.mission = finite(x.mission, MISSIONS.length);
     if (!Number.isInteger(s.mission))
         throw Error("Mission invalide.");
+    if (x.completedMissions !== undefined) {
+        if (!Array.isArray(x.completedMissions) || x.completedMissions.length > MISSIONS.length)
+            throw Error("Défis validés invalides.");
+        s.completedMissions = x.completedMissions.map(v => {
+            const id = finite(v, MISSIONS.length - 1);
+            if (!Number.isInteger(id))
+                throw Error("Défi validé invalide.");
+            return id;
+        });
+        if (new Set(s.completedMissions).size !== s.completedMissions.length)
+            throw Error("Défis validés en double.");
+    }
     s.savedAt = Math.min(now, finite(x.savedAt, 1e15));
     s.boostUntil = Math.min(now + boostDuration(s) * 1000, finite(x.boostUntil, 1e15));
     s.boostReady = Math.min(now + 180000, finite(x.boostReady, 1e15));
@@ -1719,6 +1750,22 @@ export function parseSave(text, now = Date.now()) {
                 ? Math.max(0, Math.min(1, o.volume))
                 : 0.45,
         };
+    }
+    if (x.completedMissions === undefined) {
+        // Historical achievements can prove an objective even after its workshops were reset.
+        const proofs = {
+            1: ["ten", "chapter0"], 2: ["collector", "chapter0"],
+            4: ["ten", "chapter0"], 6: ["chapter0"], 7: ["factory"],
+            10: ["forge"], 11: ["ocean"], 12: ["pulsar"], 13: ["nebula"],
+            14: ["spiral"], 15: ["horizon"],
+            16: ["chapter2"], 17: ["chapter3"], 18: ["chapter4"],
+        };
+        for (const [key, ids] of Object.entries(proofs)) {
+            const id = Number(key);
+            if (id >= s.mission && ids.some(a => s.achievements.includes(a)))
+                s.completedMissions.push(id);
+        }
+        refreshMissions(s);
     }
     return s;
 }

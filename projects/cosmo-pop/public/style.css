@@ -4576,6 +4576,13 @@ html[data-theme="minuit"] .stage-label {
 
 .badge { white-space: nowrap; }
 
+.mission-body .mission-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--purple-dark);
+  margin-top: 6px;
+}
+
 .bulk-recipes {
   background: var(--lavender);
   border: 1px solid var(--line);

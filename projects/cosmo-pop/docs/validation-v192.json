@@ -1,0 +1,28 @@
+{
+  "version": "1.9.2",
+  "tests": {
+    "passed": 78,
+    "failed": 0
+  },
+  "browser": "Cloud Chrome using real application modules and synthetic state; storage and service worker bypassed",
+  "viewports": [
+    [
+      375,
+      640
+    ],
+    [
+      320,
+      640
+    ]
+  ],
+  "scenario": "Galaxy challenge: achieved before rebirth; actual Cosmos -> Renaître -> confirmation; zero sugar and workshops afterward, challenge remains 1/1 and recoverable; claiming credits 200 Bd and moves to the unachieved Horizon challenge, whose claim button is disabled.",
+  "checks": [
+    "Live objectives persist independently of collection",
+    "Later achieved objectives can be banked while previous rewards remain pending",
+    "Encrypted export/import and repeated rebirths preserve validation",
+    "Legacy files recover live objectives and objective proofs present in durable achievements",
+    "Claimed cursor prevents replaying rewards",
+    "No horizontal overflow at 320 px, mobile navigation remains at viewport bottom"
+  ],
+  "native_device_verified": false
+}

@@ -1,4 +1,4 @@
-# Cosmo Pop 1.9.1 — L’atelier des étoiles
+# Cosmo Pop 1.9.2 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -154,3 +154,12 @@ Catalogue des recettes est un achat permanent unique de 60 poussières après de
 Les nouvelles recherches se conservent dans les sauvegardes chiffrées et à la renaissance ; les champs manquants des anciennes sauvegardes sont ajoutés au niveau zéro. Le budget total de toutes les recherches et de l'Intendant devient 1446 poussières (546 pour les trois recherches de base, 170 pour Cadence, 60 pour Catalogue, 370 pour les trois recherches spécialisées et 300 pour l'Intendant).
 
 Correction de la progression des prix de base : Soleil confiseur 240 millions, Forge de météores 600 millions (au lieu de 200 millions). Toutes les machines ont un prix de départ strictement croissant ; leurs exemplaires possédés et la réserve restent conservés. Les prix des prochaines unités continuent à dépendre de la quantité possédée et des bons éventuels.
+
+
+## Défis conservés 1.9.2
+
+La validation des objectifs est enregistrée dans `completedMissions`, indépendamment du curseur `mission` qui ne progresse qu'à la récupération. Les 19 objectifs déjà remplis peuvent être validés, même s'ils ne sont pas encore affichés. La validation d'un objectif est définitive ; une progression partielle liée aux ateliers reste propre à la vie en cours.
+
+La renaissance prend un dernier instantané des conditions avant de supprimer les ateliers et transmet les validations à la vie suivante. Les sauvegardes locales et exports chiffrés valident également les objectifs avant leur instantané. L'affichage annonce « Défi validé · à récupérer » et précise que la récompense est conservée après renaissance. Aucun encaissement automatique : la récompense existante peut ainsi servir de capital de départ lors d'une vie ultérieure. Les douceurs alimentent alors la réserve et la production cumulée de la nouvelle vie, comme un encaissement normal ; la poussière est créditée au même moment. Les montants ne changent pas.
+
+Le curseur de récupération reste permanent et interdit tout second versement d'un défi encaissé. Les anciens fichiers migrent à partir des conditions actuellement remplies et, quand elles existent, des preuves fournies par les succès historiques (première galaxie, première forge, maîtrise des chapitres, etc.). Une réussite ancienne sans aucune preuve enregistrée ne peut pas être reconstruite. La structure de chiffrement et la version de l'enveloppe restent inchangées.

@@ -1,4 +1,4 @@
-import { parseSave } from "./engine.js";
+import { parseSave, refreshMissions } from "./engine.js";
 import type { State } from "./engine.js";
 const PREFIX = "cosmo-pop:" + location.pathname.replace(/index\.html$/, "");
 const encoder = new TextEncoder();
@@ -145,6 +145,7 @@ export async function exportEncrypted(
   state: State,
   password: string,
 ): Promise<string> {
+  refreshMissions(state);
   const salt = crypto.getRandomValues(new Uint8Array(16));
   return seal(
     JSON.stringify({ ...state, savedAt: Date.now() }),
@@ -195,6 +196,7 @@ export class Storage {
     }
   }
   save(state: State): Promise<void> {
+    refreshMissions(state);
     const snapshot = JSON.stringify({ ...state, savedAt: Date.now() });
     const task = this.queue
       .catch(() => {})

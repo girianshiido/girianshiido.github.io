@@ -1,4 +1,4 @@
-import { parseSave } from "./engine.js";
+import { parseSave, refreshMissions } from "./engine.js";
 const PREFIX = "cosmo-pop:" + location.pathname.replace(/index\.html$/, "");
 const encoder = new TextEncoder();
 const to64 = (a) => btoa(Array.from(a, (b) => String.fromCharCode(b)).join(""));
@@ -97,6 +97,7 @@ async function passwordKey(password, salt) {
     }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
 }
 export async function exportEncrypted(state, password) {
+    refreshMissions(state);
     const salt = crypto.getRandomValues(new Uint8Array(16));
     return seal(JSON.stringify({ ...state, savedAt: Date.now() }), await passwordKey(password, salt), "password", { salt: to64(salt), iterations: 310000 });
 }
@@ -138,6 +139,7 @@ export class Storage {
         }
     }
     save(state) {
+        refreshMissions(state);
         const snapshot = JSON.stringify({ ...state, savedAt: Date.now() });
         const task = this.queue
             .catch(() => { })
