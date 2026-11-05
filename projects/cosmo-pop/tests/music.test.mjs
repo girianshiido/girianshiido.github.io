@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AudioManager } from '../dist/js/audio.js';
 import { fresh, parseSave, prestige, earn } from '../dist/js/engine.js';
+import { MUSIC_TRACKS } from '../dist/js/music.js';
+import { readFile } from 'node:fs/promises';
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 class Context {
@@ -73,4 +75,46 @@ test('Global mute persists through migration and prestige without altering indiv
  const expected={...s.settings};earn(s,1e9);assert.ok(prestige(s,1000));
  assert.deepEqual(parseSave(JSON.stringify(s),1000).settings,expected);
  delete s.settings.muted;assert.equal(parseSave(JSON.stringify(s),1000).settings.muted,false);
+});
+
+test('The newest selection wins when changing tracks during decoding', async (t) => {
+  const requests = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    requests.push(String(url));
+    return { ok: true, arrayBuffer: async () => new ArrayBuffer(1) };
+  });
+  let release;
+  globalThis.AudioContext = class extends Context {
+    async decodeAudioData() {
+      if (!release) return new Promise(resolve => release = resolve);
+      return { duration: 90 };
+    }
+  };
+  const audio = new AudioManager();
+  await audio.unlock();
+  await tick();
+  audio.setMusic(true, .4, 'cometes');
+  audio.setMusic(true, .4, 'neptune');
+  release({ duration: 120 });
+  await tick();
+  const context = Context.instances.at(-1);
+  assert.equal(context.sources.length, 1);
+  assert.equal(context.sources[0].loopEnd, 90);
+  assert.equal(context.sources[0].offset, 0);
+  assert.ok(requests.some(url => url.endsWith('/neptune-v1.ogg')));
+  assert.ok(requests.every(url => !url.endsWith('/cometes-v1.ogg')));
+  audio.setMusic(true, .4, 'cometes');
+  assert.ok(context.sources[0].stopped);
+  await tick();
+  assert.equal(context.sources.length, 2);
+  assert.ok(requests.some(url => url.endsWith('/cometes-v1.ogg')));
+});
+
+test('Every selectable loop ships as OGG in the offline cache', async () => {
+  const cache = await readFile(new URL('../dist/sw.js', import.meta.url), 'utf8');
+  for (const track of MUSIC_TRACKS) {
+    const asset = await readFile(new URL(`../dist/audio/${track.file}`, import.meta.url));
+    assert.equal(asset.subarray(0, 4).toString(), 'OggS');
+    assert.ok(cache.includes(`"./audio/${track.file}"`));
+  }
 });

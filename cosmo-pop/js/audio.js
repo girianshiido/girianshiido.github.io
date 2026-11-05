@@ -1,3 +1,4 @@
+import { DEFAULT_MUSIC_TRACK, MUSIC_TRACKS } from "./music.js";
 /** Short decoded OGG buffers; Web Audio allows overlapping pops without allocating media elements. */
 export class AudioManager {
     context = null;
@@ -8,6 +9,7 @@ export class AudioManager {
     unlocked = false;
     musicEnabled = true;
     musicVolume = 0.35;
+    musicTrack = DEFAULT_MUSIC_TRACK;
     musicBuffer = null;
     musicSource = null;
     musicGain = null;
@@ -25,7 +27,14 @@ export class AudioManager {
         else if (this.unlocked)
             void this.resume();
     }
-    setMusic(enabled, volume) {
+    setMusic(enabled, volume, track = this.musicTrack) {
+        if (track !== this.musicTrack) {
+            this.stopMusic();
+            this.musicTrack = track;
+            this.musicBuffer = null;
+            this.musicOffset = 0;
+            this.musicRetryAt = 0;
+        }
         this.musicEnabled = enabled;
         this.musicVolume = Number.isFinite(volume) ? Math.max(0, Math.min(1, volume)) : 0.35;
         if (this.musicGain && this.context) {
@@ -34,6 +43,11 @@ export class AudioManager {
             gain.setTargetAtTime(this.musicVolume, this.context.currentTime, 0.03);
         }
         this.syncMusic();
+    }
+    stopMusic() {
+        this.musicSource?.stop();
+        this.musicSource?.disconnect();
+        this.musicSource = null;
     }
     async resume() {
         try {
@@ -53,9 +67,7 @@ export class AudioManager {
         if (!wanted) {
             if (this.musicSource && context && this.musicBuffer) {
                 this.musicOffset = (this.musicOffset + context.currentTime - this.musicStarted) % this.musicBuffer.duration;
-                this.musicSource.stop();
-                this.musicSource.disconnect();
-                this.musicSource = null;
+                this.stopMusic();
             }
             return;
         }
@@ -63,7 +75,10 @@ export class AudioManager {
             return;
         if (!this.musicBuffer) {
             if (!this.musicLoading && Date.now() >= this.musicRetryAt) {
-                this.musicLoading = this.loadMusic().finally(() => { this.musicLoading = null; });
+                this.musicLoading = this.loadMusic(this.musicTrack).finally(() => {
+                    this.musicLoading = null;
+                    this.syncMusic();
+                });
             }
             return;
         }
@@ -84,17 +99,22 @@ export class AudioManager {
         this.musicSource = source;
         source.start(0, this.musicOffset);
     }
-    async loadMusic() {
+    async loadMusic(track) {
         try {
-            const response = await fetch(new URL("../audio/constellations-v1.ogg", import.meta.url));
+            const file = MUSIC_TRACKS.find(entry => entry.id === track).file;
+            const response = await fetch(new URL(`../audio/${file}`, import.meta.url));
             if (!response.ok)
                 throw Error("Music unavailable");
-            this.musicBuffer = await this.context.decodeAudioData(await response.arrayBuffer());
-            this.syncMusic();
+            if (track !== this.musicTrack)
+                return;
+            const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
+            if (track === this.musicTrack)
+                this.musicBuffer = buffer;
         }
         catch {
             // A missing/unsupported codec must neither block play nor cause a request on every click.
-            this.musicRetryAt = Date.now() + 30000;
+            if (track === this.musicTrack)
+                this.musicRetryAt = Date.now() + 30000;
         }
     }
     enabled = true;

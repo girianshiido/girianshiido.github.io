@@ -1,3 +1,6 @@
+import { DEFAULT_MUSIC_TRACK, MUSIC_TRACKS } from "./music.js";
+import type { MusicTrackId } from "./music.js";
+
 /** Pure deterministic economy. No browser dependencies. */
 export const LIMIT = 1e300;
 /** Saturating products keep progression finite without multiplying beyond IEEE-754 range. */
@@ -533,6 +536,8 @@ export const AUTOMATION = {
   cost: 300,
   gate: 8,
 } as const;
+export const WEEKLY_HARVEST_COST = 600;
+const WEEK_SECONDS = 7 * 24 * 60 * 60;
 export const DESTINATIONS = [
   {
     gate: 0, fuel: 5, benefit: "+50 % aux récoltes manuelles pendant 15 min.",
@@ -612,6 +617,7 @@ export interface State {
   totalMilestones: number;
   research: Record<ResearchId, number>;
   automation: { owned: boolean; enabled: boolean };
+  musicUnlocks: MusicTrackId[];
   achievements: string[];
   mission: number;
   completedMissions: number[];
@@ -635,6 +641,7 @@ export interface State {
     sound: boolean;
     volume: number;
     music: boolean;
+    musicTrack: MusicTrackId;
     musicVolume: number;
     motion: boolean;
     theme: "lavande" | "menthe" | "aurore" | "minuit";
@@ -656,6 +663,7 @@ export function fresh(now = Date.now()): State {
     totalMilestones: 0,
     research: { radiance: 0, touch: 0, time: 0, rhythm: 0, catalogue: 0, navigation: 0, comets: 0, nova: 0 },
     automation: { owned: false, enabled: false },
+    musicUnlocks: [],
     achievements: [],
     mission: 0,
     completedMissions: [],
@@ -668,7 +676,7 @@ export function fresh(now = Date.now()): State {
     boostUntil: 0,
     boostReady: 0,
     savedAt: now,
-    settings: { muted: false, sound: true, volume: 0.45, music: true, musicVolume: 0.35, motion: true, theme: "lavande" },
+    settings: { muted: false, sound: true, volume: 0.45, music: true, musicTrack: DEFAULT_MUSIC_TRACK, musicVolume: 0.35, motion: true, theme: "lavande" },
   };
 }
 const numberPrecise = new Intl.NumberFormat("fr-FR", {
@@ -1016,6 +1024,28 @@ export function buyResearch(s: State, id: ResearchId): boolean {
   s.research[id]++;
   return true;
 }
+export function musicAvailable(s: State, id: unknown): id is MusicTrackId {
+  return MUSIC_TRACKS.some(track => track.id === id && (track.cost === 0 || s.musicUnlocks.includes(track.id)));
+}
+export function buyMusic(s: State, id: string) {
+  const track = MUSIC_TRACKS.find(track => track.id === id);
+  if (!track || musicAvailable(s, id) || s.dust < track.cost) return;
+  s.dust -= track.cost;
+  s.musicUnlocks.push(track.id);
+  return track;
+}
+export function weeklyHarvest(s: State): number {
+  const amount = Math.min(LIMIT - s.sugar, safeProduct(production(s), WEEK_SECONDS));
+  return s.sugar + amount > s.sugar ? amount : 0;
+}
+export function buyWeeklyHarvest(s: State): number {
+  if (s.dust < WEEKLY_HARVEST_COST) return 0;
+  const amount = weeklyHarvest(s);
+  if (!amount) return 0;
+  s.dust -= WEEKLY_HARVEST_COST;
+  earn(s, amount);
+  return amount;
+}
 /** A one-time permanent purchase. The assistant only spends sweets, never dust. */
 export function buyAutomation(s: State): boolean {
   if (
@@ -1145,6 +1175,7 @@ export function prestige(s: State, now: number): boolean {
     totalDust: s.totalDust + gain,
     research: { ...s.research },
     automation: { ...s.automation },
+    musicUnlocks: [...s.musicUnlocks],
     achievements: [...s.achievements],
     clicks: s.clicks,
     expeditions: s.expeditions,
@@ -1704,6 +1735,11 @@ export function parseSave(text: string, now = Date.now()): State {
   const x = v as Record<string, unknown>;
   if (x.version !== 1) throw Error("Version de sauvegarde inconnue.");
   const s = fresh(now);
+  if (Array.isArray(x.musicUnlocks)) {
+    const unlocks = x.musicUnlocks;
+    s.musicUnlocks = MUSIC_TRACKS.filter(track => track.cost > 0 && unlocks.includes(track.id))
+      .map(track => track.id);
+  }
   if (x.automation && typeof x.automation === "object") {
     const a = x.automation as Record<string, unknown>;
     s.automation = {
@@ -1866,6 +1902,7 @@ export function parseSave(text: string, now = Date.now()): State {
       muted: typeof o.muted === "boolean" ? o.muted : false,
       sound: typeof o.sound === "boolean" ? o.sound : true,
       music: typeof o.music === "boolean" ? o.music : true,
+      musicTrack: musicAvailable(s, o.musicTrack) ? o.musicTrack : DEFAULT_MUSIC_TRACK,
       musicVolume:
         typeof o.musicVolume === "number" && Number.isFinite(o.musicVolume)
           ? Math.max(0, Math.min(1, o.musicVolume))

@@ -1,4 +1,4 @@
-# Cosmo Pop 1.9.2 — L’atelier des étoiles
+# Cosmo Pop 1.10.0 — L’atelier des étoiles
 
 Jeu incrémental français en TypeScript strict, sans framework, sans serveur ni télémétrie. Publication statique dans le répertoire `/cosmo-pop/` du dépôt GitHub Pages ; sources dans `projects/cosmo-pop/`.
 
@@ -23,7 +23,7 @@ La planète est une illustration PNG originale générée pour ce projet, dispon
 
 Le manifeste PWA fournit les icônes 192 et 512 px, une icône maskable et une icône Apple 180 px. Installation : Safari → Partager → Sur l’écran d’accueil sur iOS ; bouton Installer ou menu Chrome sur Android. En mode installé, l’icône d’installation devient un bouton de mise à jour. Il s’éclaire lorsqu’un nouveau Service Worker est prêt ; une activation manuelle sauvegarde la partie avant son application. La détection repose sur le mode standalone iOS/standard et sur le signal d’installation du navigateur, mémorisé sur cet appareil. Une page ne peut pas inventorier universellement les applications installées sur tous les systèmes.
 
-Les ressources PNG, scripts, cinq bruitages OGG et le thème musical OGG sont préchargés dans un cache hors ligne versionné par empreinte SHA-256. Les vérifications automatiques de mise à jour sont espacées de cinq minutes et limitées aux onglets visibles et connectés. Les sauvegardes peuvent être exportées pour transférer une partie entre le navigateur, l’application installée et un autre appareil.
+Les ressources PNG, scripts, cinq bruitages OGG et trois thèmes musicaux OGG sont préchargés dans un cache hors ligne versionné par empreinte SHA-256. Les vérifications automatiques de mise à jour sont espacées de cinq minutes et limitées aux onglets visibles et connectés. Les sauvegardes peuvent être exportées pour transférer une partie entre le navigateur, l’application installée et un autre appareil.
 
 ## Sauvegardes chiffrées
 
@@ -163,3 +163,9 @@ La validation des objectifs est enregistrée dans `completedMissions`, indépend
 La renaissance prend un dernier instantané des conditions avant de supprimer les ateliers et transmet les validations à la vie suivante. Les sauvegardes locales et exports chiffrés valident également les objectifs avant leur instantané. L'affichage annonce « Défi validé · à récupérer » et précise que la récompense est conservée après renaissance. Aucun encaissement automatique : la récompense existante peut ainsi servir de capital de départ lors d'une vie ultérieure. Les douceurs alimentent alors la réserve et la production cumulée de la nouvelle vie, comme un encaissement normal ; la poussière est créditée au même moment. Les montants ne changent pas.
 
 Le curseur de récupération reste permanent et interdit tout second versement d'un défi encaissé. Les anciens fichiers migrent à partir des conditions actuellement remplies et, quand elles existent, des preuves fournies par les succès historiques (première galaxie, première forge, maîtrise des chapitres, etc.). Une réussite ancienne sans aucune preuve enregistrée ne peut pas être reconstruite. La structure de chiffrement et la version de l'enveloppe restent inchangées.
+
+## Boutique stellaire 1.10.0
+
+La boutique du Cosmos propose « Les jardins de Neptune » et « Le train des comètes » pour 400 poussières chacun. Ces achats et le morceau choisi dans les options sont conservés dans la sauvegarde chiffrée et après chaque renaissance. « La ronde des constellations » reste disponible dès le départ. Les deux nouvelles compositions MIDI sont rendues en boucles OGG à 48 kHz avec FluidSynth et MuseScore General HQ. Le lecteur ne conserve que le buffer du morceau sélectionné.
+
+La récolte d’une semaine coûte 600 poussières à chaque achat. Elle crédite immédiatement 604 800 secondes de production passive normale, au rythme de l’atelier au moment de l’achat. Le montant visible dans la boutique tient compte de la capacité restante de la réserve. Les dépenses laissent intact le bonus permanent de poussière.

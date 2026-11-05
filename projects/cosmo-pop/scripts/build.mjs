@@ -1,4 +1,5 @@
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { MUSIC_TRACKS } from "../dist/js/music.js";
 await mkdir("dist", { recursive: true });
 await cp("public", "dist", { recursive: true });
 const files = [
@@ -17,8 +18,9 @@ const files = [
   "./js/engine.js",
   "./js/art.js",
   "./js/audio.js",
+  "./js/music.js",
   "./js/storage.js",
-  "./audio/constellations-v1.ogg",
+  ...MUSIC_TRACKS.map(track => `./audio/${track.file}`),
   ...["pop", "buy", "reward", "comet", "launch"].map((x) => `./audio/${x}.ogg`),
 ];
 const { createHash } = await import("node:crypto");
