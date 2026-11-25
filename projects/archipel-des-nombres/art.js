@@ -181,6 +181,16 @@ export function drawBasket(canvas) {
   line(ctx,'#eab97d',2,rim);
 }
 
+export function drawBasketShells(canvas,n){
+  const area=setCanvas(canvas);
+  if(!area)return;
+  const {ctx,w,h}=area;
+  const spacing=w*.32;
+  for(let i=0;i<n;i++){
+    drawToken(ctx,'shell',w/2+(i-(n-1)/2)*spacing,h*.59,w*.29);
+  }
+}
+
 function collectionArea(w,h,layout){
   const height=layout==='ring'?Math.min(w,h):h;
   const wide=layout==='frame'||layout==='line';

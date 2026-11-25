@@ -5,7 +5,7 @@ export type Token = 'shell' | 'fish' | 'berry' | 'flower' | 'leaf' | 'star' | 's
 export interface Task {
   mode: Mode; n: number; start: number; choices: number[];
   layout: Layout; token: Token; seed: number; flash: boolean; order: number[];
-  activity?: number; independent?: boolean; fixed?: Layout; oral?: boolean; comparison?: {left: number; right: number; ask: Ask}; total?: number;
+  activity?: number; independent?: boolean; basketChoices?: boolean; fixed?: Layout; oral?: boolean; comparison?: {left: number; right: number; ask: Ask}; total?: number;
 }
 export interface Round {
   chapter: number; island: number; tasks: Task[]; planned: number; index: number;
@@ -29,7 +29,7 @@ const legacy: Island[] = [
   {title:'La réserve du pont',description:'Voir ce qui change quand on ajoute ou retire un objet.',icon:'basket',tone:'gold',mode:'change',art:4},
 ];
 type Practice = Island & {
-  values?: number[]; fixed?: Layout; oral?: boolean; ask?: Ask; review?: number[];
+  values?: number[]; fixed?: Layout; oral?: boolean; ask?: Ask; review?: number[]; basketChoices?: boolean;
 };
 const atelier = (title: string, description: string, mode: Mode, art: number, rules: Partial<Practice> = {}): Practice =>
   ({title,description,mode,art,icon:legacy[art].icon,tone:legacy[art].tone,...rules});
@@ -38,7 +38,7 @@ const practice: Practice[] = [
   atelier('Chacun sa lanterne','Associe une lanterne à chaque feuille.','pair',0,{values:[1,2,3]}),
   atelier('Les doigts de la plage','Compte les doigts levés, de zéro à trois.','glance',0,{values:[1,2,3,0],fixed:'hand'}),
   atelier('Les jumeaux','Trouve un groupe qui a autant d’objets que le modèle.','same',0,{values:[0,1,2,3],fixed:'line'}),
-  atelier('Le panier vide','Écoute et reconnais les groupes de zéro, un ou deux objets.','hear',0,{values:[0,1,2],fixed:'line'}),
+  atelier('Le panier vide','Écoute et choisis le panier qui contient zéro, un ou deux coquillages.','hear',0,{values:[0,1,2],basketChoices:true}),
   atelier('La ronde de la plage','Retrouve les premiers gestes appris sur la plage.','mix',0,{review:[9,10,11,12,13]}),
   atelier('Les perles en ligne','Compte les perles, puis choisis leur nombre.','touch',2,{fixed:'line'}),
   atelier('Les poissons du lagon','Compte les poissons et indique combien il y en a.','touch',2,{fixed:'ring'}),
@@ -152,6 +152,7 @@ function taskFor(id: number,n: number,chapter: number,random: () => number,previ
   const activity=islands[id];
   const q=makeTask(activity.mode,n,chapter,random,previous);
   q.activity=id;
+  q.basketChoices=activity.basketChoices;
   q.independent=!chapter&&q.mode==='touch'&&id!==9;
   q.oral=activity.oral;
   q.fixed=activity.fixed;
