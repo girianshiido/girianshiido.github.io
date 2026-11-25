@@ -1,27 +1,35 @@
-export type Mode = 'touch' | 'echo' | 'cards' | 'glance' | 'same' | 'basket' | 'color' | 'pair' | 'change' | 'order';
+export type Mode = 'touch' | 'echo' | 'glance' | 'basket' | 'color' | 'pair' | 'change' | 'ferry' | 'order';
 export type Layout = 'line' | 'arc' | 'scatter' | 'clusters' | 'frame' | 'dice';
-export type Token = 'shell' | 'fish' | 'berry' | 'flower' | 'leaf' | 'star';
+export type Token = 'shell' | 'fish' | 'berry' | 'flower' | 'leaf' | 'star' | 'seed' | 'pearl' | 'lantern';
 export interface Task {
-  mode: Mode; n: number; start: number; pair: boolean; choices: number[];
+  mode: Mode; n: number; start: number; choices: number[];
   layout: Layout; token: Token; seed: number; flash: boolean; order: number[];
 }
 export interface Round {
   chapter: number; island: number; tasks: Task[]; planned: number; index: number;
-  first: number; errors: number; answered: boolean; assisted: boolean;
+  first: number; errors: number; answered: boolean;
 }
 export interface Island {
-  title: string; description: string; icon: string; tone: string; modes: Mode[];
+  title: string; description: string; icon: string; tone: string; mode: Mode;
+  art: number;
 }
 
 export const numbers = ['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix'];
 export const islands: Island[] = [
-  {title:'La plage aux coquillages',description:'Touche les objets un par un et trouve combien il y en a.',icon:'shell',tone:'peach',modes:['touch']},
-  {title:'L’écho de la grotte',description:'Écoute un nombre et retrouve le chiffre ou la collection.',icon:'echo',tone:'lilac',modes:['echo','cards']},
-  {title:'Le lagon des figures',description:'Reconnais les points d’un dé, des rangées et de petits groupes.',icon:'dice',tone:'mint',modes:['glance','same']},
-  {title:'Le jardin flottant',description:'Remplis un panier et colorie juste ce qu’il faut de cases.',icon:'flower',tone:'pink',modes:['basket','color']},
-  {title:'Le pont des lucioles',description:'Donne une lumière à chacun, ajoute ou retire, puis range les nombres.',icon:'lamp',tone:'gold',modes:['pair','change','order']},
-  {title:'Le grand phare',description:'Rallume le phare en rejouant aux activités des îles.',icon:'beacon',tone:'sky',modes:['touch','echo','glance','cards','basket','color','same','pair','change','order']},
+  {title:'La plage aux coquillages',description:'Compter les objets, un par un.',icon:'shell',tone:'peach',mode:'touch',art:0},
+  {title:'L’écho de la grotte',description:'Relier un nombre entendu à son chiffre.',icon:'echo',tone:'lilac',mode:'echo',art:1},
+  {title:'Le lagon des figures',description:'Reconnaître des quantités en un coup d’œil.',icon:'dice',tone:'mint',mode:'glance',art:2},
+  {title:'Le jardin flottant',description:'Préparer exactement la quantité demandée.',icon:'flower',tone:'pink',mode:'basket',art:3},
+  {title:'Le pont des lucioles',description:'Poser une lanterne sur chaque feuille.',icon:'lamp',tone:'gold',mode:'pair',art:4},
+  {title:'La traversée du phare',description:'Rapporter autant de perles qu’au premier quai.',icon:'beacon',tone:'sky',mode:'ferry',art:5},
+  {title:'Les marches du port',description:'Ranger les nombres du plus petit au plus grand.',icon:'map',tone:'sky',mode:'order',art:5},
+  {title:'La mosaïque du jardin',description:'Colorier exactement le nombre de cases demandé.',icon:'flower',tone:'pink',mode:'color',art:3},
+  {title:'La réserve du pont',description:'Voir ce qui change quand on ajoute ou retire un objet.',icon:'basket',tone:'gold',mode:'change',art:4},
 ];
+export const coreCount = 6;
+export const finalIsland = coreCount - 1;
+const exampleTargets = [2,2,3,2,2,3,2,3,3];
+
 const layouts: Layout[] = ['line','arc','scatter','clusters','frame'];
 const tokens: Token[] = ['shell','fish','berry','flower','leaf','star'];
 export function rng(seed: number) {
@@ -43,8 +51,9 @@ export function makeTask(mode: Mode, n: number, chapter: number, random = Math.r
   let layout = shuffle(layouts.filter(item => item !== previous?.layout), random)[0];
   if (!previous && mode === 'glance' && n >= 1 && n <= 6 && random() < .6) layout = 'dice';
   if (!previous && chapter && n > 5 && mode === 'glance') layout = 'frame';
-  const token = shuffle(tokens.filter(item => item !== previous?.token), random)[0];
-  const wanted = mode === 'echo' ? 1 : mode === 'cards' || mode === 'same' ? 3 : 2;
+  const token = mode==='basket' ? 'seed' : mode==='ferry' ? 'pearl'
+    : mode==='pair' ? 'lantern' : shuffle(tokens.filter(item => item !== previous?.token), random)[0];
+  const wanted = mode === 'echo' && !chapter ? 1 : 2;
   const pool = shuffle(Array.from({length:max+1},(_,i)=>i).filter(i=>i!==n),random)
     .sort((a,b) => Number(Math.abs(a-n)>2) - Number(Math.abs(b-n)>2));
   const choices = shuffle([n,...pool.slice(0,wanted)],random);
@@ -56,38 +65,55 @@ export function makeTask(mode: Mode, n: number, chapter: number, random = Math.r
   while (order.every((value,index)=>value===low+index) || (previous&&order.join()===previous.order.join())) {
     order = [order[1],order[2],order[0]];
   }
-  return { mode,n,start,pair:mode==='pair',choices,layout,token,order,
+  return { mode,n,start,choices,layout,token,order,
     seed:Math.floor(random()*100000),flash:mode==='glance' && n>=1 && n<=5 && (layout==='dice'||layout==='line'||layout==='frame') };
 }
-export function startRound(chapter: number, island: number, random = Math.random): Round {
-  const values = chapter ? [6,7,8,9,10] : [0,1,2,3,4,5];
-  const modes = islands[island].modes;
-  const count = island===5 ? modes.length : island===4 ? 6 : values.length;
-  const targets = shuffle(values,random);
-  if (island===0&&!chapter) targets.splice(0,6,1,2,...shuffle([0,3,4,5],random));
-  const extras = shuffle(values,random);
-  const tasks = Array.from({length:count},(_,i)=> {
-    const mode = modes[i%modes.length];
-    const n = targets[i] ?? extras[i-targets.length];
-    return makeTask(mode,n,chapter,random);
-  });
-  if (island===2&&!chapter) {
-    const index = tasks.findIndex(task=>task.mode==='glance'&&task.n>0);
-    const task = tasks[index];
-    task.layout = 'dice';
-    task.flash = true;
-  }
-  return {chapter,island,tasks,planned:count,index:0,first:0,errors:0,answered:false,assisted:false};
+export function roundSize(chapter: number, island: number): number {
+  return chapter || islands[island].mode==='pair' || islands[island].mode==='ferry' ? 5 : 6;
 }
+
+export function exampleTask(chapter: number, island: number): Task {
+  const mode = islands[island].mode;
+  const n = chapter ? 6 : exampleTargets[island];
+  const task = makeTask(mode,n,chapter,rng(321 + island));
+  task.layout = mode==='glance' ? (chapter?'frame':'dice') : 'line';
+  task.flash = false;
+  const low = chapter ? 5 : 1;
+  if (mode==='order') task.order = [low+2,low,low+1];
+  if (mode==='change') task.start = n-1;
+  return task;
+}
+
+export function startRound(chapter: number, island: number, random = Math.random): Round {
+  const mode = islands[island].mode;
+  const values = chapter ? [6,7,8,9,10] : mode==='pair'||mode==='ferry' ? [1,2,3,4,5] : [0,1,2,3,4,5];
+  const targets = shuffle(values,random);
+  if (!chapter && mode==='touch') targets.splice(0,6,1,2,3,...shuffle([0,4,5],random));
+  if (!chapter && mode==='glance') targets.splice(0,6,2,3,...shuffle([0,1,4,5],random));
+  const tasks = targets.map(n=>makeTask(mode,n,chapter,random));
+  if (!chapter && mode==='glance') {
+    tasks[0].layout = 'dice';
+    tasks[0].flash = true;
+    tasks[1].layout = 'frame';
+    tasks[1].flash = true;
+  }
+  return {chapter,island,tasks,planned:roundSize(chapter,island),index:0,first:0,errors:0,answered:false};
+}
+
+export function matches(task: Task, value: number | number[]): boolean {
+  return task.mode==='order'
+    ? Array.isArray(value) && value.length===task.order.length &&
+      [...task.order].sort((a,b)=>a-b).every((n,i)=>value[i]===n)
+    : value===task.n;
+}
+
 export function answer(round: Round, value: number | number[], random = Math.random) {
   if(round.answered||round.index>=round.tasks.length) return null;
   const task = round.tasks[round.index];
-  const correct = task.mode==='order'
-    ? Array.isArray(value) && value.length===3 && value.every((n,i)=>n===[...task.order].sort((a,b)=>a-b)[i])
-    : value===task.n;
+  const correct = matches(task,value);
   round.answered = true;
   const original = round.index<round.planned;
-  if(correct&&original&&!round.assisted) round.first++;
+  if(correct&&original) round.first++;
   if(!correct) {
     round.errors++;
     if(original) round.tasks.push(makeTask(task.mode,task.n,round.chapter,random,task));
@@ -98,7 +124,6 @@ export function advance(round: Round) {
   if(!round.answered) return false;
   round.index++;
   round.answered = false;
-  round.assisted = false;
   return round.index < round.tasks.length;
 }
 export function outcome(round: Round) {
@@ -106,7 +131,8 @@ export function outcome(round: Round) {
     first:round.first,total:round.planned,errors:round.errors };
 }
 export function accessible(records: readonly {mastery: boolean}[], index: number) {
-  return index===0||records.slice(0,index).every(entry=>entry.mastery);
+  const needed = Math.min(index,coreCount);
+  return records.length>=needed && records.slice(0,needed).every(entry=>entry.mastery);
 }
 export function spots(n: number,layout: Layout,seed: number): [number,number][] {
   const random = rng(seed);

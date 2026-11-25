@@ -1,7 +1,14 @@
-Les nombres de zéro à dix sont prononcés par Poslovitch (Lingua Libre), sous licence CC0 1.0.
-https://lingualibre.org/wiki/Q142683
-https://creativecommons.org/publicdomain/zero/1.0/
-https://commons.wikimedia.org/wiki/Category:Lingua_Libre_pronunciation_by_Poslovitch
+L’Archipel des nombres · crédits sonores
 
-Adaptations pour le jeu : silences raccourcis, crêtes harmonisées et conversion PCM 12 kHz.
-Les quatre brefs bruitages mélodiques ont été créés pour le jeu.
+Consignes et nombres : extraits synthétisés avec Piper et son modèle fr_FR-siwis-medium.
+Sources du modèle vocal : https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR/siwis/medium
+Piper : https://github.com/OHF-Voice/piper1-gpl
+Jeux de données : The SIWIS French Speech Synthesis Database, Pierre-Edouard Honnet,
+Alexandros Lazaridis, Philip N. Garner et Junichi Yamagishi, CC BY 4.0.
+https://doi.org/10.7488/ds/1705
+Préentraînement sur Hi-Fi Multi-Speaker English TTS, voix Cori Samuel, CC BY 4.0.
+https://www.openslr.org/109/
+https://creativecommons.org/licenses/by/4.0/
+Les extraits ont été synthétisés, normalisés et encodés en MP3 pour le jeu.
+
+Bruitages mélodiques créés pour L’Archipel des nombres.
