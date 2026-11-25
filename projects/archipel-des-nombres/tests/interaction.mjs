@@ -187,6 +187,29 @@ try{
   });
   assert.deepEqual(partial,[206,40,'audio/mpeg']);
   assert.equal(await page.evaluate(async()=> (await fetch('./audio/voix/count-hand.mp3')).ok),true);
+  // The illustrated zero through five poses must also load during offline play.
+  await enter(11);
+  const hand = page.locator('.hand-figure');
+  await hand.evaluate(img=>img.decode());
+  assert.match(await hand.getAttribute('src'),/hand-2\.webp$/);
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(19);
+  await action('skip-example').tap();
+  const poses=new Set();
+  for(let i=0;i<6;i++){
+    await hand.evaluate(img=>img.decode());
+    const n=Number((await hand.getAttribute('src')).match(/hand-(\d)\.webp$/)[1]);
+    poses.add(n);
+    if(n===0){
+      await page.locator('.number-button:not([data-action="answer-0"])').first().tap();
+      await hand.evaluate(img=>img.decode());
+      assert.match(await hand.getAttribute('src'),/hand-0\.webp$/);
+      assert.match(await page.locator('.feedback-title').innerText(),/Aucun doigt n’est levé/);
+    }else await action('answer-'+n).tap();
+    await action('advance').tap();
+  }
+  assert.deepEqual([...poses].sort(),[0,1,2,3,4,5]);
+  await action('map').tap();
   await enter(0);
   const object=page.locator('.hit').first();
   await object.tap();

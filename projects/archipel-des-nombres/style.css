@@ -160,6 +160,11 @@ progress::-moz-progress-bar{background:#488f7e;border-radius:30px}
 .answer-demo span{display:grid;place-items:center;min-width:45px;height:46px;padding:0 7px;border-radius:11px;background:#e3efe7;font-size:1.5rem;font-weight:900}
 .answer-demo b{font-size:1.4rem;color:#4c6e62}
 .feedback-canvas{width:min(165px,55%);height:65px;position:static}
+.hand-figure{
+  position:absolute;inset:0;margin:auto;width:100%;height:100%;object-fit:contain;
+  pointer-events:none;
+}
+.answer-demo .hand-figure{position:static;width:86px;height:86px;margin:0}
 .retry-note{text-align:center}
 .result-card{text-align:center;padding:27px}
 .result-emblem{background:#d8eee2;border-radius:22px;width:82px;height:82px;display:grid;place-items:center;color:#286854;margin:0 auto 16px}
