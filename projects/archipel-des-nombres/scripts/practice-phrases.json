@@ -1,6 +1,3 @@
 {
-  "count-fish": "Combien vois-tu de poissons ? Compte-les, puis choisis le nombre.",
-  "count-pearls": "Combien vois-tu de perles ? Compte-les, puis choisis le nombre.",
-  "count-stars": "Combien vois-tu d’étoiles ? Compte-les, puis choisis le nombre.",
-  "count-collection": "Compte les objets, puis choisis combien il y en a en tout."
+  "hear-basket": "Écoute le nombre de coquillages, puis choisis le panier qui en contient autant."
 }
