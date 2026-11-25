@@ -1,5 +1,5 @@
 export function bindDrag(root, onDrop, scene) {
-  let drag=null, lastDrop=0;
+  let drag=null;
   function finish(event, cancelled){
     if(!drag || drag.pointer!==event.pointerId)return;
     const transaction=drag;
@@ -7,10 +7,15 @@ export function bindDrag(root, onDrop, scene) {
     transaction.node.classList.remove('drag-origin');
     transaction.ghost?.remove();
     if(transaction.node.hasPointerCapture(event.pointerId)) transaction.node.releasePointerCapture(event.pointerId);
-    if(!transaction.ghost)return;
-    lastDrop=performance.now();
     if(cancelled||scene()!==transaction.scene)return;
-    const land=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-drop]');
+    const hit=document.elementFromPoint(event.clientX,event.clientY);
+    if(!transaction.ghost){
+      if(hit?.closest('.token-button')===transaction.node){
+        onDrop(transaction.item,transaction.where==='stock'?'basket':'stock',null);
+      }
+      return;
+    }
+    const land=hit?.closest('[data-drop]');
     if(!land||!root.contains(land))return;
     const where=land.dataset.drop;
     const slot=land.dataset.slot===undefined?null:Number(land.dataset.slot);
@@ -48,5 +53,4 @@ export function bindDrag(root, onDrop, scene) {
   window.addEventListener('pointercancel',event=>finish(event,true));
   root.addEventListener('lostpointercapture',event=>finish(event,true));
   root.addEventListener('dragstart',event=>{if(event.target.closest('.token-button'))event.preventDefault();});
-  return event=>event.detail>0&&lastDrop>0&&performance.now()-lastDrop<100;
 }

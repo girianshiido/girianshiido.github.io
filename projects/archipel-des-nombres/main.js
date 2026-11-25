@@ -476,7 +476,7 @@ async function onAction(action,target,event){
     return;
   }
   if(action.startsWith('put-')||action.startsWith('take-')){
-    if(ignoreDragClick(event))return;
+    if(event.detail>0)return;
     place(Number(action.slice(action.indexOf('-')+1)),action.startsWith('put-')?'basket':'stock',null,event.detail===0);
     return;
   }
@@ -514,6 +514,6 @@ dialog.addEventListener('submit',event=>{
   round=null;current=null;chapter=0;persistSave();applySettings();closeDialog();goMap();
   if(auto) start(0);
 });
-const ignoreDragClick=bindDrag(main,place,()=>page==='game'?current:null);
+bindDrag(main,place,()=>page==='game'?current:null);
 
 applySettings();goMap();
