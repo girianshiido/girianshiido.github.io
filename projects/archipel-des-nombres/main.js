@@ -177,7 +177,7 @@ function collectionCard(q,n,label,layout,seed,answer,extra=''){
     '<button type="button" class="collection-card '+extra+'" aria-label="'+label+'" data-action="answer-'+answer+'">'+contents+'</button>';
 }
 function collectionChoices(q){
-  const layouts=['line','ring','scatter','clusters'];
+  const layouts=q.mode==='same'?['ring','scatter','clusters']:['line','ring','scatter','clusters'];
   return '<div class="collection-options" aria-label="Collections proposées">'+q.choices.map((n,i)=>{
     const layout=q.fixed??layouts[(q.seed+n)%layouts.length];
     return collectionCard(q,n,'Collection '+(i+1),layout,q.seed+n,n);

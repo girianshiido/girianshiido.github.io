@@ -165,7 +165,7 @@ try{
   assert.match(await page.locator('#feedback-title').innerText(),/compris/);
 
   await page.locator('.game-top [data-action="map"]').tap();
-  await enter(21);
+  await enter(22);
   await action('skip-example').tap();
   assert.equal(await page.locator('.collection-options button').count(),4);
   const cardNumber=Number((await page.locator('#task-title').innerText()).match(/\d+/)[0]);

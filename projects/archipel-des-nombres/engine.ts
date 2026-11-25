@@ -30,7 +30,6 @@ const legacy: Island[] = [
 ];
 type Practice = Island & {
   values?: number[]; fixed?: Layout; oral?: boolean; ask?: Ask; review?: number[];
-  guided?: boolean;
 };
 const atelier = (title: string, description: string, mode: Mode, art: number, rules: Partial<Practice> = {}): Practice =>
   ({title,description,mode,art,icon:legacy[art].icon,tone:legacy[art].tone,...rules});
@@ -154,7 +153,7 @@ function taskFor(id: number,n: number,chapter: number,random: () => number,previ
   if(id===15||id===20)q.token='pearl';
   if(id===16)q.token='fish';
   if(id===17)q.token='star';
-  if(id===21||id===31)q.token='shell';
+  if(q.mode==='cards'||q.mode==='hidden')q.token='shell';
   if(activity.values){
     const pool=shuffle(activity.values.filter(value=>value!==n),random);
     q.choices=shuffle([n,...pool.slice(0,2)],random);
