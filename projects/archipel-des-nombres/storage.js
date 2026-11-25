@@ -2,8 +2,7 @@ import {islands,roundSize} from './engine.ts';
 
 export const key='archipel-des-nombres:save';
 export const avatars=['Renard','Hibou','Lapin','Chat'];
-export const narrators=Object.freeze({originale:'Originale',lagon:'Lagon · plus aiguë',phare:'Phare · plus grave'});
-export const defaults=Object.freeze({sound:true,voice:true,narrator:'originale',motion:true,contrast:false,large:false,flash:false});
+export const defaults=Object.freeze({sound:true,voice:true,motion:true,contrast:false,large:false,flash:false});
 const freshRecords=()=>Array.from({length:2},()=>Array.from({length:islands.length},()=>({mastery:false,first:0,errors:0,rounds:0})));
 function count(n,max=999999){return typeof n==='number'&&Number.isSafeInteger(n)?Math.max(0,Math.min(max,n)):0;}
 export function parse(raw){
@@ -17,8 +16,6 @@ export function parse(raw){
       for(const [key,defaultValue] of Object.entries(defaults)){
         if(typeof defaultValue==='boolean'&&typeof source.settings?.[key]==='boolean') settings[key]=source.settings[key];
       }
-      const narrator=source.settings?.narrator;
-      if(Object.hasOwn(narrators,narrator))settings.narrator=narrator;
       records.forEach((chapter,c)=>chapter.forEach((entry,i)=>{
         const item=source.records?.[c]?.[i];
         if(item) Object.assign(entry,{mastery:item.mastery===true,first:Math.min(count(item.first,10),roundSize(c,i)),errors:count(item.errors),rounds:count(item.rounds)});

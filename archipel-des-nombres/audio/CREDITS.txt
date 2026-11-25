@@ -12,13 +12,3 @@ https://creativecommons.org/licenses/by/4.0/
 Les extraits ont été synthétisés, normalisés et encodés en MP3 pour le jeu.
 
 Bruitages mélodiques créés pour L’Archipel des nombres.
-
-Voix supplémentaires « Lagon » et « Phare » : Rhasspy/Piper fr_FR-upmc-medium.
-Lagon correspond au locuteur 0 (Jessica Durand) et Phare au locuteur 1 (Pierre Chauvin).
-Modèle : https://huggingface.co/rhasspy/piper-voices/tree/main/fr/fr_FR/upmc/medium
-Sources : corpus UPMC Jessica Voice Data et UPMC Pierre Voice Data (ISIR, UPMC, 2013),
-distribués par MaryTTS sous CC BY-SA 4.0 :
-https://github.com/marytts/upmc-jessica-data
-https://github.com/marytts/upmc-pierre-data
-Les MP3 de ces deux voix ont été synthétisés, normalisés et encodés pour le jeu.
-Ils sont mis à disposition sous CC BY-SA 4.0 : https://creativecommons.org/licenses/by-sa/4.0/

@@ -28,6 +28,14 @@ const action=name=>page.locator('[data-action="'+name+'"]').last();
 const storeKey='archipel-des-nombres:save';
 
 try{
+  await page.addInitScript(()=>{
+    window.numberStarts=0;
+    const start=AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start=function(...args){
+      window.numberStarts++;
+      return start.apply(this,args);
+    };
+  });
   await page.goto(base,{waitUntil:'networkidle'});
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
@@ -66,7 +74,9 @@ try{
   const novice=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),storeKey);
   assert.equal(await action('answer-2').isDisabled(),true);
   await page.locator('.hit').nth(0).tap();
+  assert.equal(await page.evaluate(()=>window.numberStarts),1,'Le nombre démarre lors du toucher');
   await page.locator('.hit').nth(1).tap();
+  assert.equal(await page.evaluate(()=>window.numberStarts),2);
   const wrong=page.locator('.number-button:not([data-action="answer-2"])').first();
   await wrong.tap();
   assert.match(await page.locator('#example-note').innerText(),/Essaie encore/);
@@ -77,10 +87,12 @@ try{
 
   await page.evaluate(({key,novice})=>{
     novice.players[0].records[0].slice(0,5).forEach(entry=>entry.mastery=true);
+    novice.players[0].settings.narrator='lagon';
     localStorage.setItem(key,JSON.stringify(novice));
   },{key:storeKey,novice});
   await page.reload({waitUntil:'networkidle'});
   await action('settings').tap();
+  assert.equal(await page.locator('#narrator-choice').count(),0);
   await page.locator('.setting').filter({hasText:'Animations'}).click();
   assert.equal(await page.locator('[data-setting="motion"]').isChecked(),false);
   assert.equal(await waterLight(),'none');
@@ -143,16 +155,23 @@ try{
   assert.match(await page.locator('#feedback-title').innerText(),/compris/);
 
   await context.setOffline(true);
-  await page.reload();
+  await page.reload({waitUntil:'networkidle'});
   await page.locator('.hero').waitFor();
   const partial=await page.evaluate(async()=> {
     const response=await fetch('./audio/voix/touch.mp3',{headers:{Range:'bytes=0-39'}});
     return [response.status,(await response.arrayBuffer()).byteLength,response.headers.get('Content-Type')];
   });
   assert.deepEqual(partial,[206,40,'audio/mpeg']);
+  await action('island-0').tap();
+  const object=page.locator('.hit').first();
+  await object.tap();
+  assert.equal(await page.evaluate(()=>window.numberStarts),1,'Lecture Web Audio hors ligne');
 
   await context.setOffline(false);
   await page.addInitScript(()=>{
+    // Exercise the HTML audio fallback and check its original narration order.
+    window.AudioContext=undefined;
+    window.webkitAudioContext=undefined;
     window.voicePlayed=[];
     window.effectsPlayed=[];
     // Observe the clips selected by the game without waiting for actual playback.
@@ -204,34 +223,6 @@ try{
   assert.deepEqual(await played(),['n1']);
   assert.deepEqual(await page.evaluate(()=>window.effectsPlayed),[]);
 
-  await page.locator('.game-top [data-action="map"]').tap();
-  await action('settings').tap();
-  const picker=page.locator('#narrator-choice');
-  assert.equal(await picker.inputValue(),'originale');
-  for(const narrator of ['lagon','phare']){
-    await clearVoice();
-    await picker.selectOption(narrator);
-    await action('preview-voice').tap();
-    await waitForClips(2);
-    assert.deepEqual(await played(),[narrator+'/example',narrator+'/basket-2']);
-  }
-  const savedNarrator=await page.evaluate(key=>{
-    const data=JSON.parse(localStorage.getItem(key));
-    return data.players.find(p=>p.id===data.active).settings.narrator;
-  },storeKey);
-  assert.equal(savedNarrator,'phare');
-  await context.setOffline(true);
-  await page.reload();
-  await page.locator('.hero').waitFor();
-  await action('settings').tap();
-  assert.equal(await picker.inputValue(),'phare');
-  assert.deepEqual(await page.evaluate(async()=>{
-    const voices=['lagon','phare'];
-    return Promise.all(voices.map(async voice=>{
-      const reply=await fetch('./audio/voix/'+voice+'/example.mp3',{headers:{Range:'bytes=0-39'}});
-      return [reply.status,(await reply.arrayBuffer()).byteLength,reply.headers.get('Content-Type')];
-    }));
-  }),[[206,40,'audio/mpeg'],[206,40,'audio/mpeg']]);
   assert.deepEqual(fail,[]);
   console.log('Interface à 320 px, exemple, glisser tactile par emplacement, traversée et cache vocal hors ligne validés.');
 }finally{
