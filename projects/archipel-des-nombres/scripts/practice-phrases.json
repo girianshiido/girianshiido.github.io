@@ -1,0 +1,17 @@
+{
+  "count-line": "Compte les objets de la rangée, un par un.",
+  "count-ring": "Fais le tour du cercle. Touche chaque objet une seule fois.",
+  "count-scatter": "Touche chaque objet une fois. Cherche ceux qui restent à compter.",
+  "count-hand": "Regarde la main. Combien de doigts sont levés ?",
+  "count-dice": "Combien de points vois-tu sur le dé ?",
+  "hear-group": "Écoute le nombre. Touche le groupe qui en contient autant.",
+  "match-cards": "Choisis la carte qui correspond au nombre affiché.",
+  "compare-more": "Quel groupe a le plus d’objets ? S’il y en a autant, touche Autant.",
+  "compare-less": "Quel groupe a le moins d’objets ? S’il y en a autant, touche Autant.",
+  "complete-five": "Combien d’objets faut-il encore pour arriver à cinq ?",
+  "split-shells": "Regarde le total. Combien d’objets sont cachés sous le couvercle ?",
+  "good-match": "Tu as trouvé le groupe qui contient exactement la quantité demandée.",
+  "good-compare": "On compare les nombres d’objets de chaque côté.",
+  "good-five": "La quantité en place et la quantité manquante font cinq.",
+  "good-split": "Le groupe visible et le groupe caché forment le total."
+}
