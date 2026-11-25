@@ -22,13 +22,12 @@ export function voiceClips(task, moment){
   const {mode,n}=task;
   const instruction=mode==='echo'?'echo-guide':presentation(task).clip;
   const number='n'+n;
-  if(moment==='instruction')return mode==='color'?[instruction,number]:[instruction];
-  if(moment==='example'){
-    const readsNumber=mode==='echo'||mode==='color';
-    return readsNumber?['example',instruction,number]:['example',instruction];
+  if(moment==='question'){
+    if(mode==='echo'||mode==='basket'||mode==='color')return [number];
+    return mode==='change'?[instruction]:[];
   }
-  if(mode==='echo'||mode==='basket'||mode==='color')return [number];
-  return mode==='change'?[instruction]:[];
+  const readsNumber=mode==='color'||(mode==='echo'&&moment==='example');
+  return readsNumber?[instruction,number]:[instruction];
 }
 
 export function exampleHint(task, chapter){
