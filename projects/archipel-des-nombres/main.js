@@ -255,13 +255,12 @@ function taskBody(){
     case 'order':return manipulation();
   }
 }
+function workspaceNeedsSubmission(mode){
+  return mode==='basket'||mode==='color'||mode==='change'||mode==='ferry';
+}
 function manipulation(){
-  const q=current.q;
-  // An empty starting answer needs an explicit action. A completed ordering
-  // or a fully lit bridge can be evaluated directly from the last gesture.
-  const needsSubmit=q.mode!=='order'&&q.mode!=='pair';
   return '<div id="workspace" class="manipulation"></div>'+
-    (needsSubmit?button('J’ai fini','validate','check','secondary validate'):'');
+    (workspaceNeedsSubmission(current.q.mode)?button('J’ai fini','validate','check','primary validate'):'');
 }
 function renderTask(schedule){
   if(!round||!current) return;
@@ -342,11 +341,12 @@ function renderWorkspace(focusSelector){
 function workspaceValue(){
   return current.q.mode==='order'?current.order:current.selected.size;
 }
-function completeWorkspace(focusSelector){
+function updateWorkspace(focusSelector){
   const q=current.q;
-  const value=workspaceValue();
-  if(matches(q,value)||(q.mode==='order'&&value.length===q.order.length)){
-    submit(value);
+  const orderComplete=q.mode==='order'&&current.order.length===q.order.length;
+  const bridgeComplete=q.mode==='pair'&&current.selected.size===q.n;
+  if(orderComplete||bridgeComplete){
+    submit(workspaceValue());
     return;
   }
   audio.chime('tap');
@@ -512,7 +512,7 @@ function place(index,where,slot=null,keyboard=false){
     }
   }else if(where==='basket')state.selected.add(index);
   else state.selected.delete(index);
-  completeWorkspace(keyboard?'[data-item="'+index+'"]':undefined);
+  updateWorkspace(keyboard?'[data-item="'+index+'"]':undefined);
 }
 function openDialog(title,body,kind){
   if(!dialog.open) opener=document.activeElement;
@@ -684,15 +684,15 @@ async function onAction(action,target,event){
     const index=Number(action.slice(6));
     if(current.selected.has(index)) current.selected.delete(index);
     else current.selected.add(index);
-    completeWorkspace('[data-action="'+action+'"]');return;
+    updateWorkspace('[data-action="'+action+'"]');return;
   }
   if(action.startsWith('order-')){
     current.order.push(Number(action.slice(6)));
-    completeWorkspace(event.detail===0?'[data-action^="order-"]:not(:disabled)':undefined);
+    updateWorkspace(event.detail===0?'[data-action^="order-"]:not(:disabled)':undefined);
     return;
   }
   if(action==='undo-order'){current.order=[];renderWorkspace('[data-action^="order-"]');return;}
-  if(action==='validate')submit(workspaceValue());
+  if(action==='validate'&&workspaceNeedsSubmission(current.q.mode))submit(workspaceValue());
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('[data-action]');

@@ -3,7 +3,7 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
-import {groupFor} from '../engine.ts';
+import {exampleTask,groupFor} from '../engine.ts';
 
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg','.ogg':'audio/ogg','.m4a':'audio/mp4','.webmanifest':'application/manifest+json'};
 const root=resolve('dist');
@@ -152,6 +152,36 @@ try{
   assert.equal(await wicker.locator('[data-item]').count(),0);
   await action('put-0').tap();
   await action('put-1').tap();
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  assert.equal(await wicker.locator('[data-item]').count(),2);
+  await action('validate').tap();
+  await inSeries();
+
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(25);
+  const ordered=exampleTask(0,25).n;
+  for(let i=0;i<=ordered;i++)await action('put-'+i).tap();
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  assert.equal(await wicker.locator('[data-item]').count(),ordered+1);
+  await action('validate').tap();
+  assert.match(await page.locator('#example-note').innerText(),/Essaie encore/);
+  await action('take-'+ordered).tap();
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  await action('validate').tap();
+  await inSeries();
+
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(7);
+  for(let i=0;i<exampleTask(0,7).n;i++)await action('paint-'+i).tap();
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  await action('validate').tap();
+  await inSeries();
+
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(8);
+  await action('put-'+exampleTask(0,8).start).tap();
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  await action('validate').tap();
   await inSeries();
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(4);
@@ -180,6 +210,8 @@ try{
   await action('ferry-cross').tap();
   assert.equal(await page.locator('.basket [data-item="0"]').count(),1);
   for(const id of [1,2])await action('put-'+id).tap();
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  await action('validate').tap();
   await inSeries();
 
   await page.locator('.game-top [data-action="map"]').tap();
