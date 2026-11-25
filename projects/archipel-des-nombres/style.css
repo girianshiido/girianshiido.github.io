@@ -9,6 +9,9 @@
 }
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;min-height:100svh;display:flex;flex-direction:column}
+html,dialog{touch-action:pan-x pan-y}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer}
 button:disabled{cursor:default}
@@ -107,12 +110,12 @@ progress::-moz-progress-bar{background:#488f7e;border-radius:30px}
 .scene.cave{background:#ede6f7;border-color:#e1d5f2}
 .scene.sea{background:#e5f4ed}
 .count-canvas,.hit-layer,.glance-cover{position:absolute;inset:0;width:100%;height:100%}
-.hit{--size:clamp(37px,7vw,62px);position:absolute;width:var(--size);height:var(--size);border:0;border-radius:50%;transform:translate(-50%,-50%);background:transparent;touch-action:manipulation}
+.hit{--size:clamp(37px,7vw,62px);position:absolute;width:var(--size);height:var(--size);border:0;border-radius:50%;transform:translate(-50%,-50%);background:transparent;touch-action:pan-x pan-y}
 .hit[aria-pressed=true]{cursor:default}
 .hit:focus-visible{outline-offset:0}
 .empty-scene{align-self:end;padding-bottom:10%;color:#4b6c67;font-weight:750;z-index:1;pointer-events:none}
 .answers{display:flex;justify-content:center;gap:clamp(8px,3vw,20px);margin-top:15px}
-.number-button{width:clamp(56px,17vw,110px);min-height:59px;border:1px solid #bcd7cd;border-radius:15px;background:#fffdf5;box-shadow:0 3px 0 #cfdfd5;color:#154c47;font-weight:900;font-size:clamp(1.55rem,5vw,2.25rem);touch-action:manipulation}
+.number-button{width:clamp(56px,17vw,110px);min-height:59px;border:1px solid #bcd7cd;border-radius:15px;background:#fffdf5;box-shadow:0 3px 0 #cfdfd5;color:#154c47;font-weight:900;font-size:clamp(1.55rem,5vw,2.25rem);touch-action:pan-x pan-y}
 .number-button:not(:disabled):hover,.picture-card:hover{background:#eaf5ea;border-color:#77a99a}
 .number-button:disabled{color:#61746b;background:#f0f2e9;box-shadow:none}
 .sound-button{z-index:1;display:flex;min-height:64px;min-width:min(232px,95%);gap:12px;background:#fffdfa;border-color:#d7c9e9;color:#553778;box-shadow:0 3px 0 #d8cdec;font-size:1.05rem}
@@ -122,7 +125,7 @@ progress::-moz-progress-bar{background:#488f7e;border-radius:30px}
 .small-scene{height:115px}
 .scene-label{position:absolute;z-index:1;top:7px;left:11px;color:#3d655b;font-size:.79rem;font-weight:850}
 .answer-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:11px}
-.picture-card{position:relative;height:clamp(77px,18vw,121px);isolation:isolate;min-width:0;border:1px solid #bfdbd1;border-radius:15px;background:#fffdf6;box-shadow:0 3px 0 #ccdfd7;touch-action:manipulation}
+.picture-card{position:relative;height:clamp(77px,18vw,121px);isolation:isolate;min-width:0;border:1px solid #bfdbd1;border-radius:15px;background:#fffdf6;box-shadow:0 3px 0 #ccdfd7;touch-action:pan-x pan-y}
 .empty-card{position:absolute;inset:auto 0 5px;font-size:.72rem;color:var(--muted);font-weight:750}
 .glance-cover{display:grid;place-items:center}
 .manipulation{display:grid;gap:10px;margin:10px 0 13px}
@@ -138,7 +141,7 @@ progress::-moz-progress-bar{background:#488f7e;border-radius:30px}
 .basket-empty{color:#47675e;font-size:.82rem}
 .drag-avatar{position:fixed;left:0;top:0;z-index:20;pointer-events:none;background:#fff0c6;color:#8a592c;border:2px solid #c79654;width:43px;height:43px;display:grid;place-items:center;font-size:1.5rem;border-radius:11px}
 .paint-grid,.order-slots{display:grid;gap:clamp(5px,2vw,12px);justify-content:center;background:#f3eaf1;border:1px solid #e5d7e1;border-radius:15px;padding:15px;grid-template-columns:repeat(var(--columns),minmax(0,71px))}
-.paint-cell,.order-slot{aspect-ratio:1;border:2px solid #9e7592;border-radius:50%;background:#fffdfa;display:grid;place-items:center;color:#7a335e;min-width:0;padding:0;touch-action:manipulation}
+.paint-cell,.order-slot{aspect-ratio:1;border:2px solid #9e7592;border-radius:50%;background:#fffdfa;display:grid;place-items:center;color:#7a335e;min-width:0;padding:0;touch-action:pan-x pan-y}
 .paint-cell[aria-pressed=true]{background:#e998c5;border-color:#86576e}
 .order-slots{grid-template-columns:repeat(3,minmax(0,73px));background:#eaf4ec;border-color:#d3e5d9}
 .order-slot{font-weight:900;font-size:1.5rem;border-radius:12px;color:var(--ink);border:2px dashed #92b8a9}

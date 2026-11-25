@@ -34,12 +34,28 @@ try{
   assert.equal(await page.locator('.island img').count(),6);
   assert.ok(await page.locator('.island img').evaluateAll(imgs=>imgs.every(img=>img.complete&&img.naturalWidth>0)));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
+  assert.equal(await page.locator('.hero h1').evaluate(element=>getComputedStyle(element).userSelect),'none');
+  const cdp=await context.newCDPSession(page);
+  const scale=()=>page.evaluate(()=>window.visualViewport.scale);
+  await page.touchscreen.tap(150,159);
+  await page.touchscreen.tap(150,159);
+  await page.waitForTimeout(300);
+  assert.equal(await scale(),1);
+  const fingers=distance=>[{x:160-distance,y:180,id:0},{x:160+distance,y:180,id:1}];
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:fingers(20)});
+  for(let distance=30;distance<=80;distance+=10){
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:fingers(distance)});
+  }
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await page.waitForTimeout(300);
+  assert.equal(await scale(),1);
   const waterLight=()=>page.locator('.hero').evaluate(el=>getComputedStyle(el,'::after').animationName);
   assert.equal(await waterLight(),'hero-water-light');
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await waterLight(),'none');
   await page.emulateMedia({reducedMotion:'no-preference'});
   await action('play').click();
+  assert.equal(await page.locator('#player-name').evaluate(element=>getComputedStyle(element).userSelect),'text');
   await page.locator('#player-name').fill('Camille');
   await page.getByRole('button',{name:'Créer mon profil'}).click();
   await page.locator('.hit').first().waitFor();
@@ -67,7 +83,6 @@ try{
   assert.equal(await waterLight(),'none');
   await action('close').tap();
   await action('island-4').tap();
-  const cdp=await context.newCDPSession(page);
   async function drag(from,to){
     const a=await from.boundingBox(), b=await to.boundingBox();
     assert.ok(a&&b);
@@ -120,13 +135,14 @@ try{
   await context.setOffline(false);
   await page.addInitScript(()=>{
     window.voicePlayed=[];
+    window.effectsPlayed=[];
     // Observe the clips selected by the game without waiting for actual playback.
     HTMLMediaElement.prototype.play=function(){
       const clip=this.src.match(/\/voix\/([^/]+)\.mp3$/)?.[1];
       if(clip){
         window.voicePlayed.push(clip);
         setTimeout(()=>this.dispatchEvent(new Event('ended')),0);
-      }
+      }else window.effectsPlayed.push(this.src);
       return Promise.resolve();
     };
   });
@@ -162,6 +178,12 @@ try{
   assert.deepEqual(await played(),[]);
   await action('repeat-instruction').tap();
   assert.deepEqual(await played(),['touch']);
+  await clearVoice();
+  await page.evaluate(()=>{window.effectsPlayed=[];});
+  await page.locator('.hit').first().tap();
+  await waitForClips(1);
+  assert.deepEqual(await played(),['n1']);
+  assert.deepEqual(await page.evaluate(()=>window.effectsPlayed),[]);
   assert.deepEqual(fail,[]);
   console.log('Interface à 320 px, exemple, glisser tactile par emplacement, traversée et cache vocal hors ligne validés.');
 }finally{
