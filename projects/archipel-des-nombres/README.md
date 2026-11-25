@@ -2,18 +2,18 @@
 
 [Ouvrir le jeu](https://girianshiido.github.io/archipel-des-nombres/)
 
-Jeu de comptage en français, installable sur iPhone, iPad, Android et Mac. Le premier parcours couvre les nombres de 0 à 5. Après la traversée du phare, le second parcours aborde les nombres de 6 à 10.
+Jeu de comptage en français, installable sur iPhone, iPad, Android et Mac. Le parcours de 0 à 5 comporte six activités par île, soit 36 activités. La validation des six activités d’une île ouvre la suivante. Le parcours existant de 6 à 10 s’ouvre après le grand phare.
 
-## Un geste par île
+| Île | Compétences |
+| --- | --- |
+| Plage | Compter jusqu’à trois, associer objet à objet, reconnaître les petites quantités et le zéro. |
+| Lagon | Compter jusqu’à cinq en ligne, en cercle et en dispersion, lire les doigts et les points du dé. |
+| Grotte | Associer quantités, nombres entendus et chiffres avec des cartes, des cadres et des collections jumelles. |
+| Jardin | Former des collections, remplir le panier à partir d’une consigne orale, colorier ou modifier une quantité. |
+| Pont | Comparer, ordonner, compléter à cinq et retrouver une partie cachée. |
+| Phare | Transférer une quantité entre deux quais et réinvestir les compétences dans plusieurs séries. |
 
-- **La plage** — toucher chaque objet une fois et donner le total. Le zéro apparaît comme une collection vide.
-- **La grotte** — associer un nombre entendu à son chiffre.
-- **Le lagon** — reconnaître des quantités sur un dé, dans un cadre de cinq ou dans des groupes. Le mode avec des figures qui disparaissent reste facultatif.
-- **Le jardin** — préparer la quantité demandée. Les graines peuvent être déplacées ou sélectionnées d’un toucher.
-- **Le pont** — poser exactement une lanterne sous chaque feuille. Il y a toujours au moins une feuille.
-- **La traversée du phare** — observer la collection sur un quai, traverser et préparer autant de perles sur l’autre. Le premier quai peut être revu à volonté.
-
-Chaque atelier s’ouvre sur un exemple manipulable sans score. Au cours d’une série, une erreur donne une correction et une nouvelle variante. Au moins 80 % de réponses justes du premier coup sont nécessaires pour valider la série. L’ordre croissant, la mosaïque et les changements de quantité sont proposés comme ateliers indépendants après la traversée. Ils n’entrent pas dans la validation du parcours de comptage.
+Les activités d’apprentissage commencent par un exemple manipulable sans score. Une erreur dans une série déclenche une correction et une nouvelle variante. Pour valider, il faut au moins 80 % de réussites du premier coup. Les anciens profils conservent leurs activités acquises et, le cas échéant, leur accès au parcours de 6 à 10.
 
 Les profils et les validations sont conservés localement, y compris lors de la migration de la première version. Les consignes et les nombres sont des fichiers audio préproduits avec une seule voix française et mis en cache pour le jeu hors ligne. [Crédits de la voix](public/audio/CREDITS.txt).
 
