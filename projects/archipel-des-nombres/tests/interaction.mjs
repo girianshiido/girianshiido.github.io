@@ -157,7 +157,7 @@ try{
     window.effectsPlayed=[];
     // Observe the clips selected by the game without waiting for actual playback.
     HTMLMediaElement.prototype.play=function(){
-      const clip=this.src.match(/\/voix\/([^/]+)\.mp3$/)?.[1];
+      const clip=this.src.match(/\/voix\/(.+)\.mp3$/)?.[1];
       if(clip){
         window.voicePlayed.push(clip);
         setTimeout(()=>this.dispatchEvent(new Event('ended')),0);
@@ -203,6 +203,35 @@ try{
   await waitForClips(1);
   assert.deepEqual(await played(),['n1']);
   assert.deepEqual(await page.evaluate(()=>window.effectsPlayed),[]);
+
+  await page.locator('.game-top [data-action="map"]').tap();
+  await action('settings').tap();
+  const picker=page.locator('#narrator-choice');
+  assert.equal(await picker.inputValue(),'originale');
+  for(const narrator of ['lagon','phare']){
+    await clearVoice();
+    await picker.selectOption(narrator);
+    await action('preview-voice').tap();
+    await waitForClips(2);
+    assert.deepEqual(await played(),[narrator+'/example',narrator+'/basket-2']);
+  }
+  const savedNarrator=await page.evaluate(key=>{
+    const data=JSON.parse(localStorage.getItem(key));
+    return data.players.find(p=>p.id===data.active).settings.narrator;
+  },storeKey);
+  assert.equal(savedNarrator,'phare');
+  await context.setOffline(true);
+  await page.reload();
+  await page.locator('.hero').waitFor();
+  await action('settings').tap();
+  assert.equal(await picker.inputValue(),'phare');
+  assert.deepEqual(await page.evaluate(async()=>{
+    const voices=['lagon','phare'];
+    return Promise.all(voices.map(async voice=>{
+      const reply=await fetch('./audio/voix/'+voice+'/example.mp3',{headers:{Range:'bytes=0-39'}});
+      return [reply.status,(await reply.arrayBuffer()).byteLength,reply.headers.get('Content-Type')];
+    }));
+  }),[[206,40,'audio/mpeg'],[206,40,'audio/mpeg']]);
   assert.deepEqual(fail,[]);
   console.log('Interface à 320 px, exemple, glisser tactile par emplacement, traversée et cache vocal hors ligne validés.');
 }finally{
