@@ -1,5 +1,5 @@
 import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches,practiceIslands,groupFor,groupComplete,groupOpen,legacyCount,finalPractice,activityInfo} from './engine.ts';
-import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket,drawBasketShells} from './art.js';
+import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket,drawBasketShells,loadObjects} from './art.js';
 import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
 import * as pwa from './pwa.js';
@@ -24,6 +24,15 @@ const voicesOn=(s=prefs())=>s.sound&&s.voice&&s.voiceVolume>0;
 const range=chapter=>chapter?'6 à 10':'0 à 5';
 const title=chapterTitle;
 const portrait=(index,alt='')=>'<img class="portrait" src="./images/avatar-'+index+'.webp" alt="'+alt+'">';
+const islandImage=(island,classes='')=>'<img class="'+classes+'" src="./images/island-'+island.art+'.webp" alt="" width="1280" height="854">';
+const guideImage=(classes='')=>'<img class="'+classes+'" src="./images/guide.webp" alt="" width="512" height="512">';
+const menuObjects={touch:'shell',pair:'lantern',echo:'pearl',same:'berry',cards:'shell',basket:'seed',color:'flower',change:'seed',compare:'fish',five:'pearl',hidden:'shell',ferry:'pearl',mix:'star'};
+function activityIcon(item){
+  const object=item.mode==='touch'?({ring:'fish',scatter:'star'}[item.fixed]??'shell'):menuObjects[item.mode];
+  if(item.fixed==='hand')return '<img src="./images/hands/hand-2.webp" alt="" width="56" height="56">';
+  if(item.basketChoices)return '<img src="./images/choice-basket.webp" alt="" width="56" height="56">';
+  return object?'<img src="./images/objects/'+object+'.webp" alt="" width="56" height="56">':icon(item.icon);
+}
 const esc=value=>String(value).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const button=(label,action,glyph='',classes='secondary')=>'<button type="button" class="'+classes+'" data-action="'+action+'">'+(glyph?icon(glyph):'')+label+'</button>';
 const tag=(glyph,label)=>icon(glyph)+'<span>'+label+'</span>';
@@ -43,6 +52,7 @@ function applySettings(){
   audio.configure(s);
 }
 function chrome(){
+  document.body.dataset.view=page;
   const p=player(), view=page==='map'?' aria-current="page"':'';
   header.innerHTML='<div class="topbar shell"><button type="button" class="brand" data-action="map"><span class="brand-icon">'+icon('beacon')+'</span><span>L’Archipel<span class="brand-tail"> des nombres</span></span></button>'+
     '<nav aria-label="Navigation principale">'+
@@ -105,17 +115,17 @@ function renderGroup(){
   const completed=groupProgress(records,activeGroup);
   const count=group.activities.length;
   main.innerHTML='<div class="shell map-view island-menu"><nav class="island-nav">'+button('Carte des îles','archipelago','back','text-button')+'</nav>'+
-    '<section class="island-banner '+group.tone+'" style="--island-art:url(./images/island-'+group.art+'.webp)">'+
+    '<section class="island-banner '+group.tone+'">'+
     '<div class="island-banner-copy"><span class="range">Île '+(activeGroup+1)+' / '+practiceIslands.length+'</span>'+
-    '<h1 id="map-title" tabindex="-1">'+group.title+'</h1><p>'+group.description+'</p></div></section>'+
+    '<h1 id="map-title" tabindex="-1">'+group.title+'</h1><p>'+group.description+'</p></div>'+islandImage(group,'island-banner-art')+'</section>'+
     '<div class="route-header"><h2>Activités</h2><div class="journey-progress"><div>'+completed+' / '+count+' validées</div>'+
     '<progress value="'+completed+'" max="'+count+'" aria-label="Activités validées"></progress></div></div>'+
-    '<div class="activity-grid">'+group.activities.map((index,position)=>{
+    '<div class="activity-grid">'+group.activities.map(index=>{
       const item=activityInfo(chapter,index),available=accessible(records,index),mastered=records[index]?.mastery;
       const resumed=round?.chapter===0&&round.island===index&&current;
       const status=resumed?'Reprendre':mastered?'Validée':available?'Jouer':'Verrouillée';
-      return '<button type="button" class="extra-island activity-tile '+item.tone+(!available?' locked':'')+'" data-action="island-'+index+'"'+(available?'':' aria-disabled="true"')+'>'+
-        '<span class="activity-position">'+(position+1)+'</span><span class="tile-body"><strong>'+item.title+'</strong><span class="tile-text">'+item.description+'</span></span>'+
+      return '<button type="button" class="extra-island activity-tile '+item.tone+(mastered?' mastered':available?' ready':' locked')+'" data-action="island-'+index+'"'+(available?'':' aria-disabled="true"')+'>'+
+        '<span class="activity-icon">'+activityIcon(item)+'</span><span class="tile-body"><strong>'+item.title+'</strong><span class="tile-text">'+item.description+'</span></span>'+
         '<span class="tile-state" aria-label="'+status+'">'+icon(mastered?'check':available?'arrowSmall':'lock')+'</span></button>';
     }).join('')+'</div></div>';
 }
@@ -147,12 +157,12 @@ function play(){
   const index=firstIsland(records);
   start(index===-1?finalIsland:index);
 }
-function beginTask(example=false){
+function beginTask(example=false,justSucceeded=false){
   clearTimeout(flashTimer);
   if(!round)return;
   const q=example?exampleTask(round.chapter,round.island):round.tasks[round.index];
   const supply=q.mode==='change'?Math.max(q.n,q.start)+2:q.mode==='pair'?q.n+2:Math.max(round.chapter?12:8,q.n+2);
-  current={q,example,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
+  current={q,example,justSucceeded,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
     slots:new Map(),order:[],hidden:false,showCountingHelp:false,feedback:null,note:'',transcript:!voicesOn(),ferrySide:'source'};
   revision++;renderTask(true);
   audio.playVoice(...voiceClips(q,example?'example':islands[round.island].mode==='mix'?'review':'question'));
@@ -263,17 +273,18 @@ function renderTask(schedule){
   const progress=Array.from({length:round.planned},(_,i)=>'<span class="'+(i<round.index?'done':i===round.index&&!current.example?'here':'')+'"></span>').join('');
   main.innerHTML='<div class="shell game-view"><div class="game-top">'+button('Carte','map','back','text-button')+
     '<span class="game-island">'+icon(island.icon)+' '+island.title+'</span>'+
-    '<span class="step-label">'+count+'</span></div>'+
+    '<span class="step-label">'+(current.justSucceeded&&!current.feedback?'<span class="step-success" role="status" aria-label="Bonne réponse">'+icon('check')+'</span>':'')+count+'</span></div>'+
     '<div class="steps" role="img" aria-label="'+count+'">'+progress+'</div>'+
-    '<section class="game-card '+island.tone+'" style="--island-art:url(./images/island-'+island.art+'.webp)">'+
-    '<div class="game-heading"><div><span class="kicker">'+(current.example?'Exemple guidé':retry?'Une nouvelle variante':island.title)+'</span>'+
+    '<section class="game-card '+island.tone+'">'+
+    '<div class="game-heading"><div class="prompt-copy">'+(current.example||retry?'<span class="kicker">'+(current.example?'Exemple guidé':'Nouvel essai')+'</span>':'')+
     '<h1 tabindex="-1" id="task-title">'+info.prompt+'</h1><p>'+(current.example?exampleHint(q,round.chapter):hint)+'</p></div>'+
+    '<div class="game-setting">'+islandImage(island,'game-setting-art')+guideImage('game-guide')+'</div>'+
     '<div class="sound-tools">'+button('', 'sound',p.sound?'sound':'mute','icon-button mute-button')+
     (voicesOn(p)&&!current.feedback?button('Consigne','repeat-instruction','sound','text-button replay')+
       (auditory(q)?button(current.transcript?'Masquer le mot':'Lire le mot','transcript','','text-button transcript'):''):'')+
-    '</div></div><div id="task-body">'+(current.feedback?feedbackBody():taskBody())+'</div>'+
+    '</div></div><div class="play-board"><div id="task-body">'+(current.feedback?feedbackBody():taskBody())+'</div>'+
     (current.example&&!current.feedback?'<div class="example-controls"><p id="example-note" role="status">'+current.note+'</p>'+
-      button('Passer l’exemple','skip-example','','text-button')+'</div>':'')+'</section></div>';
+      button('Passer l’exemple','skip-example','','text-button')+'</div>':'')+'</div></section></div>';
   const mute=$('.mute-button');mute.setAttribute('aria-label',p.sound?'Couper le son':'Rétablir le son');mute.setAttribute('aria-pressed',String(!p.sound));
   if($('#workspace')) renderWorkspace();
   redraw();
@@ -424,7 +435,7 @@ function submit(value){
   }
   audio.stop();
   if(correct){
-    next();
+    next(true);
     if(page==='game'||!result?.mastery)audio.chime('good',true);
     return;
   }
@@ -436,9 +447,9 @@ function submit(value){
   renderTask(false);
   sectionFocus('feedback-title');
 }
-function next(){
+function next(justSucceeded=false){
   if(!round||!current||(!current.example&&!round.answered))return;
-  if(current.example||advance(round)){beginTask();return;}
+  if(current.example||advance(round)){beginTask(false,justSucceeded);return;}
   const done=outcome(round),p=player();
   record(p,round.chapter,round.island,done);persistSave();
   result={...done,island:round.island,chapter:round.chapter};
@@ -471,10 +482,12 @@ function renderResult(){
       primary=button(r.chapter?'Retour à la carte':'Retour aux activités','map','arrow','primary');
     }
   }
-  main.innerHTML='<div class="shell result-view"><section class="result-card '+(end&&r.mastery?'lighthouse-win':'')+
-    '" style="--island-art:url(./images/island-'+name.art+'.webp)"><div class="result-emblem">'+icon(r.mastery?'beacon':'shell')+'</div>'+
-    '<h1 id="result-title" tabindex="-1">'+headline+'</h1><p>'+message+'</p><div class="score"><strong>'+r.first+' / '+r.total+'</strong><span>réussites du premier coup</span></div>'+
-    '<div class="result-actions">'+primary+(primary.includes('data-action="map"')?'':button(r.chapter?'Carte':'Activités','map','map'))+'</div></section></div>';
+  const tally=Array.from({length:r.total},(_,i)=>'<span'+(i<r.first?' class="earned"':'')+'></span>').join('');
+  main.innerHTML='<div class="shell result-view"><section class="result-card '+name.tone+(end&&r.mastery?' lighthouse-win':'')+'">'+
+    '<div class="result-art">'+islandImage(name,'result-place')+guideImage('result-guide')+'</div>'+
+    '<div class="result-copy"><div class="result-emblem">'+icon(r.mastery?'beacon':'shell')+'</div>'+
+    '<h1 id="result-title" tabindex="-1">'+headline+'</h1><p>'+message+'</p><div class="score"><strong>'+r.first+' / '+r.total+'</strong><span>réussites du premier coup</span><div class="score-marks" aria-hidden="true">'+tally+'</div></div>'+
+    '<div class="result-actions">'+primary+(primary.includes('data-action="map"')?'':button(r.chapter?'Carte':'Activités','map','map'))+'</div></div></section></div>';
   window.scrollTo(0,0);sectionFocus('result-title');
 }
 function place(index,where,slot=null,keyboard=false){
@@ -716,4 +729,5 @@ dialog.addEventListener('submit',event=>{
 });
 bindDrag(main,place,()=>page==='game'?current:null);
 
+loadObjects(()=>requestAnimationFrame(redraw));
 applySettings();goMap();

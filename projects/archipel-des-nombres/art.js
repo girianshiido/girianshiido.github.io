@@ -6,6 +6,17 @@ const colors = {
   leaf: ['#64b894','#a7d9a8','#348371'], star: ['#f4c35b','#ffdf85','#a97134'],
   seed: ['#b87849','#f6ce8a','#7f4b3e'], pearl: ['#d9b5ce','#fff2ea','#816a9b'], lantern: ['#f3ab55','#ffe6a4','#704537'],
 };
+const objects=new Map();
+export function loadObjects(redraw) {
+  for(const name of Object.keys(colors)){
+    const image=new Image();
+    image.addEventListener('load',()=>{
+      objects.set(name,image);
+      redraw();
+    },{once:true});
+    image.src='./images/objects/'+name+'.webp';
+  }
+}
 function circle(ctx,x,y,r,color) {
   ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI); ctx.fillStyle=color; ctx.fill();
 }
@@ -25,6 +36,13 @@ function rect(ctx,x,y,w,h,r,color) {
   ctx.fillStyle=color;ctx.fill();
 }
 export function drawToken(ctx,name,x,y,size) {
+  const sprite=objects.get(name);
+  if(sprite){
+    const edge=size*1.08;
+    ellipse(ctx,x,y+size*.36,size*.31,size*.061,'#17333b26');
+    ctx.drawImage(sprite,x-edge/2,y-edge/2,edge,edge);
+    return;
+  }
   ctx.save(); ctx.translate(x,y); ctx.scale(size/100,size/100);
   const [main,light,dark]=colors[name]||colors.shell;
   ellipse(ctx,0,38,34,5,'#253e4424');
@@ -209,18 +227,32 @@ export function collection(canvas, info) {
   const contrast=document.documentElement.dataset.contrast==='true';
   if(layout==='dice') {
     const size=Math.min(w*.86,h*.88);
-    rect(ctx,w/2-size/2,h/2-size/2+4,size,size,size*.16,contrast?'#23536b':'#b4c9cd');
-    rect(ctx,w/2-size/2,h/2-size/2,size,size,size*.16,'#fffaf0');
-    for(const [x,y] of spots(n,'dice',seed)) circle(ctx,w/2+(x-.5)*size,h/2+(y-.5)*size,size*.072,'#19474c');
+    const face=ctx.createLinearGradient(0,h/2-size/2,0,h/2+size/2);
+    face.addColorStop(0,'#fffef6');
+    face.addColorStop(1,'#f8e3b9');
+    rect(ctx,w/2-size/2,h/2-size/2+6,size,size,size*.18,contrast?'#294b50':'#b6754a');
+    rect(ctx,w/2-size/2,h/2-size/2,size,size,size*.18,face);
+    for(const [x,y] of spots(n,'dice',seed)) {
+      const px=w/2+(x-.5)*size, py=h/2+(y-.5)*size, r=size*.072;
+      circle(ctx,px,py+1.5,r,'#fff8e2');
+      circle(ctx,px,py,r,'#133f49');
+    }
     return;
   }
   const wide=layout==='frame'||layout==='line';
   const area=collectionArea(w,h,layout);
-  const points=spots(n,layout,seed);
   const shortRow=isCard&&layout==='line'&&n<=3;
   const openLayout=isCard&&(shortRow||layout==='scatter'||layout==='ring'||(layout==='clusters'&&n<4));
   const widthRatio=openLayout?.22:isDouble?.126:.17;
-  const size=Math.min(w*widthRatio,h*(wide?.39:.245),isCard?31:73)*scale;
+  const points=spots(n,layout,seed).map(([x,y])=>[
+    area.left+(shortRow?.5+(x-.5)*1.5:x)*area.width,
+    area.top+y*area.height,
+  ]);
+  let spacing=Infinity;
+  for(const [i,[x,y]] of points.entries()){
+    for(const [px,py] of points.slice(0,i))spacing=Math.min(spacing,Math.hypot(x-px,y-py));
+  }
+  const size=Math.min(Math.min(w*widthRatio,h*(wide?.39:.265),isCard?41:90)*scale,spacing*.86);
   if(layout==='frame') {
     const rows=n>5?2:1, gap=area.width*.18, side=Math.min(gap*.91,h*(rows===2?.35:.47));
     for(let i=0;i<rows*5;i++){
@@ -233,9 +265,7 @@ export function collection(canvas, info) {
   if(n===0&&layout!=='ring'){
     line(ctx,contrast?'#557d84':'#9dc6be',2,p=>{p.moveTo(w*.40,h*.67);p.quadraticCurveTo(w*.5,h*.71,w*.60,h*.67);});
   }
-  points.forEach(([x,y],i)=>{
-    const xPosition=shortRow?.5+(x-.5)*1.5:x;
-    const px=area.left+xPosition*area.width, py=area.top+y*area.height;
+  points.forEach(([px,py],i)=>{
     if(marked?.has(i)) circle(ctx,px,py,size*.61,contrast?'#b4dbd1':'#b0e2ca');
     drawToken(ctx,token,px,py,size);
     if(marked?.has(i)) {

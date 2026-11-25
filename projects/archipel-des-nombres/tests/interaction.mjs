@@ -79,6 +79,11 @@ try{
   assert.equal(await action('group-1').getAttribute('aria-disabled'),'true');
   await action('play').click();
   assert.equal(await page.locator('.activity-tile').count(),6);
+  const beachArt=page.locator('.island-banner-art');
+  await beachArt.evaluate(img=>img.decode());
+  assert.match(await beachArt.getAttribute('src'),/island-0\.webp$/);
+  assert.ok(await beachArt.evaluate(img=>img.getBoundingClientRect().height>95));
+  assert.ok(await page.locator('.activity-icon img').count()>=5);
   assert.equal(await action('island-10').getAttribute('aria-disabled'),'true');
   await action('island-9').tap();
   assert.equal(await page.locator('#player-name').evaluate(element=>getComputedStyle(element).userSelect),'text');
@@ -86,6 +91,9 @@ try{
   await page.locator('#player-name').fill('Camille');
   await page.getByRole('button',{name:'Créer mon profil'}).click();
   await page.locator('.hit').first().waitFor();
+  const gameArt=page.locator('.game-setting-art');
+  await gameArt.evaluate(img=>img.decode());
+  assert.match(await gameArt.getAttribute('src'),/island-0\.webp$/);
   assert.match(await page.locator('.step-label').innerText(),/Exemple/);
   const novice=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),storeKey);
   assert.equal(await action('answer-2').isDisabled(),true);
@@ -99,6 +107,7 @@ try{
   assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).players[0].records[0][9].errors,storeKey),0);
   await action('answer-2').tap();
   await inSeries();
+  assert.equal(await page.locator('.step-success').count(),1);
   assert.equal(await page.locator('.step-label').innerText(),'1 / 6');
 
   await page.evaluate(({key,novice})=>{
