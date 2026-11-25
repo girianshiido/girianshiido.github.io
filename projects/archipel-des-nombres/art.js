@@ -4,6 +4,7 @@ const colors = {
   shell: ['#f69b81','#fbcab3','#ac4b48'], fish: ['#55adbe','#a7e0dc','#23697e'],
   berry: ['#ec6c73','#ffd1bc','#9d3d54'], flower: ['#f797b1','#ffcf65','#ac546c'],
   leaf: ['#64b894','#a7d9a8','#348371'], star: ['#f4c35b','#ffdf85','#a97134'],
+  seed: ['#b87849','#f6ce8a','#7f4b3e'], pearl: ['#d9b5ce','#fff2ea','#816a9b'], lantern: ['#f3ab55','#ffe6a4','#704537'],
 };
 function circle(ctx,x,y,r,color) {
   ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI); ctx.fillStyle=color; ctx.fill();
@@ -52,6 +53,27 @@ export function drawToken(ctx,name,x,y,size) {
     paint(ctx,main,p=>{p.moveTo(-30,29);p.quadraticCurveTo(-54,-23,38,-39);p.quadraticCurveTo(48,34,-30,29);});
     line(ctx,dark,4,p=>{p.moveTo(-34,38);p.quadraticCurveTo(-7,7,24,-21);});
     line(ctx,light,3,p=>{p.moveTo(-9,11);p.lineTo(-15,-13);p.moveTo(2,2);p.lineTo(24,2);p.moveTo(12,-8);p.lineTo(11,-23);});
+  } else if(name==='seed') {
+    paint(ctx,dark,p=>{p.moveTo(4,-42);p.bezierCurveTo(55,-6,42,28,0,39);p.bezierCurveTo(-43,31,-52,-5,4,-42);});
+    paint(ctx,main,p=>{p.moveTo(4,-37);p.bezierCurveTo(50,-5,39,25,0,34);p.bezierCurveTo(-34,24,-44,-6,4,-37);});
+    line(ctx,light,5,p=>{p.moveTo(1,-27);p.bezierCurveTo(-9,-11,-10,11,0,26);});
+    line(ctx,light,3,p=>{p.moveTo(7,-23);p.quadraticCurveTo(21,-10,22,2);});
+  } else if(name==='pearl') {
+    circle(ctx,0,-3,37,dark);
+    const shimmer=ctx.createRadialGradient(-13,-19,3,0,-3,34);
+    shimmer.addColorStop(0,'#ffffff');shimmer.addColorStop(.45,light);shimmer.addColorStop(.79,main);shimmer.addColorStop(1,'#9a81ad');
+    circle(ctx,0,-4,34,shimmer);
+    ellipse(ctx,-12,-22,12,5,'#ffffffbf');
+    circle(ctx,16,14,4,'#f4e7ff99');
+  } else if(name==='lantern') {
+    line(ctx,dark,7,p=>{p.moveTo(-14,-26);p.bezierCurveTo(-14,-56,14,-56,14,-26);});
+    rect(ctx,-29,-27,58,65,13,dark);
+    rect(ctx,-21,-23,42,54,11,main);
+    ellipse(ctx,0,1,16,20,light);
+    ellipse(ctx,0,5,9,13,'#fff6d6');
+    line(ctx,dark,4,p=>{p.moveTo(-25,-21);p.lineTo(25,32);p.moveTo(25,-21);p.lineTo(-25,32);});
+    rect(ctx,-32,-29,64,9,4,dark);
+    rect(ctx,-32,29,64,9,4,dark);
   } else if(name==='star') {
     paint(ctx,dark,p=>{for(let i=0;i<10;i++){const a=Math.PI*i/5-Math.PI/2;const r=i%2?20:45;p.lineTo(Math.cos(a)*r,Math.sin(a)*r);}});
     paint(ctx,main,p=>{for(let i=0;i<10;i++){const a=Math.PI*i/5-Math.PI/2;const r=i%2?17:39;p.lineTo(Math.cos(a)*r,Math.sin(a)*r-1);}});
