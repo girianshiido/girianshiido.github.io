@@ -171,7 +171,28 @@ try{
   const cardNumber=Number((await page.locator('#task-title').innerText()).match(/\d+/)[0]);
   await action('answer-'+cardNumber).tap();
   await action('advance').tap();
-  assert.equal(await page.locator('.collection-options button').count(),3);
+  const collectionCards=page.locator('.collection-options button');
+  const collectionRects=()=>collectionCards.evaluateAll(cards=>cards.map(card=>{
+    const {top,width}=card.getBoundingClientRect();
+    return {top,width};
+  }));
+  assert.equal(await collectionCards.count(),3);
+  const mobileCards=await collectionRects();
+  assert.equal(new Set(mobileCards.map(card=>card.top)).size,1);
+  assert.ok(mobileCards.every(card=>card.width>=72));
+
+  await page.locator('.game-top [data-action="map"]').tap();
+  await page.setViewportSize({width:1280,height:900});
+  await enter(23);
+  const desktopCards=await collectionRects();
+  assert.equal(desktopCards.length,3);
+  assert.equal(new Set(desktopCards.map(card=>card.top)).size,1);
+  assert.ok(desktopCards.every(card=>card.width<=180));
+  assert.ok(await page.locator('.model-card').evaluate(card=>card.getBoundingClientRect().width<=184));
+  await action('answer-2').tap();
+  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await page.setViewportSize({width:320,height:730});
+
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(29);
   assert.equal(await page.locator('.comparison-grid .collection-card').count(),2);

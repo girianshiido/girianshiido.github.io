@@ -217,7 +217,10 @@ export function collection(canvas, info) {
   const wide=layout==='frame'||layout==='line';
   const area=collectionArea(w,h,layout);
   const points=spots(n,layout,seed);
-  const size=Math.min(w*(isDouble?.126:.17),h*(wide?.39:.245),isCard?31:73)*scale;
+  const shortRow=isCard&&layout==='line'&&n<=3;
+  const openLayout=isCard&&(shortRow||layout==='scatter'||layout==='ring'||(layout==='clusters'&&n<4));
+  const widthRatio=openLayout?.22:isDouble?.126:.17;
+  const size=Math.min(w*widthRatio,h*(wide?.39:.245),isCard?31:73)*scale;
   if(layout==='frame') {
     const rows=n>5?2:1, gap=area.width*.18, side=Math.min(gap*.91,h*(rows===2?.35:.47));
     for(let i=0;i<rows*5;i++){
@@ -231,7 +234,8 @@ export function collection(canvas, info) {
     line(ctx,contrast?'#557d84':'#9dc6be',2,p=>{p.moveTo(w*.40,h*.67);p.quadraticCurveTo(w*.5,h*.71,w*.60,h*.67);});
   }
   points.forEach(([x,y],i)=>{
-    const px=area.left+x*area.width, py=area.top+y*area.height;
+    const xPosition=shortRow?.5+(x-.5)*1.5:x;
+    const px=area.left+xPosition*area.width, py=area.top+y*area.height;
     if(marked?.has(i)) circle(ctx,px,py,size*.61,contrast?'#b4dbd1':'#b0e2ca');
     drawToken(ctx,token,px,py,size);
     if(marked?.has(i)) {
