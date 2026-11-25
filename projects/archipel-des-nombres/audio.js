@@ -1,12 +1,13 @@
 const narration=new Audio();
 const effect=new Audio();
-let sound=true,voice=true,queue=[],generation=0;
+let sound=true,voice=true,narrator='originale',queue=[],generation=0;
 
 export function configure(settings){
   sound=settings.sound;
   voice=settings.voice;
   if(!sound)stop();
-  else if(!voice)stopVoice();
+  else if(!voice||narrator!==settings.narrator)stopVoice();
+  narrator=settings.narrator;
 }
 function stopVoice(){
   generation++;
@@ -21,7 +22,8 @@ function nextClip(){
   const clip=queue.shift();
   if(!clip||!sound||!voice||document.hidden)return;
   const requested=generation;
-  narration.src=new URL('./audio/voix/'+clip+'.mp3',document.baseURI);
+  const folder=narrator==='originale'?'':narrator+'/';
+  narration.src=new URL('./audio/voix/'+folder+clip+'.mp3',document.baseURI);
   void narration.play().catch(()=>{if(generation===requested)queue=[];});
 }
 narration.addEventListener('ended',nextClip);
