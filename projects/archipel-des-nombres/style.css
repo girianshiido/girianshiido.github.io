@@ -412,3 +412,41 @@ fieldset{border:0;padding:0;margin:5px 0 9px}
   .steps{margin-bottom:9px}
 }
 @media(prefers-reduced-motion:reduce){[data-motion=true] .pair-cell.lit{animation:none}}
+
+/* Reflets et petites récompenses, en dehors des collections à compter. */
+@media(prefers-reduced-motion:no-preference){
+  [data-motion=true] .hero::after{
+    content:"";position:absolute;z-index:-1;pointer-events:none;
+    width:16%;height:8%;right:21%;bottom:13%;
+    background:
+      radial-gradient(ellipse at center,#fff6c5c4 0%,#fff6c500 67%) 0 78%/47% 21% no-repeat,
+      radial-gradient(ellipse at center,#f0ffedbf 0%,#f0ffed00 67%) 65% 39%/58% 18% no-repeat,
+      radial-gradient(ellipse at center,#fff6c5b9 0%,#fff6c500 67%) 100% 6%/31% 14% no-repeat;
+    animation:hero-water-light 8s ease-in-out infinite;
+  }
+  [data-motion=true] .ferry-arrival>span svg{
+    animation:harbor-arrival .58s ease-out both;
+    transform-origin:50% 80%;
+  }
+  [data-motion=true] .lighthouse-win .result-emblem{position:relative;isolation:isolate}
+  [data-motion=true] .lighthouse-win .result-emblem::after{
+    content:"";position:absolute;z-index:-1;inset:-19px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,#ffe39cac 0%,#ffecac75 46%,#fff1b800 73%);
+    animation:beacon-halo 1.8s ease-out both;
+  }
+  [data-motion=true] .correct .feedback-title>span{animation:harbor-arrival .38s ease-out both}
+  @keyframes hero-water-light{
+    0%,100%{opacity:.18;transform:translateX(-10px)}
+    55%{opacity:.76;transform:translateX(8px)}
+  }
+  @keyframes harbor-arrival{
+    0%{opacity:.48;transform:translateX(-9px) scale(.86)}
+    64%{opacity:1;transform:translateX(2px) scale(1.07)}
+    100%{transform:none}
+  }
+  @keyframes beacon-halo{
+    0%{opacity:0;transform:scale(.78)}
+    33%{opacity:.95}
+    100%{opacity:0;transform:scale(1.52)}
+  }
+}
