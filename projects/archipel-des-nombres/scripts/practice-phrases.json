@@ -13,5 +13,7 @@
   "good-match": "Tu as trouvé le groupe qui contient exactement la quantité demandée.",
   "good-compare": "On compare les nombres d’objets de chaque côté.",
   "good-five": "La quantité en place et la quantité manquante font cinq.",
-  "good-split": "Le groupe visible et le groupe caché forment le total."
+  "good-split": "Le groupe visible et le groupe caché forment le total.",
+  "same-group": "Quel groupe contient autant d’objets que le modèle ?",
+  "compare-equal": "Regarde les deux groupes. Y a-t-il autant d’objets de chaque côté ?"
 }
