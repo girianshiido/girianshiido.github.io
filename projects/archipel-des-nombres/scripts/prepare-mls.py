@@ -13,14 +13,14 @@ import numpy as np
 from imageio_ffmpeg import get_ffmpeg_exe
 from piper import PiperVoice, SynthesisConfig
 
-MODEL = "fr_FR-mls-medium.onnx"
+MODEL = "fr_FR-upmc-medium.onnx"
 voice = PiperVoice.load(MODEL)
 prompts = json.loads(Path(__file__).with_name("voice-prompts.json").read_text(encoding="utf-8"))
 
 
 def synthesize(text, speaker):
     target = io.BytesIO()
-    config = SynthesisConfig(speaker_id=speaker, length_scale=1.03, noise_scale=0.50, noise_w_scale=0.6)
+    config = SynthesisConfig(speaker_id=speaker)
     with wave.open(target, "wb") as out:
         voice.synthesize_wav(text, out, syn_config=config)
     return target.getvalue()
@@ -56,29 +56,21 @@ def pitches_for(samples, rate):
 
 
 def choose():
-    candidates = []
-    count = voice.config.num_speakers
-    for speaker in np.linspace(0, count-1, 28, dtype=int).tolist():
-        pitches, durations = [], []
-        for prompt in ("example", "basket-2"):
-            data, rate = samples_of(synthesize(prompts[prompt], speaker))
+    measurements = []
+    for speaker in (0, 1):
+        durations = []
+        pitches = []
+        for example in ("example", "basket-2", "n2"):
+            data, rate = samples_of(synthesize(prompts[example], speaker))
             pitches.extend(pitches_for(data, rate))
             durations.append(len(data) / rate)
-        if len(pitches) < 4 or not (1.1 <= durations[0] <= 8 and 0.75 <= durations[1] <= 6):
-            print(f"Skipped {speaker}: {len(pitches)} voiced windows, {durations}")
-            continue
         pitch = float(np.median(pitches))
-        candidates.append((pitch, speaker))
-        print(f"Speaker {speaker}: {pitch:.0f} Hz, {durations[0]:.2f}s / {durations[1]:.2f}s")
-    assert len(candidates) >= 2, candidates
-    low = min(candidates, key=lambda row: abs(row[0]-126))
-    high = min((row for row in candidates if row[1]!=low[1]), key=lambda row: abs(row[0]-215))
-    if high[0] <= 1.2 * low[0]:
-        low, high = min(candidates), max(candidates)
-    assert high[1] != low[1], (low, high)
+        print(f"Speaker {speaker}: {pitch:.0f} Hz; durations {durations}", flush=True)
+        assert 1.2 <= durations[0] <= 5 and 0.75 <= durations[1] <= 3.6 and 0.22 <= durations[2] <= 1.5
+        measurements.append(pitch)
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-        print(f"lagon={high[1]}\nphare={low[1]}", file=out)
-    print(f"ARCHIPEL_VOICES {high[1]} {low[1]} {high[0]:.1f} {low[0]:.1f}")
+        print("lagon=0\nphare=1", file=out)
+    print(f"ARCHIPEL_VOICES 0 1 {measurements[0]:.1f} {measurements[1]:.1f}")
 
 
 def gain(payload):
