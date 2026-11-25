@@ -38,7 +38,7 @@ export function makeTask(mode, n, chapter, random = Math.random, previous) {
   if (previous && n > 0 && n < max) start = 2*n-previous.start;
   const low = Math.max(0,Math.min(max-2,n-1));
   let order = shuffle([low,low+1,low+2],random);
-  if (order.every((value,index)=>value===low+index) || (previous&&order.join()===previous.order.join())) {
+  while (order.every((value,index)=>value===low+index) || (previous&&order.join()===previous.order.join())) {
     order = [order[1],order[2],order[0]];
   }
   return { mode,n,start,pair:mode==='pair',choices,layout,token,order,

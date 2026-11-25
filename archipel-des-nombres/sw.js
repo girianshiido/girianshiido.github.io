@@ -1,5 +1,5 @@
 const PREFIX='archipel-nombres-';
-const CACHE=PREFIX+'fd81ea15';
+const CACHE=PREFIX+'563e6feb';
 const FILES=["./art.js","./audio.js","./audio/CREDITS.txt","./audio/finish.wav","./audio/good.wav","./audio/guide.wav","./audio/n0.wav","./audio/n1.wav","./audio/n10.wav","./audio/n2.wav","./audio/n3.wav","./audio/n4.wav","./audio/n5.wav","./audio/n6.wav","./audio/n7.wav","./audio/n8.wav","./audio/n9.wav","./audio/tap.wav","./engine.js","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/maskable-512.png","./images/archipel.png","./index.html","./main.js","./manifest.webmanifest","./pwa.js","./storage.js","./style.css"];
 const ROOT=new URL(self.registration.scope);
 self.addEventListener('install',event=>{

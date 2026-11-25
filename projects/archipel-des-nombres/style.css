@@ -276,3 +276,5 @@ fieldset{border:0;padding:0;margin:5px 0 9px}
 .pair-cell .token-button{width:min(100%,39px);height:36px;box-shadow:none}
 .pair-cell .spark-space{font-size:.8rem;color:#4f7367}
 .picture-card .count-canvas,.small-scene .count-canvas{height:93%;top:4%}
+
+.result-card:has(.result-emblem) .result-emblem{box-shadow:0 0 0 7px #f2f3de,0 0 0 14px #f9f5e5}

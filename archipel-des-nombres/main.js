@@ -33,7 +33,7 @@ function chrome(){
   const p=player(), view=page==='map'?' aria-current="page"':'';
   header.innerHTML='<div class="topbar shell"><button type="button" class="brand" data-action="map"><span class="brand-icon">'+icon('beacon')+'</span><span>L’Archipel<span class="brand-tail"> des nombres</span></span></button>'+
     '<nav aria-label="Navigation principale">'+
-    '<button type="button" data-action="map" class="toplink map-link"'+view+'>'+tag('map','Carte')+'</button>'+
+    '<button type="button" data-action="map" class="toplink map-link" aria-label="Carte"'+view+'>'+tag('map','Carte')+'</button>'+
     '<button type="button" class="toplink" data-action="settings" aria-label="Réglages">'+tag('settings','Réglages')+'</button>'+
     '<button type="button" class="toplink profile-link" data-action="profiles" aria-label="Joueurs'+(p?' · '+esc(p.name):'')+'">'+(p?'<span class="mini-avatar" aria-hidden="true">'+avatars[p.avatar]+'</span><span class="profile-name">'+esc(p.name)+'</span>':tag('user','Joueurs'))+'</button></nav></div>';
   footer.innerHTML='<div class="shell bottom"><span class="bottom-title">'+icon('beacon')+' L’Archipel des nombres</span><div>'+
@@ -82,7 +82,7 @@ function start(index){
 }
 function play(){
   if(round&&current&&round.chapter===chapter){
-    page='game';chrome();renderTask(false);return;
+    page='game';chrome();renderTask(!current.feedback&&!current.hidden);return;
   }
   const index=player()?.records[chapter].findIndex(entry=>!entry.mastery)??0;
   start(index===-1?5:index);
@@ -172,8 +172,10 @@ function renderTask(schedule){
     if(q.flash&&p.flash){
       const at=revision;
       flashTimer=setTimeout(()=>{
-        if(at!==revision||page!=='game'||!current||current.feedback)return;
+        if(at!==revision||page!=='game'||!current||current.feedback||dialog.open)return;
+        const focused=document.activeElement?.dataset.action;
         current.hidden=true;renderTask(false);
+        if(focused) main.querySelector('[data-action="'+focused+'"]')?.focus({preventScroll:true});
       },1800);
     }
   }
