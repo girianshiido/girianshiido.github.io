@@ -124,6 +124,63 @@ export function setCanvas(canvas) {
   ctx.clearRect(0,0,w,h);
   return {ctx,w,h};
 }
+export function drawBasket(canvas) {
+  const area=setCanvas(canvas);
+  if(!area)return;
+  const {ctx,w,h}=area;
+  const middle=w/2,left=8,right=w-8,top=33,bottom=h-30;
+  ellipse(ctx,middle,h-5,w*.39,4,'#6841272d');
+
+  const handle=p=>{
+    p.moveTo(w*.26,top+7);
+    p.bezierCurveTo(w*.28,-5,w*.72,-5,w*.74,top+7);
+  };
+  line(ctx,'#714329',12,handle);
+  line(ctx,'#cb8f4c',8,handle);
+  line(ctx,'#eabd7f',3,handle);
+
+  const wall=p=>{
+    p.moveTo(left,bottom-10);
+    p.bezierCurveTo(left+7,h-25,left+19,h-10,left+39,h-8);
+    p.quadraticCurveTo(middle,h+1,right-39,h-8);
+    p.bezierCurveTo(right-19,h-10,right-7,h-25,right,bottom-10);
+  };
+  const weave=ctx.createLinearGradient(0,bottom-10,0,h-4);
+  weave.addColorStop(0,'#e1ad6b');
+  weave.addColorStop(1,'#9c5e34');
+  paint(ctx,weave,wall);
+  ctx.save();
+  ctx.clip();
+  for(let y=bottom-1,row=0;y<h;y+=6,row++){
+    for(let x=left+(row%2)*8-16;x<right;x+=16){
+      line(ctx,row%2?'#8b4f2d':'#9d5d35',2,p=>{
+        p.moveTo(x,y+2);p.quadraticCurveTo(x+8,y-2,x+15,y+3);
+      });
+      line(ctx,'#f2c58b',1,p=>{
+        p.moveTo(x+2,y+1);p.quadraticCurveTo(x+8,y-2,x+13,y+1);
+      });
+    }
+  }
+  ctx.restore();
+  line(ctx,'#784427',2,wall);
+
+  const rim=p=>{
+    p.moveTo(left+24,top-1);
+    p.quadraticCurveTo(middle,top-9,right-24,top-1);
+    p.bezierCurveTo(right+7,top+3,right+6,bottom-5,right-25,bottom);
+    p.quadraticCurveTo(middle,bottom+7,left+25,bottom);
+    p.bezierCurveTo(left-6,bottom-5,left-7,top+3,left+24,top-1);
+  };
+  const liner=ctx.createLinearGradient(0,top,0,bottom);
+  liner.addColorStop(0,'#f1d8ae');
+  liner.addColorStop(.33,'#fff3d6');
+  liner.addColorStop(1,'#f6debb');
+  paint(ctx,liner,rim);
+  line(ctx,'#835030',8,rim);
+  line(ctx,'#c68a4c',5,rim);
+  line(ctx,'#eab97d',2,rim);
+}
+
 export function collection(canvas, info) {
   const scene=setCanvas(canvas);
   if(!scene) return;

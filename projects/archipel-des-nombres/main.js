@@ -1,5 +1,5 @@
 import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches} from './engine.js';
-import {icon,collection,hitPositions,setCanvas,drawToken} from './art.js';
+import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket} from './art.js';
 import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
 import * as pwa from './pwa.js';
@@ -10,6 +10,10 @@ import {bindDrag} from './drag.js';
 for(const event of ['gesturestart','gesturechange']){
   document.addEventListener(event,e=>e.preventDefault(),{passive:false});
 }
+document.addEventListener('contextmenu',event=>{
+  const target=event.target;
+  if(!(target instanceof Element&&target.closest('input,textarea,[contenteditable="true"]')))event.preventDefault();
+});
 
 const $=selector=>document.querySelector(selector);
 const main=$('#main'),header=$('#header'),footer=$('#footer'),dialog=$('#dialog');
@@ -214,10 +218,13 @@ function renderWorkspace(focusSelector){
         (item!==undefined?tokenButton(item,'basket',q.token):'<span class="lantern-hole" aria-hidden="true"></span>')+'</div>';
     }).join('')+'</div>':'';
     const stockLabel=paired?'Lanternes à prendre':q.mode==='ferry'?'Les perles':q.mode==='basket'?'Réserve de graines':'Réserve';
+    const wicker=q.mode==='basket'||q.mode==='change';
+    const tokenRow='<div class="token-row">'+(placed||'<span class="basket-empty">'+(q.n===0?'Le panier est vide':wicker?'Dépose ici':'Dépose les objets ici')+'</span>')+'</div>';
+    const deposit=wicker?'<div class="wicker-basket" data-drop="basket"><canvas class="wicker-art" aria-hidden="true"></canvas>'+tokenRow+'</div>':tokenRow;
     root.innerHTML='<section class="drop-area stock" data-drop="stock"><h2>'+stockLabel+'</h2><div class="token-row">'+stock+'</div></section>'+
-      '<section class="drop-area basket'+(paired?' pairing':'')+'" data-drop="basket"><h2>'+icon(paired?'lamp':q.mode==='ferry'?'beacon':'basket')+
-      (paired?'Le pont':q.mode==='ferry'?'Dépose tes perles ici':'Ton panier')+'</h2>'+lanes+
-      (paired?'':'<div class="token-row">'+(placed||'<span class="basket-empty">'+(q.n===0?'Le panier est vide':'Dépose les objets ici')+'</span>')+'</div>')+'</section>';
+      '<section class="drop-area basket'+(paired?' pairing':wicker?' wicker-area':'')+'"'+(wicker?'':' data-drop="basket"')+'><h2>'+
+      (wicker?'Ton panier':paired?icon('lamp')+'Le pont':icon('beacon')+'Dépose tes perles ici')+'</h2>'+
+      (paired?lanes:deposit)+'</section>';
   }
   if(focusSelector) (root.querySelector(focusSelector)||$('.validate'))?.focus({preventScroll:true});
   drawSmallTokens();
@@ -225,6 +232,8 @@ function renderWorkspace(focusSelector){
   if(validate)validate.disabled=q.mode==='order'&&state.order.length!==q.order.length;
 }
 function drawSmallTokens(){
+  const basket=$('.wicker-art');
+  if(basket)drawBasket(basket);
   main.querySelectorAll('.token-canvas').forEach(node=>{
     const scene=setCanvas(node);
     if(scene) drawToken(scene.ctx,node.dataset.token,scene.w/2,scene.h*.51,Math.min(scene.w,scene.h)*.9);
