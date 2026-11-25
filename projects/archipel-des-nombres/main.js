@@ -191,6 +191,10 @@ function comparison(q,reveal=false){
     collectionCard(q,right,reveal?'À droite · '+right:'Groupe de droite','ring',q.seed+21,select?2:undefined)+'</div>'+
     (reveal?'':'<div class="comparison-options">'+button('Autant','answer-1','')+(ask==='equal'?button('Différent','answer-0',''):'')+'</div>');
 }
+function glanceFigure(q,classes,hidden=false){
+  if(q.layout!=='hand')return canvas(q.n,q.layout,q.token,q.seed,classes,hidden);
+  return hidden?'':'<img class="hand-figure" src="./images/hands/hand-'+q.n+'.webp" width="320" height="320" alt="Main à observer" draggable="false">';
+}
 function taskBody(){
   const state=current,q=state.q;
   switch(q.mode){
@@ -206,7 +210,7 @@ function taskBody(){
     case 'hidden':return '<div class="hidden-total">En tout <strong>'+q.total+'</strong></div><div class="comparison-grid">'+
       collectionCard(q,q.start,'Visible','line',q.seed)+'<div class="chest-scene"><div class="chest-art" aria-hidden="true"><span>?</span></div><span class="collection-label">Dans le coffre</span></div></div>'+numeric(q);
     case 'glance':
-      return '<div class="scene lagoon">'+canvas(q.n,q.layout,q.token,q.seed,'glance-canvas',state.hidden)+(q.n===0&&q.layout!=='hand'?'<span class="empty-scene">Aucun objet</span>':'')+
+      return '<div class="scene lagoon">'+glanceFigure(q,'glance-canvas',state.hidden)+(q.n===0&&q.layout!=='hand'?'<span class="empty-scene">Aucun objet</span>':'')+
         (state.hidden?'<div class="glance-cover">'+button('Revoir la figure','show','dice')+'</div>':'')+'</div>'+numeric(q);
     case 'ferry':
       if(state.ferrySide==='source')return '<div class="ferry-source"><div class="scene lagoon"><span class="scene-label">Le premier quai</span>'+
@@ -353,7 +357,7 @@ function feedbackBody(){
   const {correct,value}=feedback;
   const media=q.mode==='compare'?comparison(q,true):q.mode==='order'
     ?'<div class="answer-demo">'+[...q.order].sort((a,b)=>a-b).map(n=>'<span>'+n+'</span>').join('<b aria-hidden="true">›</b>')+'</div>'
-    :'<div class="answer-demo">'+(q.mode==='echo'?'':canvas(q.n,q.layout,q.token,q.seed,'feedback-canvas'))+'<span>'+q.n+'</span></div>';
+    :'<div class="answer-demo">'+(q.mode==='echo'?'':glanceFigure(q,'feedback-canvas'))+'<span>'+q.n+'</span></div>';
   return '<div class="feedback '+(correct?'correct':'guided')+'"><div class="feedback-title"><span>'+icon(correct?'check':'spark')+'</span><div>'+
     '<h2 id="feedback-title" tabindex="-1">'+(correct?(example?'Tu as compris le geste !':'Bien trouvé !'):'Observons ensemble')+'</h2><p>'+explanation(q,value,correct)+'</p></div></div>'+
     (!correct?media+'<p class="retry-note">'+(round.index<round.planned?'Tu retrouveras une variante en fin de série.':'Tu pourras retravailler cette activité.')+'</p>':'')+

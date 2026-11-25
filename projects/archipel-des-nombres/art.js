@@ -181,42 +181,6 @@ export function drawBasket(canvas) {
   line(ctx,'#eab97d',2,rim);
 }
 
-function drawHand(ctx,w,h,n){
-  const unit=Math.min(w/6,h/5.8);
-  const x=w/2, y=h*.68;
-  ctx.save();
-  ctx.translate(x,y);
-  ctx.scale(unit,unit);
-  const skin='#f6c587', shade='#d79565';
-  ellipse(ctx,0,1.64,1.62,.20,'#43756724');
-  rect(ctx,-.67,.90,1.34,.79,.19,'#457f7c');
-  rect(ctx,-1.22,-.80,2.44,2.12,.52,shade);
-  rect(ctx,-1.15,-.84,2.30,2.10,.49,skin);
-  const xs=[.84,.28,-.28,-.84], tops=[-2.09,-2.80,-2.61,-2.18];
-  xs.forEach((finger,i)=>{
-    // Count the thumb first in the usual French hand signs for one to five.
-    if(n>=i+2){
-      rect(ctx,finger-.225,tops[i],.45,-tops[i]+.06,.225,shade);
-      rect(ctx,finger-.195,tops[i]+.04,.385,-tops[i]-.03,.19,skin);
-    } else {
-      rect(ctx,finger-.224,-.86,.447,.82,.21,'#e5a771');
-      line(ctx,shade,.045,p=>{p.moveTo(finger-.10,-.37);p.lineTo(finger+.10,-.37);});
-    }
-  });
-  ctx.save();
-  if(n){
-    ctx.translate(1.03,.20);ctx.rotate(.55);
-    rect(ctx,-.25,-1.70,.52,1.85,.26,shade);
-    rect(ctx,-.21,-1.66,.43,1.83,.22,skin);
-  } else {
-    ctx.translate(.44,.09);ctx.rotate(1.10);
-    rect(ctx,-.24,-.58,.50,1.67,.25,shade);
-    rect(ctx,-.21,-.58,.43,1.62,.215,skin);
-  }
-  ctx.restore();
-  ctx.restore();
-}
-
 export function collection(canvas, info) {
   const scene=setCanvas(canvas);
   if(!scene) return;
@@ -226,7 +190,6 @@ export function collection(canvas, info) {
   const isDouble=n>5;
   const isCard=canvas.classList.contains('mini-canvas');
   const contrast=document.documentElement.dataset.contrast==='true';
-  if(layout==='hand'){drawHand(ctx,w,h,n);return;}
   if(layout==='dice') {
     const size=Math.min(w*.86,h*.88);
     rect(ctx,w/2-size/2,h/2-size/2+4,size,size,size*.16,contrast?'#23536b':'#b4c9cd');
