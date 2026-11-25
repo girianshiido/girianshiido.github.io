@@ -34,6 +34,11 @@ try{
   assert.equal(await page.locator('.island img').count(),6);
   assert.ok(await page.locator('.island img').evaluateAll(imgs=>imgs.every(img=>img.complete&&img.naturalWidth>0)));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
+  const waterLight=()=>page.locator('.hero').evaluate(el=>getComputedStyle(el,'::after').animationName);
+  assert.equal(await waterLight(),'hero-water-light');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.equal(await waterLight(),'none');
+  await page.emulateMedia({reducedMotion:'no-preference'});
   await action('play').click();
   await page.locator('#player-name').fill('Camille');
   await page.getByRole('button',{name:'Créer mon profil'}).click();
@@ -56,6 +61,11 @@ try{
     localStorage.setItem(key,JSON.stringify(novice));
   },{key:storeKey,novice});
   await page.reload({waitUntil:'networkidle'});
+  await action('settings').tap();
+  await page.locator('.setting').filter({hasText:'Animations'}).click();
+  assert.equal(await page.locator('[data-setting="motion"]').isChecked(),false);
+  assert.equal(await waterLight(),'none');
+  await action('close').tap();
   await action('island-4').tap();
   const cdp=await context.newCDPSession(page);
   async function drag(from,to){
