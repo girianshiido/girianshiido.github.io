@@ -3,6 +3,7 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
+import {groupFor} from '../engine.ts';
 
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg','.webmanifest':'application/manifest+json'};
 const root=resolve('dist');
@@ -25,6 +26,13 @@ const page=await context.newPage();
 const fail=[];
 page.on('pageerror',error=>fail.push(error.message));
 const action=name=>page.locator('[data-action="'+name+'"]').last();
+async function enter(index){
+  if(await action('archipelago').count())await action('archipelago').tap();
+  await action('group-'+groupFor(index)).tap();
+  await action('island-'+index).tap();
+  const confirm=action('confirm-island-'+index);
+  if(await confirm.count())await confirm.tap();
+}
 const storeKey='archipel-des-nombres:save';
 
 try{
@@ -64,7 +72,11 @@ try{
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await waterLight(),'none');
   await page.emulateMedia({reducedMotion:'no-preference'});
+  assert.equal(await action('group-1').getAttribute('aria-disabled'),'true');
   await action('play').click();
+  assert.equal(await page.locator('.activity-tile').count(),6);
+  assert.equal(await action('island-10').getAttribute('aria-disabled'),'true');
+  await action('island-9').tap();
   assert.equal(await page.locator('#player-name').evaluate(element=>getComputedStyle(element).userSelect),'text');
   assert.equal(await contextMenuBlocked(page.locator('#player-name')),false);
   await page.locator('#player-name').fill('Camille');
@@ -80,13 +92,13 @@ try{
   const wrong=page.locator('.number-button:not([data-action="answer-2"])').first();
   await wrong.tap();
   assert.match(await page.locator('#example-note').innerText(),/Essaie encore/);
-  assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).players[0].records[0][0].errors,storeKey),0);
+  assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).players[0].records[0][9].errors,storeKey),0);
   await action('answer-2').tap();
   await action('advance').tap();
   assert.equal(await page.locator('.step-label').innerText(),'1 / 6');
 
   await page.evaluate(({key,novice})=>{
-    novice.players[0].records[0].slice(0,5).forEach(entry=>entry.mastery=true);
+    novice.players[0].records[0].forEach(entry=>entry.mastery=true);
     novice.players[0].settings.narrator='lagon';
     localStorage.setItem(key,JSON.stringify(novice));
   },{key:storeKey,novice});
@@ -97,7 +109,7 @@ try{
   assert.equal(await page.locator('[data-setting="motion"]').isChecked(),false);
   assert.equal(await waterLight(),'none');
   await action('close').tap();
-  await action('island-3').tap();
+  await enter(3);
   async function drag(from,to){
     const a=await from.boundingBox(), b=await to.boundingBox();
     assert.ok(a&&b);
@@ -121,8 +133,7 @@ try{
   await action('validate').tap();
   assert.match(await page.locator('#feedback-title').innerText(),/compris/);
   await page.locator('.game-top [data-action="map"]').tap();
-  await action('island-4').tap();
-  await action('confirm-island-4').tap();
+  await enter(4);
   await drag(action('put-0'),page.locator('[data-slot="1"]'));
   assert.equal(await page.locator('[data-slot="1"] [data-item="0"]').count(),1);
   assert.equal(await page.locator('[data-slot="0"] [data-item]').count(),0);
@@ -141,8 +152,7 @@ try{
   assert.match(await page.locator('#feedback-title').innerText(),/compris/);
 
   await page.locator('.game-top [data-action="map"]').tap();
-  await action('island-5').tap();
-  await action('confirm-island-5').tap();
+  await enter(5);
   await action('ferry-cross').tap();
   assert.equal(await page.locator('.ferry-source').count(),0);
   await action('put-0').tap();
@@ -154,6 +164,20 @@ try{
   await action('validate').tap();
   assert.match(await page.locator('#feedback-title').innerText(),/compris/);
 
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(22);
+  await action('skip-example').tap();
+  assert.equal(await page.locator('.collection-options button').count(),4);
+  const cardNumber=Number((await page.locator('#task-title').innerText()).match(/\d+/)[0]);
+  await action('answer-'+cardNumber).tap();
+  await action('advance').tap();
+  assert.equal(await page.locator('.collection-options button').count(),3);
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(29);
+  assert.equal(await page.locator('.comparison-grid .collection-card').count(),2);
+  await action('answer-1').tap();
+  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+
   await context.setOffline(true);
   await page.reload({waitUntil:'networkidle'});
   await page.locator('.hero').waitFor();
@@ -162,7 +186,8 @@ try{
     return [response.status,(await response.arrayBuffer()).byteLength,response.headers.get('Content-Type')];
   });
   assert.deepEqual(partial,[206,40,'audio/mpeg']);
-  await action('island-0').tap();
+  assert.equal(await page.evaluate(async()=> (await fetch('./audio/voix/count-hand.mp3')).ok),true);
+  await enter(0);
   const object=page.locator('.hit').first();
   await object.tap();
   assert.equal(await page.evaluate(()=>window.numberStarts),1,'Lecture Web Audio hors ligne');
@@ -188,7 +213,7 @@ try{
   const played=()=>page.evaluate(()=>window.voicePlayed);
   const clearVoice=()=>page.evaluate(()=>{window.voicePlayed=[];});
   const waitForClips=count=>page.waitForFunction(n=>window.voicePlayed.length>=n,count);
-  await action('island-1').tap();
+  await enter(1);
   await waitForClips(3);
   assert.deepEqual(await played(),['example','echo-guide','n2']);
   await clearVoice();
@@ -207,8 +232,7 @@ try{
   assert.match((await played()).join(),/^n[0-5]$/);
   await page.locator('.game-top [data-action="map"]').tap();
   await clearVoice();
-  await action('island-0').tap();
-  await action('confirm-island-0').tap();
+  await enter(0);
   await waitForClips(2);
   assert.deepEqual(await played(),['example','touch']);
   await clearVoice();

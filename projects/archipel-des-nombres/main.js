@@ -1,4 +1,4 @@
-import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches} from './engine.js';
+import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches,practiceIslands,groupFor,groupComplete,groupOpen,legacyCount,finalPractice} from './engine.ts';
 import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket} from './art.js';
 import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
@@ -26,7 +26,7 @@ const portrait=(index,alt='')=>'<img class="portrait" src="./images/avatar-'+ind
 const esc=value=>String(value).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const button=(label,action,glyph='',classes='secondary')=>'<button type="button" class="'+classes+'" data-action="'+action+'">'+(glyph?icon(glyph):'')+label+'</button>';
 const tag=(glyph,label)=>icon(glyph)+'<span>'+label+'</span>';
-let page='map',chapter=0,round=null,result=null,current=null,flashTimer=0,toastTimer=0,storageFailed=false,nextAfterCreate=false;
+let page='map',activeGroup=null,chapter=0,round=null,result=null,current=null,flashTimer=0,toastTimer=0,storageFailed=false,nextAfterCreate=null;
 let revision=0, opener=null;
 
 function persistSave(){
@@ -59,55 +59,91 @@ function goMap(scroll=false){
 function sectionFocus(id){
   requestAnimationFrame(()=>{const node=document.getElementById(id);node?.focus({preventScroll:true});});
 }
-const chapterOpen=()=>!!player()?.records[0][finalIsland].mastery;
+const chapterOpen=()=>!!player()&&(player().legacyChapterOpen||groupComplete(player().records[0],practiceIslands.length-1));
 const firstIsland=records=>islands.slice(0,coreCount).findIndex((_,i)=>!records[i]?.mastery);
+const groupProgress=(records,index)=>practiceIslands[index].activities.filter(i=>records[i]?.mastery).length;
 function islandCard(island,index,records){
-  const open=accessible(records,index),done=!!records[index]?.mastery;
-  const action=' data-action="island-'+index+'" '+(!open?'aria-disabled="true"':'');
-  if(index>=coreCount)return '<button type="button" class="extra-island '+island.tone+'"'+action+'>'+
+  const group=!chapter;
+  const open=group?groupOpen(records,index):accessible(records,index,chapter);
+  const done=group?groupComplete(records,index):!!records[index]?.mastery;
+  const action=' data-action="'+(group?'group-':'island-')+index+'" '+(!open?'aria-disabled="true"':'');
+  if(!group&&index>=coreCount)return '<button type="button" class="extra-island '+island.tone+'"'+action+'>'+
     '<span class="tile-icon">'+icon(island.icon)+'</span><span class="tile-body"><strong>'+island.title+'</strong><span class="tile-text">'+island.description+'</span></span>'+
-    '<span class="tile-state" aria-label="'+(done?'Validée':open?'Jouer':'Verrouillée')+'">'+icon(done?'check':open?'arrowSmall':'lock')+'</span></button>';
+    '<span class="tile-state" aria-label="'+(done?'Validé':open?'Jouer':'Verrouillé')+'">'+icon(done?'check':open?'arrowSmall':'lock')+'</span></button>';
+  const badge=group?groupProgress(records,index)+' / '+island.activities.length+' activités':open&&!done?'À explorer':'';
   return '<button type="button" class="island '+island.tone+(!open?' locked':'')+'"'+action+'>'+
     '<span class="tile-illustration"><img src="./images/island-'+island.art+'.webp" alt="" width="480" height="360">'+
-    (open&&!done?'<span class="tile-current">À explorer</span>':'')+'</span>'+
+    (badge?'<span class="tile-current">'+badge+'</span>':'')+'</span>'+
     '<span class="tile-info"><span class="tile-icon">'+icon(island.icon)+'</span><span class="tile-body"><span class="tile-title">'+island.title+'</span><span class="tile-text">'+island.description+'</span></span>'+
-    '<span class="tile-state" aria-label="'+(done?'Validée':open?'Jouer':'Verrouillée')+'">'+icon(done?'check':open?'arrowSmall':'lock')+'</span></span></button>';
+    '<span class="tile-state" aria-label="'+(done?'Validée':open?'Ouvrir':'Verrouillée')+'">'+icon(done?'check':open?'arrowSmall':'lock')+'</span></span></button>';
 }
 function renderMap(){
   if(chapter&&!chapterOpen()) chapter=0;
+  if(!chapter&&activeGroup!==null){renderGroup();return;}
   const records=player()?.records[chapter]??[];
-  const completed=records.slice(0,coreCount).filter(entry=>entry.mastery).length;
-  const active=firstIsland(records);
-  const canResume=round&&round.chapter===chapter&&current&&!result;
+  const visible=chapter?islands.slice(0,coreCount):practiceIslands;
+  const completed=visible.filter((_,i)=>chapter?records[i]?.mastery:groupComplete(records,i)).length;
+  const canResume=round&&round.chapter===chapter&&current;
   main.innerHTML='<div class="shell map-view"><section class="hero"><img class="hero-art" src="./images/archipel.webp" alt="" fetchpriority="high"><div class="hero-copy">'+
     '<span class="range">Compter de '+range(chapter)+'</span>'+
     '<h1 tabindex="-1" id="map-title">L’Archipel<br>des nombres</h1>'+
     '<p>Explore les îles, aide leurs habitants et allume le grand phare.</p>'+
-    button(canResume?'Reprendre':active===-1?'Rejouer au phare':completed?'Continuer l’aventure':'Commencer l’aventure','play','arrow','primary hero-button')+
+    button(canResume?'Reprendre':completed===visible.length?'Rejouer':completed?'Continuer l’aventure':'Commencer l’aventure','play','arrow','primary hero-button')+
     '</div></section><section class="route" aria-labelledby="route-title"><div class="route-header">'+
-    '<div><div class="kicker">Le parcours · '+range(chapter)+'</div><h2 id="route-title">'+title(chapter)+'</h2></div>'+
-    '<div class="journey-progress"><div>'+completed+' île'+(completed>1?'s':'')+' sur '+coreCount+'</div><progress value="'+completed+'" max="'+coreCount+'" aria-label="Îles validées"></progress></div></div>'+
-    '<div class="island-grid">'+islands.slice(0,coreCount).map((island,i)=>islandCard(island,i,records)).join('')+'</div></section>'+
+    '<div><div class="kicker">Compter de '+range(chapter)+'</div><h2 id="route-title">'+title(chapter)+'</h2></div>'+
+    '<div class="journey-progress"><div>'+completed+' / '+visible.length+' îles</div><progress value="'+completed+'" max="'+visible.length+'" aria-label="Îles validées"></progress></div></div>'+
+    '<div class="island-grid">'+visible.map((island,i)=>islandCard(island,i,records)).join('')+'</div></section>'+
     '<section class="next-land"><span class="tile-icon '+(chapter?'peach':'sky')+'">'+icon(chapter?'map':'beacon')+'</span><div>'+
-    '<h2>'+(chapter?'Les petites îles':'Au-delà du lagon')+'</h2><p>'+(chapter?'Retrouve les nombres de 0 à 5.':chapterOpen()?'Explore le parcours des nombres de 6 à 10.':'Allume le phare pour partir explorer les nombres de 6 à 10.')+'</p></div>'+
-    (chapterOpen()?button(chapter?'Revenir':'Explorer','chapter','arrow'):('<span class="future-lock" aria-label="Verrouillé">'+icon('lock')+'</span>'))+'</section>'+
-    '<section class="extra-route" aria-labelledby="extra-title"><h2 id="extra-title">Ateliers à part</h2>'+
-    '<p>'+(!records[finalIsland]?.mastery?'À découvrir après la traversée, à ton rythme.':'Choisis une autre façon de jouer avec les nombres.')+'</p><div class="extra-grid">'+
-    islands.slice(coreCount).map((island,i)=>islandCard(island,i+coreCount,records)).join('')+'</div></section></div>';
+    '<h2>'+(chapter?'Les petites îles':'Au-delà du lagon')+'</h2><p>'+(chapter?'Retrouve les nombres de 0 à 5.':chapterOpen()?'Explore le parcours des nombres de 6 à 10.':'Rallume le grand phare pour ouvrir le parcours de 6 à 10.')+'</p></div>'+
+    (chapterOpen()?button(chapter?'Revenir':'Explorer','chapter','arrow'):'<span class="future-lock" aria-label="Verrouillé">'+icon('lock')+'</span>')+'</section>'+
+    (chapter?'<section class="extra-route" aria-labelledby="extra-title"><h2 id="extra-title">Ateliers à part</h2><div class="extra-grid">'+
+    islands.slice(coreCount,legacyCount).map((island,i)=>islandCard(island,i+coreCount,records)).join('')+'</div></section>':'')+'</div>';
+}
+function renderGroup(){
+  const group=practiceIslands[activeGroup],records=player()?.records[0]??[];
+  const completed=groupProgress(records,activeGroup);
+  const count=group.activities.length;
+  main.innerHTML='<div class="shell map-view island-menu"><nav class="island-nav">'+button('Carte des îles','archipelago','back','text-button')+'</nav>'+
+    '<section class="island-banner '+group.tone+'" style="--island-art:url(./images/island-'+group.art+'.webp)">'+
+    '<div class="island-banner-copy"><span class="range">Île '+(activeGroup+1)+' / '+practiceIslands.length+'</span>'+
+    '<h1 id="map-title" tabindex="-1">'+group.title+'</h1><p>'+group.description+'</p></div></section>'+
+    '<div class="route-header"><h2>Activités</h2><div class="journey-progress"><div>'+completed+' / '+count+' validées</div>'+
+    '<progress value="'+completed+'" max="'+count+'" aria-label="Activités validées"></progress></div></div>'+
+    '<div class="activity-grid">'+group.activities.map((index,position)=>{
+      const item=islands[index],available=accessible(records,index),mastered=records[index]?.mastery;
+      const resumed=round?.chapter===0&&round.island===index&&current;
+      const status=resumed?'Reprendre':mastered?'Validée':available?'Jouer':'Verrouillée';
+      return '<button type="button" class="extra-island activity-tile '+item.tone+(!available?' locked':'')+'" data-action="island-'+index+'"'+(available?'':' aria-disabled="true"')+'>'+
+        '<span class="activity-position">'+(position+1)+'</span><span class="tile-body"><strong>'+item.title+'</strong><span class="tile-text">'+item.description+'</span></span>'+
+        '<span class="tile-state" aria-label="'+status+'">'+icon(mastered?'check':available?'arrowSmall':'lock')+'</span></button>';
+    }).join('')+'</div></div>';
+}
+function openGroup(index){
+  if(!practiceIslands[index])return;
+  if(!groupOpen(player()?.records[0]??[],index)){toast('Valide les activités des îles précédentes pour ouvrir celle-ci.');return;}
+  chapter=0;activeGroup=index;goMap(true);sectionFocus('map-title');
 }
 function start(index){
   const p=player();
-  if(!p){nextAfterCreate=true;profiles(true);return;}
-  if(!accessible(p.records[chapter],index)){toast(index<coreCount?'Termine l’île précédente pour ouvrir celle-ci.':'Termine la traversée du phare pour ouvrir cet atelier.');return;}
+  if(!p){nextAfterCreate=index;profiles(true);return;}
+  if(!accessible(p.records[chapter],index,chapter)){toast('Valide l’activité précédente pour ouvrir celle-ci.');return;}
+  if(!chapter)activeGroup=groupFor(index);
   round=startRound(chapter,index);
-  page='game';result=null;chrome();beginTask(true);
+  page='game';result=null;chrome();beginTask(islands[index].mode!=='mix');
   window.scrollTo(0,0);
 }
 function play(){
   if(round&&current&&round.chapter===chapter){
+    if(!chapter)activeGroup=groupFor(round.island);
     page='game';chrome();renderTask(!current.feedback&&!current.hidden);return;
   }
-  const index=firstIsland(player()?.records[chapter]??[]);
+  const records=player()?.records[chapter]??[];
+  if(!chapter){
+    const index=practiceIslands.findIndex((_,i)=>!groupComplete(records,i));
+    openGroup(index===-1?practiceIslands.length-1:index);
+    return;
+  }
+  const index=firstIsland(records);
   start(index===-1?finalIsland:index);
 }
 function beginTask(example=false){
@@ -118,7 +154,7 @@ function beginTask(example=false){
   current={q,example,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
     slots:new Map(),order:[],hidden:false,feedback:null,note:'',transcript:!prefs().sound||!prefs().voice,ferrySide:'source'};
   revision++;renderTask(true);
-  audio.playVoice(...voiceClips(q,example?'example':'question'));
+  audio.playVoice(...voiceClips(q,example?'example':islands[round.island].mode==='mix'?'review':'question'));
 }
 function canvas(n,layout,token,seed,classes='',hidden=false){
   return '<canvas class="count-canvas '+classes+'" aria-hidden="true" data-n="'+n+'" data-layout="'+layout+'" data-token="'+token+'" data-seed="'+seed+'"'+(hidden?' data-hidden="true"':'')+'></canvas>';
@@ -126,26 +162,58 @@ function canvas(n,layout,token,seed,classes='',hidden=false){
 function numeric(q,disabled=false){
   return '<div class="answers" aria-label="Réponses proposées">'+q.choices.map(n=>'<button type="button" class="number-button" data-action="answer-'+n+'" '+(disabled?'disabled':'')+'>'+n+'</button>').join('')+'</div>';
 }
+const auditory=q=>q.mode==='echo'||q.mode==='hear'||q.oral;
+function audioCue(q){
+  const p=prefs();
+  const name=current.transcript?numbers[q.n]:'Écouter le nombre';
+  return p.sound&&p.voice?button(name,'repeat','sound','sound-button'):'<span class="sound-button secondary">'+name+'</span>';
+}
+function collectionContents(q,n,layout,seed){
+  return canvas(n,layout,q.token,seed,'mini-canvas')+(n===0?'<span class="collection-empty">Vide</span>':'');
+}
+function collectionCard(q,n,label,layout,seed,answer,extra=''){
+  const contents=collectionContents(q,n,layout,seed);
+  return answer===undefined?'<div class="collection-card '+extra+'">'+contents+'<span class="collection-label">'+label+'</span></div>':
+    '<button type="button" class="collection-card '+extra+'" aria-label="'+label+'" data-action="answer-'+answer+'">'+contents+'</button>';
+}
+function collectionChoices(q){
+  const layouts=q.mode==='same'?['ring','scatter','clusters']:['line','ring','scatter','clusters'];
+  return '<div class="collection-options" aria-label="Collections proposées">'+q.choices.map((n,i)=>{
+    const layout=q.fixed??layouts[(q.seed+n)%layouts.length];
+    return collectionCard(q,n,'Collection '+(i+1),layout,q.seed+n,n);
+  }).join('')+'</div>';
+}
+function comparison(q,reveal=false){
+  const {left,right,ask}=q.comparison;
+  const select=ask!=='equal'&&!reveal;
+  return '<div class="comparison-grid">'+
+    collectionCard(q,left,reveal?'À gauche · '+left:'Groupe de gauche','line',q.seed,select?0:undefined)+
+    collectionCard(q,right,reveal?'À droite · '+right:'Groupe de droite','ring',q.seed+21,select?2:undefined)+'</div>'+
+    (reveal?'':'<div class="comparison-options">'+button('Autant','answer-1','')+(ask==='equal'?button('Différent','answer-0',''):'')+'</div>');
+}
 function taskBody(){
   const state=current,q=state.q;
   switch(q.mode){
     case 'touch':
       return '<div class="scene sea" id="point-scene">'+canvas(q.n,q.layout,q.token,q.seed,'point-canvas')+'<div class="hit-layer"></div>'+(q.n===0?'<span class="empty-scene">Aucun objet</span>':'')+'</div>'+numeric(q,state.marked.size!==q.n);
-    case 'echo': {
-      const p=prefs();
-      const name=state.transcript?numbers[q.n]:'Écouter le nombre';
-      const audioButton=p.sound&&p.voice?button(name,'repeat','sound','sound-button'):'<span class="sound-button secondary">'+name+'</span>';
-      return '<div class="scene cave sound-scene">'+audioButton+'</div>'+numeric(q);
-    }
+    case 'echo':return '<div class="scene cave sound-scene">'+audioCue(q)+'</div>'+numeric(q);
+    case 'hear':return '<div class="audio-prompt">'+audioCue(q)+'</div>'+collectionChoices(q);
+    case 'cards':return collectionChoices(q);
+    case 'same':
+      return '<div class="model-collection">'+collectionCard(q,q.n,'Modèle',q.fixed??'line',q.seed,undefined,'model-card')+'</div>'+collectionChoices(q);
+    case 'compare':return comparison(q);
+    case 'five':return '<div class="scene lagoon">'+canvas(q.start,'frame',q.token,q.seed)+'</div>'+numeric(q);
+    case 'hidden':return '<div class="hidden-total">En tout <strong>'+q.total+'</strong></div><div class="comparison-grid">'+
+      collectionCard(q,q.start,'Visible','line',q.seed)+'<div class="chest-scene"><div class="chest-art" aria-hidden="true"><span>?</span></div><span class="collection-label">Dans le coffre</span></div></div>'+numeric(q);
     case 'glance':
-      return '<div class="scene lagoon">'+canvas(q.n,q.layout,q.token,q.seed,'glance-canvas',state.hidden)+(q.n===0?'<span class="empty-scene">Aucun objet</span>':'')+
+      return '<div class="scene lagoon">'+canvas(q.n,q.layout,q.token,q.seed,'glance-canvas',state.hidden)+(q.n===0&&q.layout!=='hand'?'<span class="empty-scene">Aucun objet</span>':'')+
         (state.hidden?'<div class="glance-cover">'+button('Revoir la figure','show','dice')+'</div>':'')+'</div>'+numeric(q);
     case 'ferry':
       if(state.ferrySide==='source')return '<div class="ferry-source"><div class="scene lagoon"><span class="scene-label">Le premier quai</span>'+
         canvas(q.n,q.layout,q.token,q.seed)+'</div>'+button('Traverser','ferry-cross','arrow','primary ferry-button')+'</div>';
       return '<div class="ferry-arrival"><span>'+icon('beacon')+' Le second quai</span>'+button('Revoir le premier quai','ferry-back','back','text-button')+
         '</div>'+manipulation();
-    case 'basket':
+    case 'basket':return (q.oral?'<div class="audio-prompt">'+audioCue(q)+'</div>':'')+manipulation();
     case 'pair':
     case 'change':
     case 'color':
@@ -159,7 +227,7 @@ function renderTask(schedule){
   if(!round||!current) return;
   page='game';
   const q=current.q, info=presentation(q), p=prefs(), island=islands[round.island];
-  if(q.mode==='echo'&&(!p.sound||!p.voice)) current.transcript=true;
+  if(auditory(q)&&(!p.sound||!p.voice)) current.transcript=true;
   const retry=round.index>=round.planned;
   const count=current.example?'Exemple':retry?'Nouvel essai':(round.index+1)+' / '+round.planned;
   const progress=Array.from({length:round.planned},(_,i)=>'<span class="'+(i<round.index?'done':i===round.index&&!current.example?'here':'')+'"></span>').join('');
@@ -172,7 +240,7 @@ function renderTask(schedule){
     '<h1 tabindex="-1" id="task-title">'+info.prompt+'</h1><p>'+(current.example?exampleHint(q,round.chapter):info.hint)+'</p></div>'+
     '<div class="sound-tools">'+button('', 'sound',p.sound?'sound':'mute','icon-button mute-button')+
     (p.sound&&p.voice&&!current.feedback?button('Consigne','repeat-instruction','sound','text-button replay')+
-      (q.mode==='echo'?button(current.transcript?'Masquer le mot':'Lire le mot','transcript','','text-button transcript'):''):'')+
+      (auditory(q)?button(current.transcript?'Masquer le mot':'Lire le mot','transcript','','text-button transcript'):''):'')+
     '</div></div><div id="task-body">'+(current.feedback?feedbackBody():taskBody())+'</div>'+
     (current.example&&!current.feedback?'<div class="example-controls"><p id="example-note" role="status">'+current.note+'</p>'+
       button('Passer l’exemple','skip-example','','text-button')+'</div>':'')+'</section></div>';
@@ -268,6 +336,13 @@ function explanation(q,value,correct){
   if(q.mode==='change')return 'Il y avait '+q.start+'. '+(q.n>q.start?'Avec un de plus':'Avec un de moins')+', il y en a '+q.n+'.';
   if(q.mode==='pair')return correct?'Chaque feuille a sa lanterne. Il y en a autant de chaque côté.':'Il faut mettre une lanterne sous chacune des '+q.n+' feuilles.';
   if(q.mode==='ferry')return correct?'Sur chaque quai, il y a '+q.n+' perles. Le phare s’allume un peu plus !':'Tu as déposé '+value+' perles. Sur le premier quai, il y en avait '+q.n+'.';
+  if(q.mode==='compare'){
+    const {left,right}=q.comparison;
+    return 'Il y en a '+left+' à gauche et '+right+' à droite. '+(left===right?'Les deux groupes ont la même quantité.':(left>right?'Le groupe de gauche':'Le groupe de droite')+' en a plus.');
+  }
+  if(q.mode==='five')return 'Il y avait '+q.start+' objets. Il en manquait '+q.n+' pour arriver à cinq.';
+  if(q.mode==='hidden')return 'Il y en a '+q.start+' dehors et '+q.n+' dans le coffre. Cela fait '+q.total+' en tout.';
+  if(q.layout==='hand')return q.n===0?'Aucun doigt n’est levé. Cela fait zéro.':'Il y a '+q.n+' doigt'+(q.n===1?'':'s')+' levé'+(q.n===1?'':'s')+'.';
   if(q.n===0)return 'Zéro veut dire qu’il n’y a aucun objet.';
   if(q.mode==='basket'||q.mode==='color')return correct?'Tu as obtenu exactement '+q.n+'.':'Ta collection en contient '+value+'. Il en fallait '+q.n+'.';
   if(q.mode==='echo')return 'Tu as entendu « '+numbers[q.n]+' ». Le chiffre est '+q.n+'.';
@@ -276,7 +351,7 @@ function explanation(q,value,correct){
 function feedbackBody(){
   const {q,feedback,example}=current;
   const {correct,value}=feedback;
-  const media=q.mode==='order'
+  const media=q.mode==='compare'?comparison(q,true):q.mode==='order'
     ?'<div class="answer-demo">'+[...q.order].sort((a,b)=>a-b).map(n=>'<span>'+n+'</span>').join('<b aria-hidden="true">›</b>')+'</div>'
     :'<div class="answer-demo">'+(q.mode==='echo'?'':canvas(q.n,q.layout,q.token,q.seed,'feedback-canvas'))+'<span>'+q.n+'</span></div>';
   return '<div class="feedback '+(correct?'correct':'guided')+'"><div class="feedback-title"><span>'+icon(correct?'check':'spark')+'</span><div>'+
@@ -313,18 +388,35 @@ function next(){
   if(done.mastery)audio.chime('finish');
 }
 function renderResult(){
-  const r=result,end=r.island===finalIsland,extra=r.island>=coreCount;
-  const headline=r.mastery?(end?'Le grand phare brille !':extra?'Atelier réussi !':'Île validée !'):'Ta série est terminée';
-  const message=r.mastery
-    ?end?(r.chapter?'Tu as parcouru tout l’archipel.':'Tu peux explorer les îles des nombres de 6 à 10 ou découvrir les ateliers à part.'):extra?'Tu peux refaire cet atelier quand tu veux.':'L’île suivante est prête à être explorée.'
-    :'Objectif de la série : '+Math.ceil(.8*r.total)+' réponses du premier coup sur '+r.total+'.';
-  const primary=r.mastery&&end&&!r.chapter?button('Explorer le lagon','chapter','arrow','primary')
-    :r.mastery&&!end&&!extra?button('Île suivante','island-'+(r.island+1),'arrow','primary')
-    :button(r.mastery?'Retour à la carte':'Rejouer',r.mastery?'map':'island-'+r.island,'arrow','primary');
+  const r=result,records=player().records[r.chapter],name=islands[r.island];
+  const group=r.chapter?-1:groupFor(r.island);
+  const activities=r.chapter?[]:practiceIslands[group].activities;
+  const complete=!r.chapter&&groupComplete(records,group);
+  const end=r.chapter?r.island===finalIsland:r.island===finalPractice&&complete;
+  const nextActivity=r.chapter?(r.island<finalIsland?r.island+1:undefined):
+    activities.find(id=>!records[id].mastery&&accessible(records,id));
+  let headline='Ta série est terminée',primary=button('Rejouer','island-'+r.island,'arrow','primary');
+  let message='Pour valider, il faut '+Math.ceil(.8*r.total)+' réussites du premier coup sur '+r.total+'.';
+  if(r.mastery){
+    headline=end?'Le grand phare brille !':complete?'Île validée !':'Activité validée !';
+    if(end&&!r.chapter){
+      message='Tu peux maintenant explorer les nombres de 6 à 10.';
+      primary=button('Explorer le lagon','chapter','arrow','primary');
+    }else if(nextActivity!==undefined){
+      message=islands[nextActivity].title+' est disponible.';
+      primary=button(r.chapter?'Île suivante':'Activité suivante','island-'+nextActivity,'arrow','primary');
+    }else if(complete&&group+1<practiceIslands.length&&groupOpen(records,group+1)){
+      message=practiceIslands[group+1].title+' est ouverte.';
+      primary=button('Île suivante','group-'+(group+1),'arrow','primary');
+    }else{
+      message=end?'Tu as parcouru les îles de 6 à 10.':'Tu peux rejouer cette activité quand tu veux.';
+      primary=button(r.chapter?'Retour à la carte':'Retour aux activités','map','arrow','primary');
+    }
+  }
   main.innerHTML='<div class="shell result-view"><section class="result-card '+(end&&r.mastery?'lighthouse-win':'')+
-    '" style="--island-art:url(./images/island-'+islands[r.island].art+'.webp)"><div class="result-emblem">'+icon(r.mastery?'beacon':'shell')+'</div>'+
+    '" style="--island-art:url(./images/island-'+name.art+'.webp)"><div class="result-emblem">'+icon(r.mastery?'beacon':'shell')+'</div>'+
     '<h1 id="result-title" tabindex="-1">'+headline+'</h1><p>'+message+'</p><div class="score"><strong>'+r.first+' / '+r.total+'</strong><span>réussites du premier coup</span></div>'+
-    '<div class="result-actions">'+primary+(!r.mastery||(!extra&&!end)||(end&&!r.chapter)?button('Carte','map','map'):'')+'</div></section></div>';
+    '<div class="result-actions">'+primary+(primary.includes('data-action="map"')?'':button(r.chapter?'Carte':'Activités','map','map'))+'</div></section></div>';
   window.scrollTo(0,0);sectionFocus('result-title');
 }
 function place(index,where,slot=null,keyboard=false){
@@ -363,7 +455,7 @@ function closeDialog(){
 }
 dialog.addEventListener('close',()=>{
   if(opener?.isConnected)opener.focus();
-  opener=null;nextAfterCreate=false;
+  opener=null;nextAfterCreate=null;
 });
 dialog.addEventListener('click',event=>{if(event.target===dialog)closeDialog();});
 function profiles(create=false){
@@ -393,8 +485,9 @@ function settings(){
 }
 function stats(){
   const p=player();
-  openDialog('Carnet de suivi',p?'<p>Progression de <strong>'+esc(p.name)+'</strong>. Une réponse juste au premier essai sur au moins 80 % de la série ouvre l’île suivante.</p>'+
-    p.records.map((records,c)=>'<h3>'+title(c)+' · '+range(c)+'</h3><ul class="stats-list">'+records.map((r,i)=>{
+  openDialog('Carnet de suivi',p?'<p>Progression de <strong>'+esc(p.name)+'</strong>. Il faut réussir au premier essai au moins 80 % d’une série pour valider l’activité. Chaque île compte six activités de 0 à 5.</p>'+
+    p.records.map((records,c)=>'<h3>'+title(c)+' · '+range(c)+'</h3><ul class="stats-list">'+(c?records.map((_,i)=>i):practiceIslands.flatMap(group=>group.activities)).map(i=>{
+      const r=records[i];
       const total=roundSize(c,i);
       return '<li><span>'+islands[i].title+(r.mastery?'<small>Validée</small>':'')+'</span><span>'+(r.rounds||r.errors?'<strong>'+r.first+' / '+total+'</strong><small>'+r.errors+' erreur'+(r.errors===1?'':'s')+' · '+r.rounds+' série'+(r.rounds===1?'':'s')+'</small>':'<small>À découvrir</small>')+'</span></li>';
     }).join('')+'</ul>').join(''):'<p>Crée un profil pour garder les réussites et les activités à revoir.</p>'+button('Créer un profil','create','plus','primary'),'stats');
@@ -417,18 +510,20 @@ window.addEventListener('archipel-install-state',()=>{
 
 function switchProfile(id){
   if(!save.players.some(p=>p.id===id))return;
-  if(save.active!==id){save.active=id;round=null;current=null;chapter=0;}
+  if(save.active!==id){save.active=id;round=null;current=null;chapter=0;activeGroup=null;}
   persistSave();applySettings();closeDialog();goMap();
 }
 async function onAction(action,target,event){
   if(action==='map'){goMap(true);return;}
   if(action==='play'){play();return;}
-  if(action==='chapter'&&chapterOpen()){chapter=chapter?0:1;goMap(true);return;}
+  if(action==='archipelago'){activeGroup=null;goMap(true);sectionFocus('map-title');return;}
+  if(action.startsWith('group-')){openGroup(Number(action.slice(6)));return;}
+  if(action==='chapter'&&chapterOpen()){chapter=chapter?0:1;activeGroup=null;goMap(true);return;}
   if(action.startsWith('island-')){
     const index=Number(action.slice(7));
-    if(round?.chapter===chapter&&round?.island===index&&current){play();return;}
-    if(round&&current&&player()&&accessible(player().records[chapter],index)){
-      openDialog('Changer d’île ?','<p>La série en cours s’arrêtera ici.</p><div class="dialog-actions">'+button('Rester','close')+button('Changer d’île','confirm-island-'+index,'arrow','primary')+'</div>','leave');
+    if(round?.chapter===chapter&&round.island===index&&current){play();return;}
+    if(round&&current&&player()&&accessible(player().records[chapter],index,chapter)){
+      openDialog('Changer d’activité ?','<p>La série en cours s’arrêtera ici.</p><div class="dialog-actions">'+button('Rester','close')+button('Changer d’activité','confirm-island-'+index,'arrow','primary')+'</div>','leave');
     } else start(index);
     return;
   }
@@ -460,7 +555,7 @@ async function onAction(action,target,event){
   }
   if(action.startsWith('confirm-delete-')){
     const id=action.slice(15);
-    if(id===save.active){round=null;current=null;chapter=0;}
+    if(id===save.active){round=null;current=null;chapter=0;activeGroup=null;}
     remove(save,id);persistSave();applySettings();goMap();profiles();return;
   }
   if(!round||!current||page!=='game')return;
@@ -529,9 +624,9 @@ dialog.addEventListener('submit',event=>{
   event.preventDefault();
   const name=$('#player-name').value,avatar=Number(new FormData(event.target).get('avatar'));
   if(!add(save,name,avatar)){$('#profile-error').textContent=save.players.length>=12?'Le nombre maximal de profils est atteint.':'Écris un prénom ou un pseudo.';return;}
-  const auto=nextAfterCreate;nextAfterCreate=false;
+  const auto=nextAfterCreate;nextAfterCreate=null;
   round=null;current=null;chapter=0;persistSave();applySettings();closeDialog();goMap();
-  if(auto) start(0);
+  if(auto!==null)start(auto);
 });
 bindDrag(main,place,()=>page==='game'?current:null);
 
