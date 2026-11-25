@@ -151,8 +151,8 @@ try{
   const clearVoice=()=>page.evaluate(()=>{window.voicePlayed=[];});
   const waitForClips=count=>page.waitForFunction(n=>window.voicePlayed.length>=n,count);
   await action('island-1').tap();
-  await waitForClips(2);
-  assert.deepEqual(await played(),['echo-guide','n2']);
+  await waitForClips(3);
+  assert.deepEqual(await played(),['example','echo-guide','n2']);
   await clearVoice();
   await action('skip-example').tap();
   await waitForClips(1);
@@ -171,8 +171,8 @@ try{
   await clearVoice();
   await action('island-0').tap();
   await action('confirm-island-0').tap();
-  await waitForClips(1);
-  assert.deepEqual(await played(),['touch']);
+  await waitForClips(2);
+  assert.deepEqual(await played(),['example','touch']);
   await clearVoice();
   await action('skip-example').tap();
   assert.deepEqual(await played(),[]);
