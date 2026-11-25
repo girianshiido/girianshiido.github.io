@@ -219,6 +219,26 @@ try{
   });
   assert.deepEqual(partial,[206,40,'audio/mpeg']);
   assert.equal(await page.evaluate(async()=> (await fetch('./audio/voix/count-hand.mp3')).ok),true);
+  await enter(13);
+  const basketCards=page.locator('.basket-choices .basket-choice');
+  assert.equal(await basketCards.count(),3);
+  await basketCards.locator('img').evaluateAll(imgs=>Promise.all(imgs.map(img=>img.decode())));
+  const cards=await basketCards.evaluateAll(buttons=>buttons.map(button=>({
+    top:button.getBoundingClientRect().top,
+    left:button.getBoundingClientRect().left,
+    quantity:Number(button.querySelector('canvas')?.dataset.shells??0),
+  })));
+  assert.equal(new Set(cards.map(card=>card.top)).size,1);
+  assert.ok(cards[0].left<cards[1].left&&cards[1].left<cards[2].left);
+  assert.deepEqual(cards.map(card=>card.quantity).sort(),[0,1,2]);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
+  const listen=page.getByRole('button',{name:'Écouter le nombre',exact:true});
+  assert.equal(await listen.count(),1);
+  assert.ok(await listen.evaluate(button=>parseFloat(getComputedStyle(button).borderRadius)>20));
+  await listen.tap();
+  await action('answer-2').tap();
+  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await page.locator('.game-top [data-action="map"]').tap();
   // The illustrated zero through five poses must also load during offline play.
   await enter(11);
   const hand = page.locator('.hand-figure');
@@ -244,8 +264,9 @@ try{
   await action('map').tap();
   await enter(9);
   const object=page.locator('.hit').first();
+  const starts=await page.evaluate(()=>window.numberStarts);
   await object.tap();
-  assert.equal(await page.evaluate(()=>window.numberStarts),1,'Lecture Web Audio hors ligne');
+  assert.equal(await page.evaluate(()=>window.numberStarts),starts+1,'Lecture Web Audio hors ligne');
 
   await context.setOffline(false);
   await page.addInitScript(()=>{
@@ -285,6 +306,11 @@ try{
   await action('advance').tap();
   await waitForClips(1);
   assert.match((await played()).join(),/^n[0-5]$/);
+  await page.locator('.game-top [data-action="map"]').tap();
+  await clearVoice();
+  await enter(13);
+  await waitForClips(3);
+  assert.deepEqual(await played(),['example','hear-basket','n2']);
   await page.locator('.game-top [data-action="map"]').tap();
   await clearVoice();
   await enter(16);

@@ -26,7 +26,9 @@ export function presentation(task){
   switch(task.mode){
     case 'touch':return {prompt:'Combien vois-tu d’objets ?',hint:n?'Touche chaque objet une fois. Le dernier nombre donne le total.':'La plage est vide. Choisis le nombre qui signifie « aucun objet ».',clip:'touch'};
     case 'echo':return {prompt:'Quel nombre entends-tu ?',hint:'Écoute, puis touche le chiffre.',clip:'n'+n};
-    case 'hear':return {prompt:'Montre le groupe demandé',hint:'Écoute le nombre, puis touche le groupe correspondant.',clip:'hear-group'};
+    case 'hear':return task.basketChoices
+      ?{prompt:'Choisis le bon panier',hint:'Écoute le nombre de coquillages, puis touche le panier qui en contient autant.',clip:'hear-basket'}
+      :{prompt:'Montre le groupe demandé',hint:'Écoute le nombre, puis touche le groupe correspondant.',clip:'hear-group'};
     case 'same':return {prompt:'Où y en a-t-il autant ?',hint:'Observe le modèle, puis cherche un groupe de même quantité.',clip:'same-group'};
     case 'cards':return {prompt:'Trouve la carte avec '+n+' '+plural(n,'coquillage'),hint:'La bonne carte quitte le jeu après ta réponse.',clip:'match-cards'};
     case 'compare':{
@@ -65,7 +67,9 @@ export function exampleHint(task, chapter){
     case 'touch':return task.independent?'Observe la collection. Il y en a '+n+'. Choisis '+n+'.':'Touche les objets. Le dernier nombre est '+n+' : choisis '+n+'.';
     case 'echo':return 'Écoute « '+numbers[n]+' ». Le chiffre correspondant est '+n+'.';
     case 'glance':return task.fixed?'Observe la figure. Il y en a '+n+'. Choisis '+n+'.':chapter?'Une rangée pleine de cinq et un objet en dessous, cela fait six.':'Ce dé a trois points. Tu peux les compter, puis choisir 3.';
-    case 'hear':return 'Écoute « '+numbers[n]+' », puis touche le groupe qui en contient '+n+'.';
+    case 'hear':return task.basketChoices
+      ?'Écoute « '+numbers[n]+' », puis touche le panier qui contient '+n+' '+plural(n,'coquillage')+'.'
+      :'Écoute « '+numbers[n]+' », puis touche le groupe qui en contient '+n+'.';
     case 'cards':return 'Touche la carte sur laquelle tu comptes '+n+' coquillages.';
     case 'same':return 'Compte les '+n+' objets du modèle, puis trouve un groupe de même quantité.';
     case 'compare':{

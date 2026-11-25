@@ -125,8 +125,16 @@ progress::-moz-progress-bar{background:#488f7e;border-radius:30px}
 .count-help{text-align:center;margin-top:9px}
 .count-help .text-button{min-height:44px}
 @media(max-width:540px){.answers-all{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.sound-button{z-index:1;display:flex;min-height:64px;min-width:min(232px,95%);gap:12px;background:#fffdfa;border-color:#d7c9e9;color:#553778;box-shadow:0 3px 0 #d8cdec;font-size:1.05rem}
-.sound-button svg{width:23px;height:23px}
+.sound-button{
+  position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  min-height:54px;max-width:100%;padding:7px 17px 7px 8px;border:1px solid #aacdc1;border-radius:999px;
+  background:#f7fcf8;color:#17554f;box-shadow:0 2px 0 #d1e5d9;line-height:1.18;text-align:center;font-weight:800;
+}
+button.sound-button:hover{background:#ecf8ef;border-color:#74ad9f}
+button.sound-button:active{box-shadow:none;transform:translateY(2px)}
+.sound-button-icon{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#dcefe5}
+.sound-button-icon svg{width:20px;height:20px}
+.sound-word{min-width:88px;padding-inline:17px}
 .small-sound{height:87px}
 .small-sound .sound-button{min-height:52px}
 .small-scene{height:115px}
@@ -521,8 +529,25 @@ button.collection-card .mini-canvas{height:100%}
 .model-collection{display:grid;justify-items:center;margin-bottom:10px}
 .model-card{width:clamp(144px,46%,340px);border-color:#b5b6cc;background:linear-gradient(155deg,#fffaf5,#eee8f5)}
 .model-card .collection-label{color:#5b4977}
+.basket-task{
+  padding:clamp(9px,2.5vw,22px);border:1px solid #d9e5d5;border-radius:19px;
+  background:linear-gradient(180deg,#edf6ee 0%,#faf5e7 100%);
+}
+.basket-task .audio-prompt{margin-bottom:clamp(10px,2.4vw,20px)}
+.basket-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(5px,1.4vw,13px)}
+.basket-choice{
+  min-width:0;min-height:48px;display:grid;place-items:center;padding:clamp(1px,.8vw,7px);
+  border:1px solid #c7d9ca;border-radius:14px;background:#fffdf6;box-shadow:0 3px 0 #d8e4d5;
+  touch-action:manipulation;
+}
+.basket-choice:hover{background:#fff8e6;border-color:#a8956b}
+.basket-choice:active{box-shadow:none;transform:translateY(2px)}
+.basket-choice-figure{display:block;position:relative;width:min(100%,176px);aspect-ratio:1;pointer-events:none}
+.basket-choice-figure :is(img,canvas){position:absolute;inset:0;width:100%;height:100%;display:block}
+.answer-demo .basket-choice-figure{width:80px;height:80px;padding:0;border-radius:0;background:none}
+[data-contrast=true] :is(.basket-task,.basket-choice,.sound-button){border-color:#688f83}
 .audio-prompt{display:grid;justify-items:center;margin-bottom:12px}
-.audio-prompt .sound-button{min-height:49px}
+
 .comparison-options{display:flex;justify-content:center;gap:10px;margin-top:12px}
 .comparison-options button{min-width:7.1rem}
 .hidden-total{display:flex;align-items:center;justify-content:center;gap:9px;font-weight:800;margin-bottom:8px}

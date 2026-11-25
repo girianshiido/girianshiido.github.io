@@ -1,5 +1,5 @@
 import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches,practiceIslands,groupFor,groupComplete,groupOpen,legacyCount,finalPractice,activityInfo} from './engine.ts';
-import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket} from './art.js';
+import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket,drawBasketShells} from './art.js';
 import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
 import * as pwa from './pwa.js';
@@ -166,7 +166,19 @@ const auditory=q=>q.mode==='echo'||q.mode==='hear'||q.oral;
 function audioCue(q){
   const p=prefs();
   const name=current.transcript?numbers[q.n]:'Écouter le nombre';
-  return p.sound&&p.voice?button(name,'repeat','sound','sound-button'):'<span class="sound-button secondary">'+name+'</span>';
+  return p.sound&&p.voice
+    ?button('<span class="sound-button-icon">'+icon('sound')+'</span><span>'+name+'</span>','repeat','','sound-button')
+    :'<span class="sound-button sound-word">'+name+'</span>';
+}
+function basketFigure(n){
+  return '<span class="basket-choice-figure" aria-hidden="true"><img src="./images/choice-basket.webp" width="320" height="320" alt="" draggable="false">'+
+    (n?'<canvas data-shells="'+n+'"></canvas>':'')+'</span>';
+}
+function basketChoices(q){
+  const labels=['Panier de gauche','Panier du milieu','Panier de droite'];
+  return '<div class="basket-choices" role="group" aria-label="Paniers proposés">'+q.choices.map((n,i)=>
+    '<button type="button" class="basket-choice" data-action="answer-'+n+'" aria-label="'+labels[i]+'">'+basketFigure(n)+'</button>'
+  ).join('')+'</div>';
 }
 function collectionContents(q,n,layout,seed){
   return canvas(n,layout,q.token,seed,'mini-canvas')+(n===0?'<span class="collection-empty">Vide</span>':'');
@@ -206,7 +218,10 @@ function taskBody(){
         numeric(q,guided&&state.marked.size!==q.n)+(canAsk?'<div class="count-help">'+button('M’aider à compter','count-help','','text-button')+'</div>':'');
     }
     case 'echo':return '<div class="scene cave sound-scene">'+audioCue(q)+'</div>'+numeric(q);
-    case 'hear':return '<div class="audio-prompt">'+audioCue(q)+'</div>'+collectionChoices(q);
+    case 'hear':{
+      const prompt='<div class="audio-prompt">'+audioCue(q)+'</div>';
+      return q.basketChoices?'<div class="basket-task">'+prompt+basketChoices(q)+'</div>':prompt+collectionChoices(q);
+    }
     case 'cards':return collectionChoices(q);
     case 'same':
       return '<div class="model-collection">'+collectionCard(q,q.n,'Modèle',q.fixed??'line',q.seed,undefined,'model-card')+'</div>'+collectionChoices(q);
@@ -319,6 +334,9 @@ function drawSmallTokens(){
 }
 function redraw(){
   if(page!=='game'||!current) return;
+  for(const node of main.querySelectorAll('.basket-choice-figure canvas')){
+    drawBasketShells(node,Number(node.dataset.shells));
+  }
   for(const node of main.querySelectorAll('.count-canvas')){
     const d=node.dataset;
     let marked=null;
@@ -360,6 +378,8 @@ function explanation(q,value,correct){
   if(q.mode==='five')return 'Il y avait '+q.start+' objets. Il en manquait '+q.n+' pour arriver à cinq.';
   if(q.mode==='hidden')return 'Il y en a '+q.start+' dehors et '+q.n+' dans le coffre. Cela fait '+q.total+' en tout.';
   if(q.layout==='hand')return q.n===0?'Aucun doigt n’est levé. Cela fait zéro.':'Il y a '+q.n+' doigt'+(q.n===1?'':'s')+' levé'+(q.n===1?'':'s')+'.';
+  if(q.basketChoices)return q.n===0?'Le panier vide contient zéro coquillage.':
+    'Le bon panier contient '+q.n+' coquillage'+(q.n===1?'': 's')+'.';
   if(q.n===0)return 'Zéro veut dire qu’il n’y a aucun objet.';
   if(q.mode==='basket'||q.mode==='color')return correct?'Tu as obtenu exactement '+q.n+'.':'Ta collection en contient '+value+'. Il en fallait '+q.n+'.';
   if(q.mode==='echo')return 'Tu as entendu « '+numbers[q.n]+' ». Le chiffre est '+q.n+'.';
@@ -370,7 +390,7 @@ function feedbackBody(){
   const {correct,value}=feedback;
   const media=q.mode==='compare'?comparison(q,true):q.mode==='order'
     ?'<div class="answer-demo">'+[...q.order].sort((a,b)=>a-b).map(n=>'<span>'+n+'</span>').join('<b aria-hidden="true">›</b>')+'</div>'
-    :'<div class="answer-demo">'+(q.mode==='echo'?'':glanceFigure(q,'feedback-canvas'))+'<span>'+q.n+'</span></div>';
+    :'<div class="answer-demo">'+(q.basketChoices?basketFigure(q.n):q.mode==='echo'?'':glanceFigure(q,'feedback-canvas'))+'<span>'+q.n+'</span></div>';
   return '<div class="feedback '+(correct?'correct':'guided')+'"><div class="feedback-title"><span>'+icon(correct?'check':'spark')+'</span><div>'+
     '<h2 id="feedback-title" tabindex="-1">'+(correct?(example?'Tu as compris le geste !':'Bien trouvé !'):'Observons ensemble')+'</h2><p>'+explanation(q,value,correct)+'</p></div></div>'+
     (!correct?media+'<p class="retry-note">'+(round.index<round.planned?'Tu retrouveras une variante en fin de série.':'Tu pourras retravailler cette activité.')+'</p>':'')+
