@@ -27,11 +27,14 @@ function nextClip(){
 narration.addEventListener('ended',nextClip);
 export function playVoice(...clips){
   stopVoice();
+  if(!clips.length||!sound||!voice||document.hidden)return false;
+  effect.pause();
   queue=clips;
   nextClip();
+  return true;
 }
 export function chime(type){
-  if(!sound||document.hidden)return;
+  if(!sound||document.hidden||!narration.paused)return;
   effect.pause();
   effect.src=new URL('./audio/'+type+'.mp3',document.baseURI);
   effect.volume=.48;

@@ -6,6 +6,11 @@ import * as pwa from './pwa.js';
 import {presentation,exampleHint,exampleVoices,chapterTitle,voiceClips} from './lessons.js';
 import {bindDrag} from './drag.js';
 
+// WebKit also sends its own pinch gesture events in some display modes.
+for(const event of ['gesturestart','gesturechange']){
+  document.addEventListener(event,e=>e.preventDefault(),{passive:false});
+}
+
 const $=selector=>document.querySelector(selector);
 const main=$('#main'),header=$('#header'),footer=$('#footer'),dialog=$('#dialog');
 const save=load();
@@ -468,7 +473,8 @@ async function onAction(action,target,event){
     if(current.marked.has(index))return;
     current.marked.add(index);current.markOrder.push(index);
     const total=current.marked.size;
-    audio.chime('tap');audio.playVoice('n'+total);redraw();
+    if(!audio.playVoice('n'+total))audio.chime('tap');
+    redraw();
     if(total===current.q.n){
       main.querySelectorAll('.number-button').forEach(b=>b.disabled=false);
       if(event.detail===0) $('.number-button')?.focus({preventScroll:true});
