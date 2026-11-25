@@ -117,7 +117,8 @@ function renderGroup(){
   main.innerHTML='<div class="shell map-view island-menu"><nav class="island-nav">'+button('Carte des îles','archipelago','back','text-button')+'</nav>'+
     '<section class="island-banner '+group.tone+'">'+
     '<div class="island-banner-copy"><span class="range">Île '+(activeGroup+1)+' / '+practiceIslands.length+'</span>'+
-    '<h1 id="map-title" tabindex="-1">'+group.title+'</h1><p>'+group.description+'</p></div>'+islandImage(group,'island-banner-art')+'</section>'+
+    '<h1 id="map-title" tabindex="-1">'+group.title+'</h1><p>'+group.description+'</p></div>'+
+    '<div class="island-banner-illustration">'+islandImage(group,'island-banner-art')+'</div></section>'+
     '<div class="route-header"><h2>Activités</h2><div class="journey-progress"><div>'+completed+' / '+count+' validées</div>'+
     '<progress value="'+completed+'" max="'+count+'" aria-label="Activités validées"></progress></div></div>'+
     '<div class="activity-grid">'+group.activities.map(index=>{

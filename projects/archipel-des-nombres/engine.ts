@@ -160,7 +160,7 @@ function taskFor(id: number,n: number,chapter: number,random: () => number,previ
   if(id===15||id===20)q.token='pearl';
   if(id===16)q.token='fish';
   if(id===17)q.token='star';
-  if(q.mode==='cards'||q.mode==='hidden')q.token='shell';
+  if(id===9||q.mode==='cards'||q.mode==='hidden')q.token='shell';
   if(activity.values){
     const pool=shuffle(activity.values.filter(value=>value!==n),random);
     q.choices=shuffle([n,...pool.slice(0,2)],random);

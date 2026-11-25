@@ -642,17 +642,18 @@ progress::-moz-progress-bar{background:#277468}
 .next-land{background:#f9f3de;border-color:#bfb492}
 
 .island-banner{
-  display:grid;grid-template-columns:minmax(0,43fr) minmax(0,57fr);
+  display:grid;grid-template-columns:minmax(0,46fr) minmax(0,54fr);
   align-items:stretch;min-height:285px;border:1px solid #12404a;
   background:var(--ocean);color:var(--cream);border-radius:29px;
   box-shadow:0 6px 0 #c3b597,0 14px 26px #28434a16;
 }
 .island-banner-copy{
-  align-self:center;max-width:none;padding:clamp(22px,4vw,45px);
+  align-self:center;max-width:none;padding:clamp(22px,3.6vw,38px);
 }
-.island-banner h1{font-size:clamp(2.1rem,4.45vw,3.65rem);line-height:.99;margin-block:13px 10px}
+.island-banner h1{font-size:clamp(2.1rem,4vw,3.2rem);line-height:.99;margin-block:13px 10px}
 .island-banner p{color:#fff1d3}
-.island-banner-art{width:100%;height:100%;min-height:0;max-height:350px;object-fit:cover;object-position:center 58%;display:block}
+.island-banner-illustration{position:relative}
+.island-banner-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 58%;display:block}
 .activity-grid{gap:15px}
 .activity-tile{
   grid-template-columns:68px minmax(0,1fr) auto;gap:15px;min-height:100px;
@@ -827,7 +828,8 @@ button.collection-card:active,.basket-choice:active{transform:translateY(3px);bo
   .tile-state{width:27px;height:27px}
   .island-banner{grid-template-columns:1fr;min-height:auto;border-radius:20px}
   .island-banner-copy{padding:17px}
-  .island-banner-art{max-height:182px;aspect-ratio:2.1;object-position:center 60%}
+  .island-banner-illustration{height:clamp(138px,48vw,182px)}
+  .island-banner-art{object-position:center 60%}
   .activity-grid{gap:11px}
   .activity-tile{grid-template-columns:49px minmax(0,1fr) auto;gap:9px;min-height:76px;padding:8px 9px}
   .activity-icon{border-radius:12px}
