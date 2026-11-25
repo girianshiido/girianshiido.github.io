@@ -116,6 +116,52 @@ try{
     return [response.status,(await response.arrayBuffer()).byteLength,response.headers.get('Content-Type')];
   });
   assert.deepEqual(partial,[206,40,'audio/mpeg']);
+
+  await context.setOffline(false);
+  await page.addInitScript(()=>{
+    window.voicePlayed=[];
+    // Observe the clips selected by the game without waiting for actual playback.
+    HTMLMediaElement.prototype.play=function(){
+      const clip=this.src.match(/\/voix\/([^/]+)\.mp3$/)?.[1];
+      if(clip){
+        window.voicePlayed.push(clip);
+        setTimeout(()=>this.dispatchEvent(new Event('ended')),0);
+      }
+      return Promise.resolve();
+    };
+  });
+  await page.reload();
+  const played=()=>page.evaluate(()=>window.voicePlayed);
+  const clearVoice=()=>page.evaluate(()=>{window.voicePlayed=[];});
+  const waitForClips=count=>page.waitForFunction(n=>window.voicePlayed.length>=n,count);
+  await action('island-1').tap();
+  await waitForClips(3);
+  assert.deepEqual(await played(),['example','echo-guide','n2']);
+  await clearVoice();
+  await action('skip-example').tap();
+  await waitForClips(1);
+  const [firstNumber]=await played();
+  assert.match(firstNumber,/^n[0-5]$/);
+  await action('repeat').tap();
+  assert.deepEqual(await played(),[firstNumber,firstNumber]);
+  await action('repeat-instruction').tap();
+  assert.deepEqual(await played(),[firstNumber,firstNumber,'echo-guide']);
+  await action('answer-'+firstNumber.slice(1)).tap();
+  await clearVoice();
+  await action('advance').tap();
+  await waitForClips(1);
+  assert.match((await played()).join(),/^n[0-5]$/);
+  await page.locator('.game-top [data-action="map"]').tap();
+  await clearVoice();
+  await action('island-0').tap();
+  await action('confirm-island-0').tap();
+  await waitForClips(2);
+  assert.deepEqual(await played(),['example','touch']);
+  await clearVoice();
+  await action('skip-example').tap();
+  assert.deepEqual(await played(),[]);
+  await action('repeat-instruction').tap();
+  assert.deepEqual(await played(),['touch']);
   assert.deepEqual(fail,[]);
   console.log('Interface à 320 px, exemple, glisser tactile par emplacement, traversée et cache vocal hors ligne validés.');
 }finally{

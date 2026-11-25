@@ -3,7 +3,7 @@ import {icon,collection,hitPositions,setCanvas,drawToken} from './art.js';
 import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
 import * as pwa from './pwa.js';
-import {presentation,exampleHint,exampleVoices,chapterTitle} from './lessons.js';
+import {presentation,exampleHint,exampleVoices,chapterTitle,voiceClips} from './lessons.js';
 import {bindDrag} from './drag.js';
 
 const $=selector=>document.querySelector(selector);
@@ -109,13 +109,7 @@ function beginTask(example=false){
   current={q,example,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
     slots:new Map(),order:[],hidden:false,feedback:null,note:'',transcript:!prefs().sound||!prefs().voice,ferrySide:'source'};
   revision++;renderTask(true);
-  announce(true);
-}
-function announce(intro=false){
-  if(!current)return;
-  const q=current.q;
-  audio.playVoice(...(intro&&current.example?['example']:[]),
-    ...(intro&&q.mode==='echo'?['echo-guide']:[]),presentation(q).clip);
+  audio.playVoice(...voiceClips(q,example?'example':'question'));
 }
 function canvas(n,layout,token,seed,classes='',hidden=false){
   return '<canvas class="count-canvas '+classes+'" aria-hidden="true" data-n="'+n+'" data-layout="'+layout+'" data-token="'+token+'" data-seed="'+seed+'"'+(hidden?' data-hidden="true"':'')+'></canvas>';
@@ -128,8 +122,12 @@ function taskBody(){
   switch(q.mode){
     case 'touch':
       return '<div class="scene sea" id="point-scene">'+canvas(q.n,q.layout,q.token,q.seed,'point-canvas')+'<div class="hit-layer"></div>'+(q.n===0?'<span class="empty-scene">Aucun objet</span>':'')+'</div>'+numeric(q,state.marked.size!==q.n);
-    case 'echo':
-      return '<div class="scene cave sound-scene">'+button(state.transcript?numbers[q.n]:'Écouter le nombre','repeat','sound','sound-button')+'</div>'+numeric(q);
+    case 'echo': {
+      const p=prefs();
+      const name=state.transcript?numbers[q.n]:'Écouter le nombre';
+      const audioButton=p.sound&&p.voice?button(name,'repeat','sound','sound-button'):'<span class="sound-button secondary">'+name+'</span>';
+      return '<div class="scene cave sound-scene">'+audioButton+'</div>'+numeric(q);
+    }
     case 'glance':
       return '<div class="scene lagoon">'+canvas(q.n,q.layout,q.token,q.seed,'glance-canvas',state.hidden)+(q.n===0?'<span class="empty-scene">Aucun objet</span>':'')+
         (state.hidden?'<div class="glance-cover">'+button('Revoir la figure','show','dice')+'</div>':'')+'</div>'+numeric(q);
@@ -164,7 +162,8 @@ function renderTask(schedule){
     '<div class="game-heading"><div><span class="kicker">'+(current.example?'Exemple guidé':retry?'Une nouvelle variante':island.title)+'</span>'+
     '<h1 tabindex="-1" id="task-title">'+info.prompt+'</h1><p>'+(current.example?exampleHint(q,round.chapter):info.hint)+'</p></div>'+
     '<div class="sound-tools">'+button('', 'sound',p.sound?'sound':'mute','icon-button mute-button')+
-    (q.mode==='echo'?button(current.transcript?'Masquer le mot':'Lire le mot','transcript','','text-button transcript'):(p.sound&&p.voice?button('Écouter','repeat','sound','text-button replay') :''))+
+    (p.sound&&p.voice&&!current.feedback?button('Consigne','repeat-instruction','sound','text-button replay')+
+      (q.mode==='echo'?button(current.transcript?'Masquer le mot':'Lire le mot','transcript','','text-button transcript'):''):'')+
     '</div></div><div id="task-body">'+(current.feedback?feedbackBody():taskBody())+'</div>'+
     (current.example&&!current.feedback?'<div class="example-controls"><p id="example-note" role="status">'+current.note+'</p>'+
       button('Passer l’exemple','skip-example','','text-button')+'</div>':'')+'</section></div>';
@@ -459,7 +458,8 @@ async function onAction(action,target,event){
     main.querySelector(action==='ferry-cross'?'.ferry-arrival button':'.ferry-button')?.focus({preventScroll:true});return;
   }
   if(current.feedback)return;
-  if(action==='repeat'){announce();return;}
+  if(action==='repeat'){audio.playVoice('n'+current.q.n);return;}
+  if(action==='repeat-instruction'){audio.playVoice(...voiceClips(current.q,'instruction'));return;}
   if(action==='transcript'){current.transcript=!current.transcript;renderTask(false);$('.transcript')?.focus();return;}
   if(action==='show'){current.hidden=false;renderTask(false);$('.number-button')?.focus({preventScroll:true});return;}
   if(action.startsWith('answer-')){submit(Number(action.slice(7)));return;}
