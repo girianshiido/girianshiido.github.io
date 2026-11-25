@@ -7,7 +7,7 @@ Jeu de comptage en français, installable sur iPhone, iPad, Android et Mac. Le p
 | Île | Compétences |
 | --- | --- |
 | Plage | Compter jusqu’à trois, associer objet à objet, reconnaître les petites quantités et le zéro. |
-| Lagon | Compter jusqu’à cinq en ligne, en cercle et en dispersion, lire les doigts et les points du dé. |
+| Lagon | Compter jusqu’à cinq en autonomie, lire les doigts et les points du dé, puis relever un défi avec les six réponses possibles. |
 | Grotte | Associer quantités, nombres entendus et chiffres avec des cartes, des cadres et des collections jumelles. |
 | Jardin | Former des collections, remplir le panier à partir d’une consigne orale, colorier ou modifier une quantité. |
 | Pont | Comparer, ordonner, compléter à cinq et retrouver une partie cachée. |

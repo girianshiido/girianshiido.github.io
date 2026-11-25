@@ -1,4 +1,4 @@
-import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches,practiceIslands,groupFor,groupComplete,groupOpen,legacyCount,finalPractice} from './engine.ts';
+import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches,practiceIslands,groupFor,groupComplete,groupOpen,legacyCount,finalPractice,activityInfo} from './engine.ts';
 import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket} from './art.js';
 import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
@@ -110,7 +110,7 @@ function renderGroup(){
     '<div class="route-header"><h2>Activités</h2><div class="journey-progress"><div>'+completed+' / '+count+' validées</div>'+
     '<progress value="'+completed+'" max="'+count+'" aria-label="Activités validées"></progress></div></div>'+
     '<div class="activity-grid">'+group.activities.map((index,position)=>{
-      const item=islands[index],available=accessible(records,index),mastered=records[index]?.mastery;
+      const item=activityInfo(chapter,index),available=accessible(records,index),mastered=records[index]?.mastery;
       const resumed=round?.chapter===0&&round.island===index&&current;
       const status=resumed?'Reprendre':mastered?'Validée':available?'Jouer':'Verrouillée';
       return '<button type="button" class="extra-island activity-tile '+item.tone+(!available?' locked':'')+'" data-action="island-'+index+'"'+(available?'':' aria-disabled="true"')+'>'+
@@ -152,7 +152,7 @@ function beginTask(example=false){
   const q=example?exampleTask(round.chapter,round.island):round.tasks[round.index];
   const supply=q.mode==='change'?Math.max(q.n,q.start)+2:q.mode==='pair'?q.n+2:Math.max(round.chapter?12:8,q.n+2);
   current={q,example,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
-    slots:new Map(),order:[],hidden:false,feedback:null,note:'',transcript:!prefs().sound||!prefs().voice,ferrySide:'source'};
+    slots:new Map(),order:[],hidden:false,showCountingHelp:false,feedback:null,note:'',transcript:!prefs().sound||!prefs().voice,ferrySide:'source'};
   revision++;renderTask(true);
   audio.playVoice(...voiceClips(q,example?'example':islands[round.island].mode==='mix'?'review':'question'));
 }
@@ -160,7 +160,7 @@ function canvas(n,layout,token,seed,classes='',hidden=false){
   return '<canvas class="count-canvas '+classes+'" aria-hidden="true" data-n="'+n+'" data-layout="'+layout+'" data-token="'+token+'" data-seed="'+seed+'"'+(hidden?' data-hidden="true"':'')+'></canvas>';
 }
 function numeric(q,disabled=false){
-  return '<div class="answers" aria-label="Réponses proposées">'+q.choices.map(n=>'<button type="button" class="number-button" data-action="answer-'+n+'" '+(disabled?'disabled':'')+'>'+n+'</button>').join('')+'</div>';
+  return '<div class="answers'+(q.choices.length>4?' answers-all':'')+'" aria-label="Réponses proposées">'+q.choices.map(n=>'<button type="button" class="number-button" data-action="answer-'+n+'" '+(disabled?'disabled':'')+'>'+n+'</button>').join('')+'</div>';
 }
 const auditory=q=>q.mode==='echo'||q.mode==='hear'||q.oral;
 function audioCue(q){
@@ -198,8 +198,13 @@ function glanceFigure(q,classes,hidden=false){
 function taskBody(){
   const state=current,q=state.q;
   switch(q.mode){
-    case 'touch':
-      return '<div class="scene sea" id="point-scene">'+canvas(q.n,q.layout,q.token,q.seed,'point-canvas')+'<div class="hit-layer"></div>'+(q.n===0?'<span class="empty-scene">Aucun objet</span>':'')+'</div>'+numeric(q,state.marked.size!==q.n);
+    case 'touch':{
+      const guided=!q.independent||state.showCountingHelp;
+      const canAsk=q.independent&&!guided&&q.n>0&&round.index>=round.planned;
+      return '<div class="scene sea" id="point-scene">'+canvas(q.n,q.layout,q.token,q.seed,guided?'point-canvas':'')+
+        (guided?'<div class="hit-layer"></div>':'')+(q.n===0?'<span class="empty-scene">Aucun objet</span>':'')+'</div>'+
+        numeric(q,guided&&state.marked.size!==q.n)+(canAsk?'<div class="count-help">'+button('M’aider à compter','count-help','','text-button')+'</div>':'');
+    }
     case 'echo':return '<div class="scene cave sound-scene">'+audioCue(q)+'</div>'+numeric(q);
     case 'hear':return '<div class="audio-prompt">'+audioCue(q)+'</div>'+collectionChoices(q);
     case 'cards':return collectionChoices(q);
@@ -230,7 +235,8 @@ function manipulation(){
 function renderTask(schedule){
   if(!round||!current) return;
   page='game';
-  const q=current.q, info=presentation(q), p=prefs(), island=islands[round.island];
+  const q=current.q, info=presentation(q), p=prefs(), island=activityInfo(round.chapter,round.island);
+  const hint=current.showCountingHelp?'Touche chaque objet une fois, puis choisis le dernier nombre.':info.hint;
   if(auditory(q)&&(!p.sound||!p.voice)) current.transcript=true;
   const retry=round.index>=round.planned;
   const count=current.example?'Exemple':retry?'Nouvel essai':(round.index+1)+' / '+round.planned;
@@ -241,7 +247,7 @@ function renderTask(schedule){
     '<div class="steps" role="img" aria-label="'+count+'">'+progress+'</div>'+
     '<section class="game-card '+island.tone+'" style="--island-art:url(./images/island-'+island.art+'.webp)">'+
     '<div class="game-heading"><div><span class="kicker">'+(current.example?'Exemple guidé':retry?'Une nouvelle variante':island.title)+'</span>'+
-    '<h1 tabindex="-1" id="task-title">'+info.prompt+'</h1><p>'+(current.example?exampleHint(q,round.chapter):info.hint)+'</p></div>'+
+    '<h1 tabindex="-1" id="task-title">'+info.prompt+'</h1><p>'+(current.example?exampleHint(q,round.chapter):hint)+'</p></div>'+
     '<div class="sound-tools">'+button('', 'sound',p.sound?'sound':'mute','icon-button mute-button')+
     (p.sound&&p.voice&&!current.feedback?button('Consigne','repeat-instruction','sound','text-button replay')+
       (auditory(q)?button(current.transcript?'Masquer le mot':'Lire le mot','transcript','','text-button transcript'):''):'')+
@@ -315,8 +321,15 @@ function redraw(){
   if(page!=='game'||!current) return;
   for(const node of main.querySelectorAll('.count-canvas')){
     const d=node.dataset;
-    const marked=node.classList.contains('point-canvas')?current.marked:null;
-    if(marked) marked.order=current.markOrder;
+    let marked=null;
+    if(node.classList.contains('point-canvas')){
+      marked=current.marked;
+      marked.order=current.markOrder;
+    }else if(node.classList.contains('feedback-canvas')&&current.q.independent){
+      const order=Array.from({length:current.q.n},(_,i)=>i);
+      marked=new Set(order);
+      marked.order=order;
+    }
     collection(node,{n:Number(d.n),layout:d.layout,seed:Number(d.seed),token:d.token,hidden:d.hidden==='true',marked,scale:prefs().large?1.17:1});
   }
   const point=$('.point-canvas'),layer=$('.hit-layer');
@@ -376,7 +389,7 @@ function submit(value){
   clearTimeout(flashTimer);
   current.feedback={correct,value};
   audio.stop();
-  if(current.example)audio.playVoice(exampleVoices[current.q.mode]);
+  if(current.example)audio.playVoice(exampleVoices[current.q.independent?'independent':current.q.mode]);
   else audio.chime(correct?'good':'guide');
   if(!correct){player().records[round.chapter][round.island].errors++;persistSave();}
   renderTask(false);
@@ -392,7 +405,7 @@ function next(){
   if(done.mastery)audio.chime('finish');
 }
 function renderResult(){
-  const r=result,records=player().records[r.chapter],name=islands[r.island];
+  const r=result,records=player().records[r.chapter],name=activityInfo(r.chapter,r.island);
   const group=r.chapter?-1:groupFor(r.island);
   const activities=r.chapter?[]:practiceIslands[group].activities;
   const complete=!r.chapter&&groupComplete(records,group);
@@ -407,7 +420,7 @@ function renderResult(){
       message='Tu peux maintenant explorer les nombres de 6 à 10.';
       primary=button('Explorer le lagon','chapter','arrow','primary');
     }else if(nextActivity!==undefined){
-      message=islands[nextActivity].title+' est disponible.';
+      message=activityInfo(r.chapter,nextActivity).title+' est disponible.';
       primary=button(r.chapter?'Île suivante':'Activité suivante','island-'+nextActivity,'arrow','primary');
     }else if(complete&&group+1<practiceIslands.length&&groupOpen(records,group+1)){
       message=practiceIslands[group+1].title+' est ouverte.';
@@ -493,7 +506,7 @@ function stats(){
     p.records.map((records,c)=>'<h3>'+title(c)+' · '+range(c)+'</h3><ul class="stats-list">'+(c?records.map((_,i)=>i):practiceIslands.flatMap(group=>group.activities)).map(i=>{
       const r=records[i];
       const total=roundSize(c,i);
-      return '<li><span>'+islands[i].title+(r.mastery?'<small>Validée</small>':'')+'</span><span>'+(r.rounds||r.errors?'<strong>'+r.first+' / '+total+'</strong><small>'+r.errors+' erreur'+(r.errors===1?'':'s')+' · '+r.rounds+' série'+(r.rounds===1?'':'s')+'</small>':'<small>À découvrir</small>')+'</span></li>';
+      return '<li><span>'+activityInfo(c,i).title+(r.mastery?'<small>Validée</small>':'')+'</span><span>'+(r.rounds||r.errors?'<strong>'+r.first+' / '+total+'</strong><small>'+r.errors+' erreur'+(r.errors===1?'':'s')+' · '+r.rounds+' série'+(r.rounds===1?'':'s')+'</small>':'<small>À découvrir</small>')+'</span></li>';
     }).join('')+'</ul>').join(''):'<p>Crée un profil pour garder les réussites et les activités à revoir.</p>'+button('Créer un profil','create','plus','primary'),'stats');
 }
 function installation(){
@@ -574,6 +587,12 @@ async function onAction(action,target,event){
     main.querySelector(action==='ferry-cross'?'.ferry-arrival button':'.ferry-button')?.focus({preventScroll:true});return;
   }
   if(current.feedback)return;
+  if(action==='count-help'&&current.q.independent&&round.index>=round.planned){
+    current.showCountingHelp=true;
+    renderTask(false);
+    $('.hit')?.focus({preventScroll:true});
+    return;
+  }
   if(action==='repeat'){audio.playVoice('n'+current.q.n);return;}
   if(action==='repeat-instruction'){audio.playVoice(...voiceClips(current.q,'instruction'));return;}
   if(action==='transcript'){current.transcript=!current.transcript;renderTask(false);$('.transcript')?.focus();return;}

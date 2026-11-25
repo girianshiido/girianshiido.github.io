@@ -181,6 +181,13 @@ export function drawBasket(canvas) {
   line(ctx,'#eab97d',2,rim);
 }
 
+function collectionArea(w,h,layout){
+  const height=layout==='ring'?Math.min(w,h):h;
+  const wide=layout==='frame'||layout==='line';
+  const width=layout==='ring'?height:Math.min(w,h*(wide?2.8:2.65));
+  return {left:(w-width)/2,top:(h-height)/2,width,height};
+}
+
 export function collection(canvas, info) {
   const scene=setCanvas(canvas);
   if(!scene) return;
@@ -198,24 +205,23 @@ export function collection(canvas, info) {
     return;
   }
   const wide=layout==='frame'||layout==='line';
-  const area=Math.min(w, h*(wide?2.8:2.65));
-  const origin=(w-area)/2;
+  const area=collectionArea(w,h,layout);
   const points=spots(n,layout,seed);
   const size=Math.min(w*(isDouble?.126:.17),h*(wide?.39:.245),isCard?31:73)*scale;
   if(layout==='frame') {
-    const rows=n>5?2:1, gap=area*.18, side=Math.min(gap*.91,h*(rows===2?.35:.47));
+    const rows=n>5?2:1, gap=area.width*.18, side=Math.min(gap*.91,h*(rows===2?.35:.47));
     for(let i=0;i<rows*5;i++){
-      const x=origin+(.14+.18*(i%5))*area;
+      const x=area.left+(.14+.18*(i%5))*area.width;
       const y=(rows===1?.5:.28+.44*Math.floor(i/5))*h;
       rect(ctx,x-side/2,y-side/2,side,side,side*.22,contrast?'#ccdadd':'#d6eee5');
       rect(ctx,x-side/2+1.6,y-side/2+1.6,side-3.2,side-3.2,side*.21,'#fffdf2');
     }
   }
-  if(n===0){
+  if(n===0&&layout!=='ring'){
     line(ctx,contrast?'#557d84':'#9dc6be',2,p=>{p.moveTo(w*.40,h*.67);p.quadraticCurveTo(w*.5,h*.71,w*.60,h*.67);});
   }
   points.forEach(([x,y],i)=>{
-    const px=origin+x*area, py=y*h;
+    const px=area.left+x*area.width, py=area.top+y*area.height;
     if(marked?.has(i)) circle(ctx,px,py,size*.61,contrast?'#b4dbd1':'#b0e2ca');
     drawToken(ctx,token,px,py,size);
     if(marked?.has(i)) {
@@ -228,6 +234,6 @@ export function collection(canvas, info) {
 }
 export function hitPositions(canvas,n,layout,seed) {
   const w=canvas.clientWidth,h=canvas.clientHeight;
-  const area = Math.min(w,h*((layout==='line'||layout==='frame')?2.8:2.65));
-  return spots(n,layout,seed).map(([x,y])=>[ ((w-area)/2+x*area)/w*100, y*100 ]);
+  const area=collectionArea(w,h,layout);
+  return spots(n,layout,seed).map(([x,y])=>[(area.left+x*area.width)/w*100,(area.top+y*area.height)/h*100]);
 }

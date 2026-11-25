@@ -178,6 +178,38 @@ try{
   await action('answer-1').tap();
   assert.match(await page.locator('#feedback-title').innerText(),/compris/);
 
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(16);
+  assert.equal(await page.locator('#task-title').innerText(),'Combien vois-tu de poissons ?');
+  assert.equal(await page.locator('.hit').count(),0);
+  assert.equal(await action('answer-2').isEnabled(),true);
+  await action('answer-2').tap();
+  await action('advance').tap();
+  let incorrect=false;
+  for(let i=0;i<6;i++){
+    assert.equal(await action('count-help').count(),0);
+    const n=Number(await page.locator('#point-scene canvas').getAttribute('data-n'));
+    if(n>0&&!incorrect){
+      await page.locator('.number-button:not([data-action="answer-'+n+'"])').first().tap();
+      assert.match(await page.locator('.feedback-title').innerText(),/Observons ensemble/);
+      incorrect=true;
+    }else await action('answer-'+n).tap();
+    await action('advance').tap();
+  }
+  await action('count-help').tap();
+  const targets=page.locator('.hit');
+  const n=await targets.count();
+  assert.ok(n>0);
+  assert.equal(await action('answer-'+n).isDisabled(),true);
+  for(let i=0;i<n;i++)await action('point-'+i).tap();
+  assert.equal(await action('answer-'+n).isEnabled(),true);
+
+  await page.locator('.game-top [data-action="map"]').tap();
+  await enter(0);
+  assert.equal(await page.locator('.answers-all button').count(),6);
+  assert.equal(await page.locator('.answers-all button:enabled').count(),6);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
+
   await context.setOffline(true);
   await page.reload({waitUntil:'networkidle'});
   await page.locator('.hero').waitFor();
@@ -210,7 +242,7 @@ try{
   }
   assert.deepEqual([...poses].sort(),[0,1,2,3,4,5]);
   await action('map').tap();
-  await enter(0);
+  await enter(9);
   const object=page.locator('.hit').first();
   await object.tap();
   assert.equal(await page.evaluate(()=>window.numberStarts),1,'Lecture Web Audio hors ligne');
@@ -255,14 +287,19 @@ try{
   assert.match((await played()).join(),/^n[0-5]$/);
   await page.locator('.game-top [data-action="map"]').tap();
   await clearVoice();
-  await enter(0);
+  await enter(16);
   await waitForClips(2);
-  assert.deepEqual(await played(),['example','touch']);
+  assert.deepEqual(await played(),['example','count-fish']);
+  await page.locator('.game-top [data-action="map"]').tap();
+  await clearVoice();
+  await enter(9);
+  await waitForClips(2);
+  assert.deepEqual(await played(),['example','count-line']);
   await clearVoice();
   await action('skip-example').tap();
   assert.deepEqual(await played(),[]);
   await action('repeat-instruction').tap();
-  assert.deepEqual(await played(),['touch']);
+  assert.deepEqual(await played(),['count-line']);
   await clearVoice();
   await page.evaluate(()=>{window.effectsPlayed=[];});
   await page.locator('.hit').first().tap();

@@ -5,13 +5,20 @@ export const chapterTitle = chapter => chapters[chapter];
 const plural = (n, singular) => n === 1 ? singular : singular+'s';
 const focused = {
   line:['Combien d’objets dans la rangée ?','Compte en suivant la rangée.','count-line'],
-  ring:['Combien de poissons dans le cercle ?','Fais le tour du cercle. Chaque poisson compte une fois.','count-ring'],
-  scatter:['Combien d’étoiles vois-tu ?','Repère les étoiles déjà comptées.','count-scatter'],
   hand:['Combien de doigts sont levés ?','Seuls les doigts levés comptent.','count-hand'],
   dice:['Combien de points sur le dé ?','Observe les points du dé.','count-dice'],
 };
+const independent = {
+  line:['Combien vois-tu de perles ?','count-pearls'],
+  ring:['Combien vois-tu de poissons ?','count-fish'],
+  scatter:['Combien vois-tu d’étoiles ?','count-stars'],
+};
 export function presentation(task){
   const n=task.n;
+  if(task.independent){
+    const [prompt,clip]=independent[task.fixed]??['Combien vois-tu d’objets ?','count-collection'];
+    return {prompt,hint:'Compte à ton rythme, puis choisis le nombre.',clip};
+  }
   if((task.mode==='touch'||task.mode==='glance')&&task.fixed&&focused[task.fixed]){
     const [prompt,hint,clip]=focused[task.fixed];
     return {prompt,hint,clip};
@@ -55,7 +62,7 @@ export function voiceClips(task, moment){
 export function exampleHint(task, chapter){
   const n=task.n;
   switch(task.mode){
-    case 'touch':return 'Touche les objets. Le dernier nombre est '+n+' : choisis '+n+'.';
+    case 'touch':return task.independent?'Observe la collection. Il y en a '+n+'. Choisis '+n+'.':'Touche les objets. Le dernier nombre est '+n+' : choisis '+n+'.';
     case 'echo':return 'Écoute « '+numbers[n]+' ». Le chiffre correspondant est '+n+'.';
     case 'glance':return task.fixed?'Observe la figure. Il y en a '+n+'. Choisis '+n+'.':chapter?'Une rangée pleine de cinq et un objet en dessous, cela fait six.':'Ce dé a trois points. Tu peux les compter, puis choisir 3.';
     case 'hear':return 'Écoute « '+numbers[n]+' », puis touche le groupe qui en contient '+n+'.';
@@ -76,7 +83,7 @@ export function exampleHint(task, chapter){
   }
 }
 export const exampleVoices={
-  touch:'good-count',echo:'good-echo',glance:'good-glance',basket:'good-basket',pair:'good-pair',
+  independent:'good-glance',touch:'good-count',echo:'good-echo',glance:'good-glance',basket:'good-basket',pair:'good-pair',
   hear:'good-match',cards:'good-match',same:'good-match',compare:'good-compare',five:'good-five',hidden:'good-split',
   ferry:'good-ferry',color:'good-color',change:'good-change',order:'good-order',
 };
