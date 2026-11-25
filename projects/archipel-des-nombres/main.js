@@ -1,6 +1,6 @@
 import {islands,numbers,accessible,startRound,answer,advance,outcome,coreCount,finalIsland,roundSize,exampleTask,matches} from './engine.js';
 import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket} from './art.js';
-import {avatars,defaults,load,persist,add,remove,record,narrators} from './storage.js';
+import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
 import * as pwa from './pwa.js';
 import {presentation,exampleHint,exampleVoices,chapterTitle,voiceClips} from './lessons.js';
@@ -362,7 +362,6 @@ function closeDialog(){
   if(dialog.open)dialog.close();
 }
 dialog.addEventListener('close',()=>{
-  if(dialog.dataset.kind==='settings')audio.stop();
   if(opener?.isConnected)opener.focus();
   opener=null;nextAfterCreate=false;
 });
@@ -388,11 +387,8 @@ function settings(){
     ['contrast','Contraste renforcé','Renforce la lisibilité des contours et des textes.'],
     ['flash','Figures éclair','Masque certaines petites figures après un instant. Elles peuvent être revues à volonté.'],
   ];
-  const picker=player()?'<div class="narrator-picker"><label for="narrator-choice">Choix de la voix</label>'+
-    '<select id="narrator-choice">'+Object.entries(narrators).map(([id,name])=>'<option value="'+id+'"'+(s.narrator===id?' selected':'')+'>'+name+'</option>').join('')+'</select>'+
-    '<button type="button" class="text-button narrator-preview" data-action="preview-voice"'+(s.sound&&s.voice?'':' disabled')+'>'+icon('sound')+' Écouter</button></div>':'';
   openDialog('Réglages',(player()?'':'<p>Crée un profil pour garder tes réglages.</p>')+
-    options.map(([key,label,detail])=>'<label class="setting"><span><strong>'+label+'</strong><small>'+detail+'</small></span><input type="checkbox" role="switch" data-setting="'+key+'" '+(s[key]?'checked':'')+' '+(!player()?'disabled':'')+'><i></i></label>'+(key==='voice'?picker:'')).join('')+
+    options.map(([key,label,detail])=>'<label class="setting"><span><strong>'+label+'</strong><small>'+detail+'</small></span><input type="checkbox" role="switch" data-setting="'+key+'" '+(s[key]?'checked':'')+' '+(!player()?'disabled':'')+'><i></i></label>').join('')+
     '<div class="dialog-actions">'+button('Vérifier les mises à jour','update','install')+'</div><p id="update-note" role="status"></p>','settings');
 }
 function stats(){
@@ -441,7 +437,6 @@ async function onAction(action,target,event){
     case 'profiles':profiles();return;
     case 'create':profiles(true);return;
     case 'settings':settings();return;
-    case 'preview-voice':audio.playVoice('example','basket-2');return;
     case 'stats':stats();return;
     case 'install':installation();return;
     case 'close':closeDialog();return;
@@ -523,16 +518,9 @@ document.addEventListener('click',event=>{
 });
 document.addEventListener('change',event=>{
   const input=event.target,key=input.dataset.setting,p=player();
-  if(!p)return;
-  if(input.id==='narrator-choice'){
-    if(!Object.hasOwn(narrators,input.value))return;
-    p.settings.narrator=input.value;
-  }else if(key){
-    p.settings[key]=input.checked;
-  }else return;
+  if(!key||!p)return;
+  p.settings[key]=input.checked;
   persistSave();applySettings();
-  const preview=$('.narrator-preview');
-  if(preview)preview.disabled=!(p.settings.sound&&p.settings.voice);
   if(page==='game')renderTask(false);
   if(page==='map')redraw();
 });
