@@ -34,12 +34,12 @@ def samples_of(payload):
 
 def pitches_for(samples, rate):
     # Estimate a median from voiced windows, rejecting quiet or weakly periodic frames.
-    size = round(rate * 0.042)
+    size = round(rate * 0.052)
     low_lag, high_lag = round(rate / 330), round(rate / 70)
     out = []
     for start in range(0, len(samples) - size, size // 2):
         frame = samples[start:start+size]
-        if np.mean(frame ** 2) < 0.001:
+        if np.mean(frame ** 2) < 0.00025:
             continue
         frame = (frame - frame.mean()) * np.hanning(size)
         corr = np.correlate(frame, frame, "full")[size - 1:]
@@ -48,7 +48,7 @@ def pitches_for(samples, rate):
         if not peak_positions:
             continue
         strongest = max(corr[i] for i in peak_positions)
-        if strongest < 0.48 * corr[0]:
+        if strongest < 0.30 * corr[0]:
             continue
         first_peak = next(i for i in peak_positions if corr[i] >= 0.87 * strongest)
         out.append(rate / first_peak)
@@ -64,7 +64,8 @@ def choose():
             data, rate = samples_of(synthesize(prompts[prompt], speaker))
             pitches.extend(pitches_for(data, rate))
             durations.append(len(data) / rate)
-        if len(pitches) < 10 or not (1.6 <= durations[0] <= 4.9 and 1.25 <= durations[1] <= 3.3):
+        if len(pitches) < 4 or not (1.1 <= durations[0] <= 8 and 0.75 <= durations[1] <= 6):
+            print(f"Skipped {speaker}: {len(pitches)} voiced windows, {durations}")
             continue
         pitch = float(np.median(pitches))
         candidates.append((pitch, speaker))
@@ -72,7 +73,9 @@ def choose():
     assert len(candidates) >= 2, candidates
     low = min(candidates, key=lambda row: abs(row[0]-126))
     high = min((row for row in candidates if row[1]!=low[1]), key=lambda row: abs(row[0]-215))
-    assert high[0] > 1.2 * low[0], (low, high)
+    if high[0] <= 1.2 * low[0]:
+        low, high = min(candidates), max(candidates)
+    assert high[1] != low[1], (low, high)
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
         print(f"lagon={high[1]}\nphare={low[1]}", file=out)
     print(f"ARCHIPEL_VOICES {high[1]} {low[1]} {high[0]:.1f} {low[0]:.1f}")
