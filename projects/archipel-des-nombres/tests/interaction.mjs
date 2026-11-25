@@ -5,7 +5,7 @@ import {resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
 import {groupFor} from '../engine.ts';
 
-const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg','.webmanifest':'application/manifest+json'};
+const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg','.ogg':'audio/ogg','.m4a':'audio/mp4','.webmanifest':'application/manifest+json'};
 const root=resolve('dist');
 const server=createServer(async(req,res)=>{
   const path=new URL(req.url,'http://localhost').pathname;
@@ -34,6 +34,10 @@ async function enter(index){
   if(await confirm.count())await confirm.tap();
 }
 const storeKey='archipel-des-nombres:save';
+async function inSeries(){
+  assert.equal(await action('advance').count(),0);
+  assert.match(await page.locator('.step-label').innerText(),/^1 \/ \d+$/);
+}
 
 try{
   await page.addInitScript(()=>{
@@ -94,7 +98,7 @@ try{
   assert.match(await page.locator('#example-note').innerText(),/Essaie encore/);
   assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).players[0].records[0][9].errors,storeKey),0);
   await action('answer-2').tap();
-  await action('advance').tap();
+  await inSeries();
   assert.equal(await page.locator('.step-label').innerText(),'1 / 6');
 
   await page.evaluate(({key,novice})=>{
@@ -108,6 +112,15 @@ try{
   await page.locator('.setting').filter({hasText:'Animations'}).click();
   assert.equal(await page.locator('[data-setting="motion"]').isChecked(),false);
   assert.equal(await waterLight(),'none');
+  const volumeControl=key=>page.locator('[data-setting="'+key+'"]');
+  for(const [key,value] of [['musicVolume',32],['voiceVolume',62],['effectsVolume',0]]){
+    await volumeControl(key).fill(String(value));
+    assert.equal(await volumeControl(key).getAttribute('aria-valuetext'),value+' %');
+  }
+  await volumeControl('music').uncheck();
+  const soundPrefs=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).players[0].settings,storeKey);
+  assert.deepEqual([soundPrefs.music,soundPrefs.musicVolume,soundPrefs.voiceVolume,soundPrefs.effectsVolume],[false,32,62,0]);
+  await volumeControl('effectsVolume').fill('48');
   await action('close').tap();
   await enter(3);
   async function drag(from,to){
@@ -125,31 +138,28 @@ try{
     canvas.getContext('2d').getImageData(canvas.width/2,canvas.height/2,1,1).data[3]>0));
   assert.equal(await contextMenuBlocked(action('put-0')),true);
   await drag(action('put-0'),wicker.locator('.token-row'));
-  await action('put-1').tap();
-  assert.equal(await wicker.locator('[data-item]').count(),2);
-  await action('take-0').tap();
   assert.equal(await wicker.locator('[data-item]').count(),1);
+  await action('take-0').tap();
+  assert.equal(await wicker.locator('[data-item]').count(),0);
   await action('put-0').tap();
-  await action('validate').tap();
-  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await action('put-1').tap();
+  await inSeries();
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(4);
   await drag(action('put-0'),page.locator('[data-slot="1"]'));
   assert.equal(await page.locator('[data-slot="1"] [data-item="0"]').count(),1);
   assert.equal(await page.locator('[data-slot="0"] [data-item]').count(),0);
   assert.equal(await page.locator('.stock [data-item="3"]').count(),1);
-  await drag(action('put-1'),page.locator('[data-slot="0"]'));
-  assert.equal(await page.locator('[data-slot="0"] [data-item="1"]').count(),1);
-  await drag(action('take-1'),page.locator('[data-slot="1"]'));
+  await drag(action('put-1'),page.locator('[data-slot="1"]'));
   assert.equal(await page.locator('[data-slot="1"] [data-item="1"]').count(),1);
-  assert.equal(await page.locator('[data-slot="0"] [data-item="0"]').count(),1);
+  assert.equal(await page.locator('.stock [data-item="0"]').count(),1);
   await drag(action('take-1'),page.locator('.stock h2'));
   assert.equal(await page.locator('.stock [data-item="1"]').count(),1);
   assert.equal(await page.locator('[data-slot="1"] [data-item]').count(),0);
   await action('put-2').tap();
-  assert.equal(await page.locator('[data-slot="1"] [data-item="2"]').count(),1);
-  await action('validate').tap();
-  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  assert.equal(await page.locator('[data-slot="0"] [data-item="2"]').count(),1);
+  await action('put-1').tap();
+  await inSeries();
 
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(5);
@@ -161,8 +171,7 @@ try{
   await action('ferry-cross').tap();
   assert.equal(await page.locator('.basket [data-item="0"]').count(),1);
   for(const id of [1,2])await action('put-'+id).tap();
-  await action('validate').tap();
-  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await inSeries();
 
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(22);
@@ -170,7 +179,7 @@ try{
   assert.equal(await page.locator('.collection-options button').count(),4);
   const cardNumber=Number((await page.locator('#task-title').innerText()).match(/\d+/)[0]);
   await action('answer-'+cardNumber).tap();
-  await action('advance').tap();
+  assert.equal(await page.locator('.step-label').innerText(),'2 / 8');
   const collectionCards=page.locator('.collection-options button');
   const collectionRects=()=>collectionCards.evaluateAll(cards=>cards.map(card=>{
     const {top,width}=card.getBoundingClientRect();
@@ -190,14 +199,14 @@ try{
   assert.ok(desktopCards.every(card=>card.width<=180));
   assert.ok(await page.locator('.model-card').evaluate(card=>card.getBoundingClientRect().width<=184));
   await action('answer-2').tap();
-  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await inSeries();
   await page.setViewportSize({width:320,height:730});
 
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(29);
   assert.equal(await page.locator('.comparison-grid .collection-card').count(),2);
   await action('answer-1').tap();
-  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await inSeries();
 
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(16);
@@ -205,7 +214,7 @@ try{
   assert.equal(await page.locator('.hit').count(),0);
   assert.equal(await action('answer-2').isEnabled(),true);
   await action('answer-2').tap();
-  await action('advance').tap();
+  await inSeries();
   let incorrect=false;
   for(let i=0;i<6;i++){
     assert.equal(await action('count-help').count(),0);
@@ -214,8 +223,8 @@ try{
       await page.locator('.number-button:not([data-action="answer-'+n+'"])').first().tap();
       assert.match(await page.locator('.feedback-title').innerText(),/Observons ensemble/);
       incorrect=true;
+      await action('advance').tap();
     }else await action('answer-'+n).tap();
-    await action('advance').tap();
   }
   await action('count-help').tap();
   const targets=page.locator('.hit');
@@ -239,6 +248,7 @@ try{
     return [response.status,(await response.arrayBuffer()).byteLength,response.headers.get('Content-Type')];
   });
   assert.deepEqual(partial,[206,40,'audio/mpeg']);
+  assert.equal(await page.evaluate(async()=> (await fetch('./audio/brise-du-lagon.ogg')).ok),true);
   assert.equal(await page.evaluate(async()=> (await fetch('./audio/voix/count-hand.mp3')).ok),true);
   await enter(13);
   const basketCards=page.locator('.basket-choices .basket-choice');
@@ -258,7 +268,7 @@ try{
   assert.ok(await listen.evaluate(button=>parseFloat(getComputedStyle(button).borderRadius)>20));
   await listen.tap();
   await action('answer-2').tap();
-  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await inSeries();
   await page.locator('.game-top [data-action="map"]').tap();
   // The illustrated zero through five poses must also load during offline play.
   await enter(11);
@@ -278,8 +288,8 @@ try{
       await hand.evaluate(img=>img.decode());
       assert.match(await hand.getAttribute('src'),/hand-0\.webp$/);
       assert.match(await page.locator('.feedback-title').innerText(),/Aucun doigt n’est levé/);
+      await action('advance').tap();
     }else await action('answer-'+n).tap();
-    await action('advance').tap();
   }
   assert.deepEqual([...poses].sort(),[0,1,2,3,4,5]);
   await action('map').tap();
@@ -322,9 +332,8 @@ try{
   assert.deepEqual(await played(),[firstNumber,firstNumber]);
   await action('repeat-instruction').tap();
   assert.deepEqual(await played(),[firstNumber,firstNumber,'echo-guide']);
-  await action('answer-'+firstNumber.slice(1)).tap();
   await clearVoice();
-  await action('advance').tap();
+  await action('answer-'+firstNumber.slice(1)).tap();
   await waitForClips(1);
   assert.match((await played()).join(),/^n[0-5]$/);
   await page.locator('.game-top [data-action="map"]').tap();

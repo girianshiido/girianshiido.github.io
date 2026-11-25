@@ -47,6 +47,11 @@ test('Les séries générées respectent leur objectif et restent solubles',()=>
       assert.ok(answer(r,solve(q)));
       advance(r);
     }
+    if(!chapter){
+      const zeros=r.tasks.filter(q=>q.n===0&&q.mode!=='compare'&&q.mode!=='order').length;
+      assert.ok(zeros<=1);
+      if(activity.basketChoices||activity.fixed==='hand')assert.equal(zeros,1);
+    }
     assert.ok(outcome(r).mastery);
   }
 });
@@ -94,8 +99,17 @@ test('Le lagon fait compter en autonomie avec un défi à six réponses',()=>{
   for(const id of [0,15,16,17])assert.equal(exampleTask(0,id).independent,true);
   const r=startRound(0,0,rng(13));
   assert.equal(new Set(r.tasks.map(q=>q.layout)).size,6);
-  assert.deepEqual(r.tasks.map(q=>q.n).sort(),[0,1,2,3,4,5]);
+  assert.deepEqual([...new Set(r.tasks.filter(q=>q.n>0).map(q=>q.n))].sort(),[1,2,3,4,5]);
   assert.ok(r.tasks.every(q=>q.choices.join() === '0,1,2,3,4,5'));
+});
+
+test('Le zéro reste occasionnel dans les séries de comptage',()=>{
+  let roundsWithZero=0;
+  for(let seed=0;seed<200;seed++){
+    const r=startRound(0,0,rng(seed*104729));
+    if(r.tasks.some(q=>q.n===0))roundsWithZero++;
+  }
+  assert.ok(roundsWithZero>40&&roundsWithZero<120);
 });
 
 test('Les anciens profils, réglages et îles validées sont conservés',()=>{

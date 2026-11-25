@@ -199,7 +199,14 @@ export function startRound(chapter: number, island: number, random = Math.random
   const targets=shuffle(values,random);
   if (!chapter&&island===2) targets.splice(0,6,2,3,...shuffle([0,1,4,5],random));
   const collectionLayouts=!chapter&&island===0?shuffle(['line','ring','scatter','arc','clusters','frame'] as const,random):null;
-  const deck=() => shuffle(shuffle(values,random).slice(0,4),random);
+  const teachesZero=activity.basketChoices||activity.fixed==='hand';
+  let canAskZero=!chapter&&(teachesZero||random()<.4);
+  const deck=()=>{
+    const eligible=canAskZero?values:values.filter(n=>n>0);
+    const selection=shuffle(eligible,random).slice(0,4);
+    if(selection.includes(0))canAskZero=false;
+    return shuffle(selection,random);
+  };
   const cards=mode==='cards'?[deck(),deck()]:[];
   const deckSeed=mode==='cards'?Math.floor(random()*100000):0;
   const deckOrder=mode==='cards'?shuffle(values,random):[];
@@ -213,7 +220,16 @@ export function startRound(chapter: number, island: number, random = Math.random
     }
     const id=activity.review?.[i]??island;
     const options=valuesFor(id,chapter);
-    const n=id===island?(targets[i]??targets[i%targets.length]):options[Math.floor(random()*options.length)];
+    let n=id===island?targets[i%targets.length]:options[Math.floor(random()*options.length)];
+    const taskMode=islands[id].mode;
+    // In comparisons and ordering, zero is a choice code or a list parameter.
+    if(n===0&&taskMode!=='compare'&&taskMode!=='order'){
+      if(!canAskZero){
+        const positive=options.filter(value=>value>0);
+        n=positive[Math.floor(random()*positive.length)];
+      }
+      canAskZero=false;
+    }
     const q=taskFor(id,n,chapter,random);
     if(collectionLayouts)q.layout=collectionLayouts[i];
     return q;

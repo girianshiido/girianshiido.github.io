@@ -39,11 +39,11 @@ export function presentation(task){
     case 'five':return {prompt:'Combien en manque-t-il pour faire cinq ?',hint:'Les cases libres peuvent t’aider.',clip:'complete-five'};
     case 'hidden':return {prompt:'Combien sont cachés dans le coffre ?',hint:'Le nombre au-dessus donne le total. Observe ceux qui sont dehors.',clip:'split-shells'};
     case 'glance':return {prompt:'Combien en vois-tu ?',hint:'Observe les groupes, puis choisis leur total.',clip:'glance'};
-    case 'basket':return task.oral?{prompt:'Prépare la commande',hint:'Écoute le nombre de graines à mettre dans le panier.',clip:'hear-group'}:{prompt:n?'Mets '+n+' '+plural(n,'graine')+' dans le panier':'Prépare un panier vide',hint:n?'Touche ou fais glisser les graines. Tu peux les remettre dans la réserve.':'Garde le panier vide pour montrer zéro, puis valide.',clip:n?'basket-'+n:'empty'};
+    case 'basket':return task.oral?{prompt:'Prépare la commande',hint:'Écoute le nombre de graines à mettre dans le panier.',clip:'hear-group'}:{prompt:n?'Mets '+n+' '+plural(n,'graine')+' dans le panier':'Prépare un panier vide',hint:n?'Touche ou fais glisser les graines. Tu peux les remettre dans la réserve.':'Garde le panier vide, puis touche « J’ai fini ».',clip:n?'basket-'+n:'empty'};
     case 'color':return {prompt:'Colorie '+n+' '+plural(n,'case'),hint:n?'Touche les cases pour les colorier. Touche de nouveau pour effacer.':'Garde toutes les cases blanches. Cela représente zéro.',clip:'color'};
     case 'pair':return {prompt:'Une lanterne pour chaque feuille',hint:'Dépose une lanterne sur le rond sous chaque feuille. Tu peux aussi toucher une lanterne.',clip:'pair'};
     case 'ferry':return {prompt:'Autant de perles sur les deux quais',hint:'Observe les perles, puis traverse. De l’autre côté, prépare la même quantité.',clip:'ferry'};
-    case 'change':return {prompt:task.n>task.start?'Ajoute un objet au panier':'Enlève un objet du panier',hint:'Change la quantité d’un seul objet, puis valide.',clip:task.n>task.start?'add':'remove'};
+    case 'change':return {prompt:task.n>task.start?'Ajoute un objet au panier':'Enlève un objet du panier',hint:'Change la quantité d’un seul objet.',clip:task.n>task.start?'add':'remove'};
     case 'order':return {prompt:'Range du plus petit au plus grand',hint:'Touche les nombres dans l’ordre. Touche une case remplie pour recommencer.',clip:'order'};
   }
 }
@@ -78,10 +78,10 @@ export function exampleHint(task, chapter){
     }
     case 'five':return 'Le cadre peut contenir cinq objets. Compte les '+n+' cases libres.';
     case 'hidden':return 'Il y en a '+task.total+' en tout et '+task.start+' dehors. Il en reste '+n+' dans le coffre.';
-    case 'basket':return 'Mets '+n+' graines dans le panier. Touche une graine ou fais-la glisser, puis valide.';
+    case 'basket':return 'Mets '+n+' graines dans le panier. Touche une graine ou fais-la glisser.';
     case 'pair':return 'Prends une lanterne et dépose-la sous une feuille, puis recommence avec les autres.';
     case 'ferry':return 'Compte les perles sur le quai. Traverse, prépare la même quantité, puis compare.';
-    case 'color':return 'Touche '+n+' cases différentes, puis valide.';
+    case 'color':return 'Touche '+n+' cases différentes.';
     case 'change':return 'Il y a '+task.start+' objets. Ajoute-en un pour en avoir '+n+'.';
     case 'order':return 'Commence par '+Math.min(...task.order)+', le plus petit. Continue avec les deux autres.';
   }

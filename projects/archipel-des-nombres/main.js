@@ -3,7 +3,7 @@ import {icon,collection,hitPositions,setCanvas,drawToken,drawBasket,drawBasketSh
 import {avatars,defaults,load,persist,add,remove,record} from './storage.js';
 import * as audio from './audio.js';
 import * as pwa from './pwa.js';
-import {presentation,exampleHint,exampleVoices,chapterTitle,voiceClips} from './lessons.js';
+import {presentation,exampleHint,chapterTitle,voiceClips} from './lessons.js';
 import {bindDrag} from './drag.js';
 
 // WebKit also sends its own pinch gesture events in some display modes.
@@ -19,7 +19,8 @@ const $=selector=>document.querySelector(selector);
 const main=$('#main'),header=$('#header'),footer=$('#footer'),dialog=$('#dialog');
 const save=load();
 const player=()=>save.players.find(p=>p.id===save.active);
-const prefs=()=>player()?.settings??defaults;
+const prefs=()=>player()?.settings??save.preferences;
+const voicesOn=(s=prefs())=>s.sound&&s.voice&&s.voiceVolume>0;
 const range=chapter=>chapter?'6 à 10':'0 à 5';
 const title=chapterTitle;
 const portrait=(index,alt='')=>'<img class="portrait" src="./images/avatar-'+index+'.webp" alt="'+alt+'">';
@@ -152,7 +153,7 @@ function beginTask(example=false){
   const q=example?exampleTask(round.chapter,round.island):round.tasks[round.index];
   const supply=q.mode==='change'?Math.max(q.n,q.start)+2:q.mode==='pair'?q.n+2:Math.max(round.chapter?12:8,q.n+2);
   current={q,example,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
-    slots:new Map(),order:[],hidden:false,showCountingHelp:false,feedback:null,note:'',transcript:!prefs().sound||!prefs().voice,ferrySide:'source'};
+    slots:new Map(),order:[],hidden:false,showCountingHelp:false,feedback:null,note:'',transcript:!voicesOn(),ferrySide:'source'};
   revision++;renderTask(true);
   audio.playVoice(...voiceClips(q,example?'example':islands[round.island].mode==='mix'?'review':'question'));
 }
@@ -164,9 +165,8 @@ function numeric(q,disabled=false){
 }
 const auditory=q=>q.mode==='echo'||q.mode==='hear'||q.oral;
 function audioCue(q){
-  const p=prefs();
   const name=current.transcript?numbers[q.n]:'Écouter le nombre';
-  return p.sound&&p.voice
+  return voicesOn()
     ?button('<span class="sound-button-icon">'+icon('sound')+'</span><span>'+name+'</span>','repeat','','sound-button')
     :'<span class="sound-button sound-word">'+name+'</span>';
 }
@@ -245,14 +245,19 @@ function taskBody(){
   }
 }
 function manipulation(){
-  return '<div id="workspace" class="manipulation"></div>'+button('Valider','validate','check','primary validate');
+  const q=current.q;
+  // An empty starting answer needs an explicit action. A completed ordering
+  // or a fully lit bridge can be evaluated directly from the last gesture.
+  const needsSubmit=q.mode!=='order'&&q.mode!=='pair';
+  return '<div id="workspace" class="manipulation"></div>'+
+    (needsSubmit?button('J’ai fini','validate','check','secondary validate'):'');
 }
 function renderTask(schedule){
   if(!round||!current) return;
   page='game';
   const q=current.q, info=presentation(q), p=prefs(), island=activityInfo(round.chapter,round.island);
   const hint=current.showCountingHelp?'Touche chaque objet une fois, puis choisis le dernier nombre.':info.hint;
-  if(auditory(q)&&(!p.sound||!p.voice)) current.transcript=true;
+  if(auditory(q)&&!voicesOn(p)) current.transcript=true;
   const retry=round.index>=round.planned;
   const count=current.example?'Exemple':retry?'Nouvel essai':(round.index+1)+' / '+round.planned;
   const progress=Array.from({length:round.planned},(_,i)=>'<span class="'+(i<round.index?'done':i===round.index&&!current.example?'here':'')+'"></span>').join('');
@@ -264,7 +269,7 @@ function renderTask(schedule){
     '<div class="game-heading"><div><span class="kicker">'+(current.example?'Exemple guidé':retry?'Une nouvelle variante':island.title)+'</span>'+
     '<h1 tabindex="-1" id="task-title">'+info.prompt+'</h1><p>'+(current.example?exampleHint(q,round.chapter):hint)+'</p></div>'+
     '<div class="sound-tools">'+button('', 'sound',p.sound?'sound':'mute','icon-button mute-button')+
-    (p.sound&&p.voice&&!current.feedback?button('Consigne','repeat-instruction','sound','text-button replay')+
+    (voicesOn(p)&&!current.feedback?button('Consigne','repeat-instruction','sound','text-button replay')+
       (auditory(q)?button(current.transcript?'Masquer le mot':'Lire le mot','transcript','','text-button transcript'):''):'')+
     '</div></div><div id="task-body">'+(current.feedback?feedbackBody():taskBody())+'</div>'+
     (current.example&&!current.feedback?'<div class="example-controls"><p id="example-note" role="status">'+current.note+'</p>'+
@@ -321,8 +326,19 @@ function renderWorkspace(focusSelector){
   }
   if(focusSelector) (root.querySelector(focusSelector)||$('.validate'))?.focus({preventScroll:true});
   drawSmallTokens();
-  const validate=$('.validate');
-  if(validate)validate.disabled=q.mode==='order'&&state.order.length!==q.order.length;
+}
+function workspaceValue(){
+  return current.q.mode==='order'?current.order:current.selected.size;
+}
+function completeWorkspace(focusSelector){
+  const q=current.q;
+  const value=workspaceValue();
+  if(matches(q,value)||(q.mode==='order'&&value.length===q.order.length)){
+    submit(value);
+    return;
+  }
+  audio.chime('tap');
+  renderWorkspace(focusSelector);
 }
 function drawSmallTokens(){
   const basket=$('.wicker-art');
@@ -366,11 +382,11 @@ function redraw(){
 let frame=0;
 if('ResizeObserver' in window){const resize=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(redraw);});resize.observe(main);}
 window.addEventListener('resize',redraw);
-function explanation(q,value,correct){
+function explanation(q,value){
   if(q.mode==='order')return 'Dans cet ordre, chaque nombre est plus grand que celui qui le précède.';
   if(q.mode==='change')return 'Il y avait '+q.start+'. '+(q.n>q.start?'Avec un de plus':'Avec un de moins')+', il y en a '+q.n+'.';
-  if(q.mode==='pair')return correct?'Chaque feuille a sa lanterne. Il y en a autant de chaque côté.':'Il faut mettre une lanterne sous chacune des '+q.n+' feuilles.';
-  if(q.mode==='ferry')return correct?'Sur chaque quai, il y a '+q.n+' perles. Le phare s’allume un peu plus !':'Tu as déposé '+value+' perles. Sur le premier quai, il y en avait '+q.n+'.';
+  if(q.mode==='pair')return 'Il faut mettre une lanterne sous chacune des '+q.n+' feuilles.';
+  if(q.mode==='ferry')return 'Tu as déposé '+value+' perles. Sur le premier quai, il y en avait '+q.n+'.';
   if(q.mode==='compare'){
     const {left,right}=q.comparison;
     return 'Il y en a '+left+' à gauche et '+right+' à droite. '+(left===right?'Les deux groupes ont la même quantité.':(left>right?'Le groupe de gauche':'Le groupe de droite')+' en a plus.');
@@ -381,24 +397,24 @@ function explanation(q,value,correct){
   if(q.basketChoices)return q.n===0?'Le panier vide contient zéro coquillage.':
     'Le bon panier contient '+q.n+' coquillage'+(q.n===1?'': 's')+'.';
   if(q.n===0)return 'Zéro veut dire qu’il n’y a aucun objet.';
-  if(q.mode==='basket'||q.mode==='color')return correct?'Tu as obtenu exactement '+q.n+'.':'Ta collection en contient '+value+'. Il en fallait '+q.n+'.';
+  if(q.mode==='basket'||q.mode==='color')return 'Ta collection en contient '+value+'. Il en fallait '+q.n+'.';
   if(q.mode==='echo')return 'Tu as entendu « '+numbers[q.n]+' ». Le chiffre est '+q.n+'.';
   return 'On en compte '+q.n+' en tout.';
 }
 function feedbackBody(){
-  const {q,feedback,example}=current;
-  const {correct,value}=feedback;
+  const {q,feedback}=current;
   const media=q.mode==='compare'?comparison(q,true):q.mode==='order'
     ?'<div class="answer-demo">'+[...q.order].sort((a,b)=>a-b).map(n=>'<span>'+n+'</span>').join('<b aria-hidden="true">›</b>')+'</div>'
     :'<div class="answer-demo">'+(q.basketChoices?basketFigure(q.n):q.mode==='echo'?'':glanceFigure(q,'feedback-canvas'))+'<span>'+q.n+'</span></div>';
-  return '<div class="feedback '+(correct?'correct':'guided')+'"><div class="feedback-title"><span>'+icon(correct?'check':'spark')+'</span><div>'+
-    '<h2 id="feedback-title" tabindex="-1">'+(correct?(example?'Tu as compris le geste !':'Bien trouvé !'):'Observons ensemble')+'</h2><p>'+explanation(q,value,correct)+'</p></div></div>'+
-    (!correct?media+'<p class="retry-note">'+(round.index<round.planned?'Tu retrouveras une variante en fin de série.':'Tu pourras retravailler cette activité.')+'</p>':'')+
-    button(example?'Commencer la série':'Continuer','advance','arrow','primary feedback-next')+'</div>';
+  return '<div class="feedback guided"><div class="feedback-title"><span>'+icon('spark')+'</span><div>'+
+    '<h2 id="feedback-title" tabindex="-1">Observons ensemble</h2><p>'+explanation(q,feedback.value)+'</p></div></div>'+
+    media+'<p class="retry-note">'+(round.index<round.planned?'Tu retrouveras une variante en fin de série.':'Tu pourras retravailler cette activité.')+'</p>'+
+    button('Continuer','advance','arrow','primary feedback-next')+'</div>';
 }
 function submit(value){
   if(!current||!round||current.feedback)return;
-  const correct=current.example?matches(current.q,value):answer(round,value);
+  const example=current.example;
+  const correct=example?matches(current.q,value):answer(round,value);
   if(correct===null)return;
   if(current.example&&!correct){
     current.note=explanation(current.q,value,false)+' Essaie encore.';
@@ -406,17 +422,22 @@ function submit(value){
     audio.chime('guide');
     return;
   }
-  clearTimeout(flashTimer);
-  current.feedback={correct,value};
   audio.stop();
-  if(current.example)audio.playVoice(exampleVoices[current.q.independent?'independent':current.q.mode]);
-  else audio.chime(correct?'good':'guide');
-  if(!correct){player().records[round.chapter][round.island].errors++;persistSave();}
+  if(correct){
+    next();
+    if(page==='game'||!result?.mastery)audio.chime('good',true);
+    return;
+  }
+  clearTimeout(flashTimer);
+  current.feedback={value};
+  audio.chime('guide');
+  player().records[round.chapter][round.island].errors++;
+  persistSave();
   renderTask(false);
   sectionFocus('feedback-title');
 }
 function next(){
-  if(!round||!current?.feedback)return;
+  if(!round||!current||(!current.example&&!round.answered))return;
   if(current.example||advance(round)){beginTask();return;}
   const done=outcome(round),p=player();
   record(p,round.chapter,round.island,done);persistSave();
@@ -477,8 +498,7 @@ function place(index,where,slot=null,keyboard=false){
     }
   }else if(where==='basket')state.selected.add(index);
   else state.selected.delete(index);
-  audio.chime('tap');
-  renderWorkspace(keyboard?'[data-item="'+index+'"]':undefined);
+  completeWorkspace(keyboard?'[data-item="'+index+'"]':undefined);
 }
 function openDialog(title,body,kind){
   if(!dialog.open) opener=document.activeElement;
@@ -508,16 +528,26 @@ function profiles(create=false){
 }
 function settings(){
   const s=prefs();
-  const options=[
-    ['sound','Son général','Coupe toutes les voix et tous les bruitages.'],
+  const toggle=([key,label,detail])=>'<label class="setting"><span><strong>'+label+'</strong><small>'+detail+'</small></span>'+
+    '<input type="checkbox" role="switch" data-setting="'+key+'" '+(s[key]?'checked':'')+'><i></i></label>';
+  const slider=([key,label])=>'<label class="volume-setting"><span>'+label+'<span data-level="'+key+
+    '" aria-hidden="true">'+s[key]+' %</span></span><input type="range" data-setting="'+key+
+    '" aria-label="'+label+'" aria-valuetext="'+s[key]+' %" min="0" max="100" value="'+s[key]+'"></label>';
+  const sounds=[
+    ['sound','Son général','Musique, voix et bruitages.'],
+    ['music','Musique de fond','Brise du lagon.'],
     ['voice','Voix française','Consignes et nombres parlés.'],
+  ];
+  const volumes=[['musicVolume','Volume de la musique'],['voiceVolume','Volume des voix'],['effectsVolume','Volume des bruitages']];
+  const display=[
     ['motion','Animations','Adoucit les apparitions et les changements d’écran.'],
     ['large','Grands objets','Agrandit les objets à compter.'],
     ['contrast','Contraste renforcé','Renforce la lisibilité des contours et des textes.'],
     ['flash','Figures éclair','Masque certaines petites figures après un instant. Elles peuvent être revues à volonté.'],
   ];
-  openDialog('Réglages',(player()?'':'<p>Crée un profil pour garder tes réglages.</p>')+
-    options.map(([key,label,detail])=>'<label class="setting"><span><strong>'+label+'</strong><small>'+detail+'</small></span><input type="checkbox" role="switch" data-setting="'+key+'" '+(s[key]?'checked':'')+' '+(!player()?'disabled':'')+'><i></i></label>').join('')+
+  openDialog('Réglages','<fieldset class="sound-settings"><legend>Audio</legend>'+sounds.map(toggle).join('')+
+    '<div class="volume-settings">'+volumes.map(slider).join('')+'</div></fieldset>'+
+    '<fieldset class="display-settings"><legend>Affichage et jeu</legend>'+display.map(toggle).join('')+'</fieldset>'+
     '<div class="dialog-actions">'+button('Vérifier les mises à jour','update','install')+'</div><p id="update-note" role="status"></p>','settings');
 }
 function stats(){
@@ -640,27 +670,40 @@ async function onAction(action,target,event){
     const index=Number(action.slice(6));
     if(current.selected.has(index)) current.selected.delete(index);
     else current.selected.add(index);
-    audio.chime('tap');renderWorkspace('[data-action="'+action+'"]');return;
+    completeWorkspace('[data-action="'+action+'"]');return;
   }
   if(action.startsWith('order-')){
-    current.order.push(Number(action.slice(6)));audio.chime('tap');renderWorkspace();
-    if(event.detail===0) ($('[data-action^="order-"]:not(:disabled)')??$('.validate'))?.focus();
+    current.order.push(Number(action.slice(6)));
+    completeWorkspace(event.detail===0?'[data-action^="order-"]:not(:disabled)':undefined);
     return;
   }
   if(action==='undo-order'){current.order=[];renderWorkspace('[data-action^="order-"]');return;}
-  if(action==='validate') submit(current.q.mode==='order'?current.order:current.selected.size);
+  if(action==='validate')submit(workspaceValue());
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('[data-action]');
   if(button&&!button.disabled) void onAction(button.dataset.action,button,event);
 });
-document.addEventListener('change',event=>{
-  const input=event.target,key=input.dataset.setting,p=player();
-  if(!key||!p)return;
-  p.settings[key]=input.checked;
-  persistSave();applySettings();
+function changeSetting(input){
+  const key=input.dataset.setting;
+  if(!Object.hasOwn(defaults,key))return false;
+  const s=prefs();
+  if(input.type==='range'){
+    s[key]=input.valueAsNumber;
+    const percentage=s[key]+' %';
+    dialog.querySelector('[data-level="'+key+'"]').textContent=percentage;
+    input.setAttribute('aria-valuetext',percentage);
+  }else s[key]=input.checked;
+  applySettings();
+  return true;
+}
+dialog.addEventListener('input',event=>{
+  if(event.target.type==='range')changeSetting(event.target);
+});
+dialog.addEventListener('change',event=>{
+  if(!changeSetting(event.target))return;
+  persistSave();
   if(page==='game')renderTask(false);
-  if(page==='map')redraw();
 });
 dialog.addEventListener('submit',event=>{
   if(event.target.id!=='new-player')return;

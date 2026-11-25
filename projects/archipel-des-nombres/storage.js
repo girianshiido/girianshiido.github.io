@@ -2,20 +2,27 @@ import {islands,roundSize,legacyCount,finalIsland} from './engine.ts';
 
 export const key='archipel-des-nombres:save';
 export const avatars=['Renard','Hibou','Lapin','Chat'];
-export const defaults=Object.freeze({sound:true,voice:true,motion:true,contrast:false,large:false,flash:false});
+export const defaults=Object.freeze({sound:true,voice:true,music:true,musicVolume:18,voiceVolume:100,effectsVolume:48,motion:true,contrast:false,large:false,flash:false});
 const freshRecords=()=>[islands.length,legacyCount].map(length=>Array.from({length},()=>({mastery:false,first:0,errors:0,rounds:0})));
 function count(n,max=999999){return typeof n==='number'&&Number.isSafeInteger(n)?Math.max(0,Math.min(max,n)):0;}
+function validatedSettings(source){
+  const settings={...defaults};
+  for(const [key,fallback] of Object.entries(defaults)){
+    const value=source?.[key];
+    if(typeof fallback==='boolean'&&typeof value==='boolean')settings[key]=value;
+    if(typeof fallback==='number'&&Number.isFinite(value))settings[key]=Math.max(0,Math.min(100,Math.round(value)));
+  }
+  return settings;
+}
 export function parse(raw){
-  const empty={version:3,active:'',players:[]};
+  const empty={version:3,active:'',players:[],preferences:{...defaults}};
   try{
     const data=JSON.parse(raw);
     if(![1,2,3].includes(data?.version)||!Array.isArray(data.players)) return empty;
+    empty.preferences=validatedSettings(data.preferences);
     for(const source of data.players.slice(0,12)){
       if(typeof source?.id!=='string'||!/^[\w-]{1,64}$/.test(source.id)||typeof source.name!=='string'||!source.name.trim()||empty.players.some(p=>p.id===source.id)) continue;
-      const settings={...defaults},records=freshRecords();
-      for(const [key,defaultValue] of Object.entries(defaults)){
-        if(typeof defaultValue==='boolean'&&typeof source.settings?.[key]==='boolean') settings[key]=source.settings[key];
-      }
+      const settings=validatedSettings(source.settings),records=freshRecords();
       records.forEach((chapter,c)=>chapter.forEach((entry,i)=>{
         const item=source.records?.[c]?.[i];
         if(item) Object.assign(entry,{mastery:item.mastery===true,first:Math.min(count(item.first,10),roundSize(c,i)),errors:count(item.errors),rounds:count(item.rounds)});
@@ -35,7 +42,7 @@ export function persist(data){
 export function add(data,name,avatar){
   if(!name.trim()||data.players.length>=12) return false;
   const id=globalThis.crypto?.randomUUID?.()??Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-  data.players.push({id,name:name.trim().slice(0,24),avatar,settings:{...defaults},records:freshRecords()});
+  data.players.push({id,name:name.trim().slice(0,24),avatar,settings:{...data.preferences},records:freshRecords()});
   data.active=id;
   return true;
 }
