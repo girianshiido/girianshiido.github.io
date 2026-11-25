@@ -35,6 +35,8 @@ try{
   assert.ok(await page.locator('.island img').evaluateAll(imgs=>imgs.every(img=>img.complete&&img.naturalWidth>0)));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
   assert.equal(await page.locator('.hero h1').evaluate(element=>getComputedStyle(element).userSelect),'none');
+  const contextMenuBlocked=target=>target.evaluate(element=>!element.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true})));
+  assert.equal(await contextMenuBlocked(page.locator('.hero h1')),true);
   const cdp=await context.newCDPSession(page);
   const scale=()=>page.evaluate(()=>window.visualViewport.scale);
   await page.touchscreen.tap(150,159);
@@ -56,6 +58,7 @@ try{
   await page.emulateMedia({reducedMotion:'no-preference'});
   await action('play').click();
   assert.equal(await page.locator('#player-name').evaluate(element=>getComputedStyle(element).userSelect),'text');
+  assert.equal(await contextMenuBlocked(page.locator('#player-name')),false);
   await page.locator('#player-name').fill('Camille');
   await page.getByRole('button',{name:'Créer mon profil'}).click();
   await page.locator('.hit').first().waitFor();
@@ -82,7 +85,7 @@ try{
   assert.equal(await page.locator('[data-setting="motion"]').isChecked(),false);
   assert.equal(await waterLight(),'none');
   await action('close').tap();
-  await action('island-4').tap();
+  await action('island-3').tap();
   async function drag(from,to){
     const a=await from.boundingBox(), b=await to.boundingBox();
     assert.ok(a&&b);
@@ -92,6 +95,22 @@ try{
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     await page.waitForTimeout(130);
   }
+  const wicker=page.locator('.wicker-basket');
+  assert.equal(await wicker.locator('[data-item]').count(),0);
+  assert.ok(await wicker.locator('canvas.wicker-art').evaluate(canvas=>
+    canvas.getContext('2d').getImageData(canvas.width/2,canvas.height/2,1,1).data[3]>0));
+  assert.equal(await contextMenuBlocked(action('put-0')),true);
+  await drag(action('put-0'),wicker.locator('.token-row'));
+  await action('put-1').tap();
+  assert.equal(await wicker.locator('[data-item]').count(),2);
+  await action('take-0').tap();
+  assert.equal(await wicker.locator('[data-item]').count(),1);
+  await action('put-0').tap();
+  await action('validate').tap();
+  assert.match(await page.locator('#feedback-title').innerText(),/compris/);
+  await page.locator('.game-top [data-action="map"]').tap();
+  await action('island-4').tap();
+  await action('confirm-island-4').tap();
   await drag(action('put-0'),page.locator('[data-slot="1"]'));
   assert.equal(await page.locator('[data-slot="1"] [data-item="0"]').count(),1);
   assert.equal(await page.locator('[data-slot="0"] [data-item]').count(),0);

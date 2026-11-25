@@ -453,3 +453,15 @@ fieldset{border:0;padding:0;margin:5px 0 9px}
     100%{opacity:0;transform:scale(1.52)}
   }
 }
+
+
+/* The seeds sit over the basket's open lining and remain individual buttons. */
+.drop-area.wicker-area{background:#f8efe2;border-color:#e5d3ba;border-style:solid}
+.wicker-area h2{color:#634a35}
+.wicker-basket{position:relative;width:min(100%,380px);margin-inline:auto;padding:33px 16px 32px}
+.wicker-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.wicker-basket .token-row{position:relative;min-height:44px;justify-content:center;align-content:center;gap:2px 4px}
+.wicker-basket .token-button{width:44px;height:44px;border-color:transparent;background:transparent;box-shadow:none}
+.wicker-basket .token-button:hover{background:#c8955c29}
+.wicker-basket .basket-empty{color:#735033}
+[data-contrast=true] .wicker-basket .basket-empty{color:#422a16}
