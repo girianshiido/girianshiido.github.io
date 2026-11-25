@@ -68,7 +68,7 @@ test('Une île demande de valider ses six activités et ouvre la suivante',()=>{
 });
 
 test('Une correction ne remplace pas une réussite du premier coup',()=>{
-  const random=rng(43),r=startRound(0,0,random);
+  const random=rng(43),r=startRound(1,0,random);
   for(let i=0;i<r.planned;i++){
     const q=r.tasks[i];
     assert.equal(answer(r,q.choices.find(n=>n!==q.n),random),false);
@@ -85,7 +85,17 @@ test('Une correction ne remplace pas une réussite du premier coup',()=>{
     assert.ok(answer(r,solve(task),random));
     advance(r);
   }
-  assert.deepEqual(outcome(r),{mastery:false,first:0,total:6,errors:6});
+  assert.deepEqual(outcome(r),{mastery:false,first:0,total:5,errors:5});
+});
+
+test('Le lagon fait compter en autonomie avec un défi à six réponses',()=>{
+  assert.equal(exampleTask(0,9).independent,false);
+  assert.equal(exampleTask(1,0).independent,false);
+  for(const id of [0,15,16,17])assert.equal(exampleTask(0,id).independent,true);
+  const r=startRound(0,0,rng(13));
+  assert.equal(new Set(r.tasks.map(q=>q.layout)).size,6);
+  assert.deepEqual(r.tasks.map(q=>q.n).sort(),[0,1,2,3,4,5]);
+  assert.ok(r.tasks.every(q=>q.choices.join() === '0,1,2,3,4,5'));
 });
 
 test('Les anciens profils, réglages et îles validées sont conservés',()=>{

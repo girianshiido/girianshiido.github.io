@@ -5,7 +5,7 @@ export type Token = 'shell' | 'fish' | 'berry' | 'flower' | 'leaf' | 'star' | 's
 export interface Task {
   mode: Mode; n: number; start: number; choices: number[];
   layout: Layout; token: Token; seed: number; flash: boolean; order: number[];
-  activity?: number; fixed?: Layout; oral?: boolean; comparison?: {left: number; right: number; ask: Ask}; total?: number;
+  activity?: number; independent?: boolean; fixed?: Layout; oral?: boolean; comparison?: {left: number; right: number; ask: Ask}; total?: number;
 }
 export interface Round {
   chapter: number; island: number; tasks: Task[]; planned: number; index: number;
@@ -40,9 +40,9 @@ const practice: Practice[] = [
   atelier('Les jumeaux','Trouve un groupe qui a autant d’objets que le modèle.','same',0,{values:[0,1,2,3],fixed:'line'}),
   atelier('Le panier vide','Écoute et reconnais les groupes de zéro, un ou deux objets.','hear',0,{values:[0,1,2],fixed:'line'}),
   atelier('La ronde de la plage','Retrouve les premiers gestes appris sur la plage.','mix',0,{review:[9,10,11,12,13]}),
-  atelier('Les perles en ligne','Suis la rangée et compte jusqu’à cinq.','touch',2,{fixed:'line'}),
-  atelier('Le cercle des poissons','Fais le tour du cercle en touchant chaque poisson.','touch',2,{fixed:'ring'}),
-  atelier('La pêche aux étoiles','Retrouve chaque étoile dispersée dans le lagon.','touch',2,{fixed:'scatter'}),
+  atelier('Les perles en ligne','Compte les perles, puis choisis leur nombre.','touch',2,{fixed:'line'}),
+  atelier('Les poissons du lagon','Compte les poissons et indique combien il y en a.','touch',2,{fixed:'ring'}),
+  atelier('La pêche aux étoiles','Compte les étoiles dispersées dans le lagon.','touch',2,{fixed:'scatter'}),
   atelier('Le dé du navigateur','Reconnais les points du dé.','glance',2,{values:[1,2,3,4,5],fixed:'dice'}),
   atelier('L’empreinte de la main','Reconnais de zéro à cinq doigts levés.','glance',2,{fixed:'hand'}),
   atelier('Le cadre des perles','Lis la quantité dans un cadre de cinq cases.','glance',1,{fixed:'frame'}),
@@ -63,10 +63,15 @@ const practice: Practice[] = [
   atelier('Le grand phare','Rejoue aux activités des îles pour rallumer le phare.','mix',5,{review:[17,20,25,29,30,31]}),
 ];
 export const islands: Practice[] = [...legacy,...practice];
+export function activityInfo(chapter: number,index: number): Practice {
+  if(!chapter&&index===0)return {...islands[index],title:'Le défi des collections',
+    description:'Compte dans différentes dispositions et choisis parmi les six nombres.',tone:'mint',art:2};
+  return islands[index];
+}
 export const legacyCount = legacy.length;
 export const practiceIslands = [
   {...legacy[0],title:'La plage des petits nombres',description:'Les premières quantités, de zéro à trois.',activities:[9,10,11,12,13,14]},
-  {...legacy[2],title:'Le lagon des collections',description:'Compte jusqu’à cinq en ligne, en cercle et en petits groupes.',activities:[15,16,17,18,19,0]},
+  {...legacy[2],title:'Le lagon des collections',description:'Observe les collections et compte jusqu’à cinq à ton rythme.',activities:[15,16,17,18,19,0]},
   {...legacy[1],title:'La grotte des échos',description:'Relie les quantités, les nombres entendus et les chiffres.',activities:[1,20,21,22,23,24]},
   {...legacy[3],title:'Le jardin des paniers',description:'Construis et transforme des collections.',activities:[4,3,7,25,8,26]},
   {...legacy[4],title:'Le pont des comparaisons',description:'Compare, ordonne et décompose les nombres.',activities:[27,28,29,6,30,31]},
@@ -147,6 +152,7 @@ function taskFor(id: number,n: number,chapter: number,random: () => number,previ
   const activity=islands[id];
   const q=makeTask(activity.mode,n,chapter,random,previous);
   q.activity=id;
+  q.independent=!chapter&&q.mode==='touch'&&id!==9;
   q.oral=activity.oral;
   q.fixed=activity.fixed;
   if(activity.fixed){q.layout=activity.fixed;q.flash=false;}
@@ -158,6 +164,7 @@ function taskFor(id: number,n: number,chapter: number,random: () => number,previ
     const pool=shuffle(activity.values.filter(value=>value!==n),random);
     q.choices=shuffle([n,...pool.slice(0,2)],random);
   }
+  if(id===0&&q.independent)q.choices=[0,1,2,3,4,5];
   if(activity.ask){
     const ask=activity.ask;
     // Encode selecting the left group, equal quantities, and the right group.
@@ -189,8 +196,8 @@ export function startRound(chapter: number, island: number, random = Math.random
   const values=valuesFor(island,chapter);
   const count=roundSize(chapter,island);
   const targets=shuffle(values,random);
-  if (!chapter&&island===0) targets.splice(0,6,1,2,3,...shuffle([0,4,5],random));
   if (!chapter&&island===2) targets.splice(0,6,2,3,...shuffle([0,1,4,5],random));
+  const collectionLayouts=!chapter&&island===0?shuffle(['line','ring','scatter','arc','clusters','frame'] as const,random):null;
   const deck=() => shuffle(shuffle(values,random).slice(0,4),random);
   const cards=mode==='cards'?[deck(),deck()]:[];
   const deckSeed=mode==='cards'?Math.floor(random()*100000):0;
@@ -206,7 +213,9 @@ export function startRound(chapter: number, island: number, random = Math.random
     const id=activity.review?.[i]??island;
     const options=valuesFor(id,chapter);
     const n=id===island?(targets[i]??targets[i%targets.length]):options[Math.floor(random()*options.length)];
-    return taskFor(id,n,chapter,random);
+    const q=taskFor(id,n,chapter,random);
+    if(collectionLayouts)q.layout=collectionLayouts[i];
+    return q;
   });
   if (!chapter&&island===2) {
     tasks[0].layout = 'dice';
@@ -260,7 +269,12 @@ export function accessible(records: Records,index: number,chapter = 0) {
   const needed = Math.min(index,coreCount);
   return records.length>=needed && records.slice(0,needed).every(entry=>entry.mastery);
 }
+export const ringRadius = .34;
 export function spots(n: number,layout: Layout,seed: number): [number,number][] {
+  if(layout==='ring') return Array.from({length:n},(_,i)=>{
+    const angle=-Math.PI/2+Math.PI*2*i/n;
+    return [.5+ringRadius*Math.cos(angle),.5+ringRadius*Math.sin(angle)];
+  });
   const random = rng(seed);
   if(n===1&&layout!=='frame') return [[.5,.5]];
   if(layout==='dice'&&n<=6){
@@ -271,10 +285,6 @@ export function spots(n: number,layout: Layout,seed: number): [number,number][] 
     return Array.from({length:n},(_,i)=>[.14+.18*(i%5), n>5?.28+.44*Math.floor(i/5):.5]);
   }
   if(layout==='line') return Array.from({length:n},(_,i)=>[.5+(i-(n-1)/2)*.17,.5]);
-  if(layout==='ring') return Array.from({length:n},(_,i)=>{
-    const angle=-Math.PI/2+Math.PI*2*i/n;
-    return [.5+.32*Math.cos(angle),.5+.34*Math.sin(angle)];
-  });
   if(layout==='arc') return Array.from({length:n},(_,i)=>{
     const angle=n>5 ? i/n*2*Math.PI : Math.PI*(.14+.72*i/(n-1));
     return n>5 ? [.5+.37*Math.cos(angle),.5+.34*Math.sin(angle)] : [.5-.39*Math.cos(angle),.78-.55*Math.sin(angle)];

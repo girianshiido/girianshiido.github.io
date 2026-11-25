@@ -118,6 +118,13 @@ progress::-moz-progress-bar{background:#488f7e;border-radius:30px}
 .number-button{width:clamp(56px,17vw,110px);min-height:59px;border:1px solid #bcd7cd;border-radius:15px;background:#fffdf5;box-shadow:0 3px 0 #cfdfd5;color:#154c47;font-weight:900;font-size:clamp(1.55rem,5vw,2.25rem);touch-action:pan-x pan-y}
 .number-button:not(:disabled):hover,.picture-card:hover{background:#eaf5ea;border-color:#77a99a}
 .number-button:disabled{color:#61746b;background:#f0f2e9;box-shadow:none}
+.answers-all{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));max-width:535px;margin-inline:auto;
+}
+.answers-all .number-button{width:100%}
+.count-help{text-align:center;margin-top:9px}
+.count-help .text-button{min-height:44px}
+@media(max-width:540px){.answers-all{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sound-button{z-index:1;display:flex;min-height:64px;min-width:min(232px,95%);gap:12px;background:#fffdfa;border-color:#d7c9e9;color:#553778;box-shadow:0 3px 0 #d8cdec;font-size:1.05rem}
 .sound-button svg{width:23px;height:23px}
 .small-sound{height:87px}
