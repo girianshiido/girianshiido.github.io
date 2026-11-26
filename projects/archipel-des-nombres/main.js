@@ -328,7 +328,9 @@ function renderWorkspace(focusSelector){
     }).join('')+'</div>':'';
     const stockLabel=paired?'Lanternes à prendre':q.mode==='ferry'?'Les perles':q.mode==='basket'?'Réserve de graines':'Réserve';
     const wicker=q.mode==='basket'||q.mode==='change';
-    const tokenRow='<div class="token-row">'+(placed||'<span class="basket-empty">'+(q.n===0?'Le panier est vide':wicker?'Dépose ici':'Dépose les objets ici')+'</span>')+'</div>';
+    const rowClass=wicker?'token-row basket-grid':'token-row';
+    const rowStyle=wicker?' style="--basket-rows:'+(round.chapter?3:2)+'"':'';
+    const tokenRow='<div class="'+rowClass+'"'+rowStyle+'>'+(placed||'<span class="basket-empty">'+(q.n===0?'Le panier est vide':wicker?'Dépose ici':'Dépose les objets ici')+'</span>')+'</div>';
     const deposit=wicker?'<div class="wicker-basket" data-drop="basket"><canvas class="wicker-art" aria-hidden="true"></canvas>'+tokenRow+'</div>':tokenRow;
     root.innerHTML='<section class="drop-area stock" data-drop="stock"><h2>'+stockLabel+'</h2><div class="token-row">'+stock+'</div></section>'+
       '<section class="drop-area basket'+(paired?' pairing':wicker?' wicker-area':'')+'"'+(wicker?'':' data-drop="basket"')+'><h2>'+

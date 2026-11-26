@@ -147,6 +147,7 @@ export function drawBasket(canvas) {
   if(!area)return;
   const {ctx,w,h}=area;
   const middle=w/2,left=8,right=w-8,top=33,bottom=h-30;
+  const seamLeft=left+25,seamRight=right-25;
   ellipse(ctx,middle,h-5,w*.39,4,'#6841272d');
 
   const handle=p=>{
@@ -158,12 +159,12 @@ export function drawBasket(canvas) {
   line(ctx,'#eabd7f',3,handle);
 
   const wall=p=>{
-    p.moveTo(left,bottom-10);
-    p.bezierCurveTo(left+7,h-25,left+19,h-10,left+39,h-8);
+    p.moveTo(seamLeft,bottom);
+    p.bezierCurveTo(seamLeft+5,bottom+10,left+29,h-10,left+39,h-8);
     p.quadraticCurveTo(middle,h+1,right-39,h-8);
-    p.bezierCurveTo(right-19,h-10,right-7,h-25,right,bottom-10);
+    p.bezierCurveTo(right-29,h-10,seamRight-5,bottom+10,seamRight,bottom);
   };
-  const weave=ctx.createLinearGradient(0,bottom-10,0,h-4);
+  const weave=ctx.createLinearGradient(0,bottom,0,h-4);
   weave.addColorStop(0,'#e1ad6b');
   weave.addColorStop(1,'#9c5e34');
   paint(ctx,weave,wall);
@@ -185,8 +186,8 @@ export function drawBasket(canvas) {
   const rim=p=>{
     p.moveTo(left+24,top-1);
     p.quadraticCurveTo(middle,top-9,right-24,top-1);
-    p.bezierCurveTo(right+7,top+3,right+6,bottom-5,right-25,bottom);
-    p.quadraticCurveTo(middle,bottom+7,left+25,bottom);
+    p.bezierCurveTo(right+7,top+3,right+6,bottom-5,seamRight,bottom);
+    p.quadraticCurveTo(middle,bottom+7,seamLeft,bottom);
     p.bezierCurveTo(left-6,bottom-5,left-7,top+3,left+24,top-1);
   };
   const liner=ctx.createLinearGradient(0,top,0,bottom);

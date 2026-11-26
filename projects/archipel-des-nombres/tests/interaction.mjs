@@ -160,12 +160,38 @@ try{
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(25);
   const ordered=exampleTask(0,25).n;
-  for(let i=0;i<=ordered;i++)await action('put-'+i).tap();
+  const basketRows=()=>wicker.locator('[data-item]').evaluateAll(tokens=>{
+    const rows=[];
+    for(const token of tokens){
+      const {top,left,right,bottom}=token.getBoundingClientRect();
+      const cell={top,left,right,bottom};
+      if(rows.at(-1)?.[0].top===top)rows.at(-1).push(cell);
+      else rows.push([cell]);
+    }
+    return rows;
+  });
+  const emptyBasketHeight=(await wicker.boundingBox()).height;
+  for(let i=0;i<8;i++){
+    await action('put-'+i).tap();
+    assert.equal((await wicker.boundingBox()).height,emptyBasketHeight);
+  }
+  for(const width of [320,1280]){
+    await page.setViewportSize({width,height:800});
+    const rows=await basketRows();
+    assert.deepEqual(rows.map(row=>row.length),[5,3]);
+    assert.ok(Math.abs(rows[0][0].left-rows[1][0].left)<1);
+    const bounds=await wicker.boundingBox();
+    assert.ok(rows.flat().every(cell=>cell.left>=bounds.x&&cell.right<=bounds.x+bounds.width&&cell.bottom<=bounds.y+bounds.height));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),width);
+  }
+  await page.setViewportSize({width:320,height:730});
   assert.equal(await page.locator('.step-label').innerText(),'Exemple');
-  assert.equal(await wicker.locator('[data-item]').count(),ordered+1);
+  assert.equal(await wicker.locator('[data-item]').count(),8);
   await action('validate').tap();
   assert.match(await page.locator('#example-note').innerText(),/Essaie encore/);
-  await action('take-'+ordered).tap();
+  for(let i=7;i>=ordered;i--)await action('take-'+i).tap();
+  assert.equal(await wicker.locator('[data-item]').count(),ordered);
+  assert.equal((await wicker.boundingBox()).height,emptyBasketHeight);
   assert.equal(await page.locator('.step-label').innerText(),'Exemple');
   await action('validate').tap();
   await inSeries();
