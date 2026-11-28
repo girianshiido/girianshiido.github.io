@@ -133,7 +133,7 @@ try{
     await volumeControl(key).fill(String(value));
     assert.equal(await volumeControl(key).getAttribute('aria-valuetext'),value+' %');
   }
-  await volumeControl('music').uncheck();
+  await volumeControl('music').press('Space');
   const soundPrefs=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).players[0].settings,storeKey);
   assert.deepEqual([soundPrefs.music,soundPrefs.musicVolume,soundPrefs.voiceVolume,soundPrefs.effectsVolume],[false,32,62,0]);
   await volumeControl('effectsVolume').fill('48');
@@ -314,8 +314,8 @@ try{
   assert.equal(await action('answer-'+n).isEnabled(),true);
   await action('answer-'+n).tap();
   await finishSuccess();
-
-  await page.locator('.game-top [data-action="map"]').tap();
+  assert.ok(await page.locator('#result-title').isVisible());
+  await page.locator('header .map-link').tap();
   await enter(0);
   assert.equal(await page.locator('.answers-all button').count(),6);
   assert.equal(await page.locator('.answers-all button:enabled').count(),6);
