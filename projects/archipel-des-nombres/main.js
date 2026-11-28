@@ -37,7 +37,9 @@ const esc=value=>String(value).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>
 const button=(label,action,glyph='',classes='secondary')=>'<button type="button" class="'+classes+'" data-action="'+action+'">'+(glyph?icon(glyph):'')+label+'</button>';
 const tag=(glyph,label)=>icon(glyph)+'<span>'+label+'</span>';
 let page='map',activeGroup=null,chapter=0,round=null,result=null,current=null,flashTimer=0,toastTimer=0,storageFailed=false,nextAfterCreate=null;
-let revision=0, opener=null;
+const successStatus=$('#task-success');
+const successPause=1000;
+let revision=0, opener=null,successTimer=0;
 
 function persistSave(){
   if(!persist(save)&&!storageFailed){storageFailed=true;toast('La sauvegarde locale est indisponible dans ce navigateur.');}
@@ -64,6 +66,7 @@ function chrome(){
     button('Suivi','stats','chart','text-button')+'</div></div>';
 }
 function goMap(scroll=false){
+  pauseSuccess();
   clearTimeout(flashTimer);audio.stop();page='map';result=null;chrome();renderMap();
   if(scroll) window.scrollTo(0,0);
 }
@@ -158,21 +161,21 @@ function play(){
   const index=firstIsland(records);
   start(index===-1?finalIsland:index);
 }
-function beginTask(example=false,justSucceeded=false){
+function beginTask(example=false){
   clearTimeout(flashTimer);
   if(!round)return;
   const q=example?exampleTask(round.chapter,round.island):round.tasks[round.index];
   const supply=q.mode==='change'?Math.max(q.n,q.start)+2:q.mode==='pair'?q.n+2:Math.max(round.chapter?12:8,q.n+2);
-  current={q,example,justSucceeded,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
-    slots:new Map(),order:[],hidden:false,showCountingHelp:false,feedback:null,note:'',transcript:!voicesOn(),ferrySide:'source'};
+  current={q,example,supply,marked:new Set(),markOrder:[],selected:new Set(q.mode==='change'?Array.from({length:q.start},(_,i)=>i):[]),
+    slots:new Map(),order:[],hidden:false,showCountingHelp:false,success:false,feedback:null,note:'',transcript:!voicesOn(),ferrySide:'source'};
   revision++;renderTask(true);
   audio.playVoice(...voiceClips(q,example?'example':islands[round.island].mode==='mix'?'review':'question'));
 }
 function canvas(n,layout,token,seed,classes='',hidden=false){
   return '<canvas class="count-canvas '+classes+'" aria-hidden="true" data-n="'+n+'" data-layout="'+layout+'" data-token="'+token+'" data-seed="'+seed+'"'+(hidden?' data-hidden="true"':'')+'></canvas>';
 }
-function numeric(q,disabled=false){
-  return '<div class="answers'+(q.choices.length>4?' answers-all':'')+'" aria-label="Réponses proposées">'+q.choices.map(n=>'<button type="button" class="number-button" data-action="answer-'+n+'" '+(disabled?'disabled':'')+'>'+n+'</button>').join('')+'</div>';
+function numeric(q){
+  return '<div class="answers'+(q.choices.length>4?' answers-all':'')+'" aria-label="Réponses proposées">'+q.choices.map(n=>'<button type="button" class="number-button" data-action="answer-'+n+'">'+n+'</button>').join('')+'</div>';
 }
 const auditory=q=>q.mode==='echo'||q.mode==='hear'||q.oral;
 function audioCue(q){
@@ -226,7 +229,7 @@ function taskBody(){
       const canAsk=q.independent&&!guided&&q.n>0&&round.index>=round.planned;
       return '<div class="scene sea" id="point-scene">'+canvas(q.n,q.layout,q.token,q.seed,guided?'point-canvas':'')+
         (guided?'<div class="hit-layer"></div>':'')+(q.n===0?'<span class="empty-scene">Aucun objet</span>':'')+'</div>'+
-        numeric(q,guided&&state.marked.size!==q.n)+(canAsk?'<div class="count-help">'+button('M’aider à compter','count-help','','text-button')+'</div>':'');
+        numeric(q)+(canAsk?'<div class="count-help">'+button('M’aider à compter','count-help','','text-button')+'</div>':'');
     }
     case 'echo':return '<div class="scene cave sound-scene">'+audioCue(q)+'</div>'+numeric(q);
     case 'hear':{
@@ -266,14 +269,14 @@ function renderTask(schedule){
   if(!round||!current) return;
   page='game';
   const q=current.q, info=presentation(q), p=prefs(), island=activityInfo(round.chapter,round.island);
-  const hint=current.showCountingHelp?'Touche chaque objet une fois, puis choisis le dernier nombre.':info.hint;
+  const hint=current.showCountingHelp?'Tu peux toucher chaque objet pour t’aider à compter.':info.hint;
   if(auditory(q)&&!voicesOn(p)) current.transcript=true;
   const retry=round.index>=round.planned;
   const count=current.example?'Exemple':retry?'Nouvel essai':(round.index+1)+' / '+round.planned;
   const progress=Array.from({length:round.planned},(_,i)=>'<span class="'+(i<round.index?'done':i===round.index&&!current.example?'here':'')+'"></span>').join('');
   main.innerHTML='<div class="shell game-view"><div class="game-top">'+button('Carte','map','back','text-button')+
     '<span class="game-island">'+icon(island.icon)+' '+island.title+'</span>'+
-    '<span class="step-label">'+(current.justSucceeded&&!current.feedback?'<span class="step-success" role="status" aria-label="Bonne réponse">'+icon('check')+'</span>':'')+count+'</span></div>'+
+    '<span class="step-label">'+count+'</span></div>'+
     '<div class="steps" role="img" aria-label="'+count+'">'+progress+'</div>'+
     '<section class="game-card '+island.tone+'">'+
     '<div class="game-heading"><div class="prompt-copy">'+(current.example||retry?'<span class="kicker">'+(current.example?'Exemple guidé':'Nouvel essai')+'</span>':'')+
@@ -288,12 +291,13 @@ function renderTask(schedule){
   const mute=$('.mute-button');mute.setAttribute('aria-label',p.sound?'Couper le son':'Rétablir le son');mute.setAttribute('aria-pressed',String(!p.sound));
   if($('#workspace')) renderWorkspace();
   redraw();
+  if(current.success){presentSuccess();return;}
   if(schedule){
     sectionFocus('task-title');
     if(q.flash&&p.flash&&!current.example){
       const at=revision;
       flashTimer=setTimeout(()=>{
-        if(at!==revision||page!=='game'||!current||current.feedback||dialog.open)return;
+        if(at!==revision||page!=='game'||!current||current.success||current.feedback||dialog.open)return;
         const focused=document.activeElement?.dataset.action;
         current.hidden=true;renderTask(false);
         if(focused) main.querySelector('[data-action="'+focused+'"]')?.focus({preventScroll:true});
@@ -347,12 +351,12 @@ function updateWorkspace(focusSelector){
   const q=current.q;
   const orderComplete=q.mode==='order'&&current.order.length===q.order.length;
   const bridgeComplete=q.mode==='pair'&&current.selected.size===q.n;
+  renderWorkspace(focusSelector);
   if(orderComplete||bridgeComplete){
     submit(workspaceValue());
     return;
   }
   audio.chime('tap');
-  renderWorkspace(focusSelector);
 }
 function drawSmallTokens(){
   const basket=$('.wicker-art');
@@ -425,8 +429,24 @@ function feedbackBody(){
     media+'<p class="retry-note">'+(round.index<round.planned?'Tu retrouveras une variante en fin de série.':'Tu pourras retravailler cette activité.')+'</p>'+
     button('Continuer','advance','arrow','primary feedback-next')+'</div>';
 }
+function pauseSuccess(){
+  clearTimeout(successTimer);
+  successTimer=0;
+  successStatus.textContent='';
+}
+function presentSuccess(){
+  if(!current?.success||page!=='game')return;
+  const body=$('#task-body');
+  body.querySelector('[data-action="answer-'+current.q.n+'"], .validate')?.classList.add('confirmed-answer');
+  body.inert=true;
+  const example=$('.example-controls');
+  if(example)example.inert=true;
+  if(dialog.open||document.hidden||successTimer)return;
+  successStatus.innerHTML=icon('check')+'<span>Bravo !</span>';
+  successTimer=setTimeout(next,successPause);
+}
 function submit(value){
-  if(!current||!round||current.feedback)return;
+  if(!current||!round||current.feedback||current.success)return;
   const example=current.example;
   const correct=example?matches(current.q,value):answer(round,value);
   if(correct===null)return;
@@ -437,12 +457,17 @@ function submit(value){
     return;
   }
   audio.stop();
+  clearTimeout(flashTimer);
   if(correct){
-    next(true);
-    if(page==='game'||!result?.mastery)audio.chime('good',true);
+    current.success=true;
+    if(example){
+      current.note='';
+      $('#example-note').textContent='';
+    }
+    audio.chime('good');
+    presentSuccess();
     return;
   }
-  clearTimeout(flashTimer);
   current.feedback={value};
   audio.chime('guide');
   player().records[round.chapter][round.island].errors++;
@@ -450,9 +475,10 @@ function submit(value){
   renderTask(false);
   sectionFocus('feedback-title');
 }
-function next(justSucceeded=false){
+function next(){
   if(!round||!current||(!current.example&&!round.answered))return;
-  if(current.example||advance(round)){beginTask(false,justSucceeded);return;}
+  pauseSuccess();
+  if(current.example||advance(round)){beginTask();return;}
   const done=outcome(round),p=player();
   record(p,round.chapter,round.island,done);persistSave();
   result={...done,island:round.island,chapter:round.chapter};
@@ -494,7 +520,7 @@ function renderResult(){
   window.scrollTo(0,0);sectionFocus('result-title');
 }
 function place(index,where,slot=null,keyboard=false){
-  if(!current||current.feedback||index<0||index>=current.supply)return;
+  if(!current||current.feedback||current.success||index<0||index>=current.supply)return;
   const state=current;
   if(state.q.mode==='pair'){
     const origin=[...state.slots].find(([,item])=>item===index)?.[0];
@@ -517,7 +543,10 @@ function place(index,where,slot=null,keyboard=false){
   updateWorkspace(keyboard?'[data-item="'+index+'"]':undefined);
 }
 function openDialog(title,body,kind){
-  if(!dialog.open) opener=document.activeElement;
+  if(!dialog.open){
+    opener=document.activeElement;
+    if(current?.success)pauseSuccess();
+  }
   dialog.dataset.kind=kind;
   dialog.innerHTML='<div class="dialog-head"><h2 id="dialog-title">'+title+'</h2>'+
     '<button type="button" class="icon-button" data-action="close" aria-label="Fermer">'+icon('close')+'</button></div>'+body;
@@ -529,7 +558,9 @@ function closeDialog(){
 dialog.addEventListener('close',()=>{
   if(opener?.isConnected)opener.focus();
   opener=null;nextAfterCreate=null;
+  presentSuccess();
 });
+document.addEventListener('visibilitychange',()=>document.hidden?pauseSuccess():presentSuccess());
 dialog.addEventListener('click',event=>{if(event.target===dialog)closeDialog();});
 function profiles(create=false){
   const p=player();
@@ -646,13 +677,14 @@ async function onAction(action,target,event){
     player().settings.sound=!prefs().sound;persistSave();applySettings();renderTask(false);
     $('.mute-button')?.focus({preventScroll:true});return;
   }
-  if(action==='advance'){next();return;}
+  if(current.success)return;
+  if(action==='advance'&&current.feedback){next();return;}
+  if(current.feedback)return;
   if(action==='skip-example'&&current.example){beginTask();return;}
   if(action==='ferry-cross'||action==='ferry-back'){
     current.ferrySide=action==='ferry-cross'?'arrival':'source';renderTask(false);
     main.querySelector(action==='ferry-cross'?'.ferry-arrival button':'.ferry-button')?.focus({preventScroll:true});return;
   }
-  if(current.feedback)return;
   if(action==='count-help'&&current.q.independent&&round.index>=round.planned){
     current.showCountingHelp=true;
     renderTask(false);
@@ -671,10 +703,7 @@ async function onAction(action,target,event){
     const total=current.marked.size;
     if(!audio.playVoice('n'+total))audio.chime('tap');
     redraw();
-    if(total===current.q.n){
-      main.querySelectorAll('.number-button').forEach(b=>b.disabled=false);
-      if(event.detail===0) $('.number-button')?.focus({preventScroll:true});
-    }else if(event.detail===0){$('.hit[tabindex="0"]')?.focus({preventScroll:true});}
+    if(event.detail===0) ($('.hit[tabindex="0"]')??$('.number-button'))?.focus({preventScroll:true});
     return;
   }
   if(action.startsWith('put-')||action.startsWith('take-')){
@@ -730,7 +759,7 @@ dialog.addEventListener('submit',event=>{
   round=null;current=null;chapter=0;persistSave();applySettings();closeDialog();goMap();
   if(auto!==null)start(auto);
 });
-bindDrag(main,place,()=>page==='game'?current:null);
+bindDrag(main,place,()=>page==='game'&&!current?.success?current:null);
 
 loadObjects(()=>requestAnimationFrame(redraw));
 applySettings();goMap();

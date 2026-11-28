@@ -4,7 +4,7 @@ const chapters = ['Les petites îles','Au-delà du lagon'];
 export const chapterTitle = chapter => chapters[chapter];
 const plural = (n, singular) => n === 1 ? singular : singular+'s';
 const focused = {
-  line:['Combien d’objets dans la rangée ?','Compte en suivant la rangée.','count-line'],
+  line:['Combien d’objets dans la rangée ?','Tu peux toucher les objets en suivant la rangée pour t’aider à compter.','count-line'],
   hand:['Combien de doigts sont levés ?','Seuls les doigts levés comptent.','count-hand'],
   dice:['Combien de points sur le dé ?','Observe les points du dé.','count-dice'],
 };
@@ -24,7 +24,7 @@ export function presentation(task){
     return {prompt,hint,clip};
   }
   switch(task.mode){
-    case 'touch':return {prompt:'Combien vois-tu d’objets ?',hint:n?'Touche chaque objet une fois. Le dernier nombre donne le total.':'La plage est vide. Choisis le nombre qui signifie « aucun objet ».',clip:'touch'};
+    case 'touch':return {prompt:'Combien vois-tu d’objets ?',hint:n?'Tu peux toucher chaque objet une fois pour t’aider. Le dernier nombre donne le total.':'La plage est vide. Choisis le nombre qui signifie « aucun objet ».',clip:'touch'};
     case 'echo':return {prompt:'Quel nombre entends-tu ?',hint:'Écoute, puis touche le chiffre.',clip:'n'+n};
     case 'hear':return task.basketChoices
       ?{prompt:'Choisis le bon panier',hint:'Écoute le nombre de coquillages, puis touche le panier qui en contient autant.',clip:'hear-basket'}
@@ -64,7 +64,7 @@ export function voiceClips(task, moment){
 export function exampleHint(task, chapter){
   const n=task.n;
   switch(task.mode){
-    case 'touch':return task.independent?'Observe la collection. Il y en a '+n+'. Choisis '+n+'.':'Touche les objets. Le dernier nombre est '+n+' : choisis '+n+'.';
+    case 'touch':return task.independent?'Observe la collection. Il y en a '+n+'. Choisis '+n+'.':'Tu peux toucher les objets pour les compter. Il y en a '+n+' : choisis '+n+'.';
     case 'echo':return 'Écoute « '+numbers[n]+' ». Le chiffre correspondant est '+n+'.';
     case 'glance':return task.fixed?'Observe la figure. Il y en a '+n+'. Choisis '+n+'.':chapter?'Une rangée pleine de cinq et un objet en dessous, cela fait six.':'Ce dé a trois points. Tu peux les compter, puis choisir 3.';
     case 'hear':return task.basketChoices

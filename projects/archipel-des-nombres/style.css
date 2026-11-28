@@ -693,10 +693,16 @@ body:is([data-view=game],[data-view=result]) .bottom .text-button:hover{backgrou
 .game-island{font-size:.94rem}
 .game-island svg{color:#ffd484}
 .step-label{display:flex;align-items:center;gap:7px;color:#fff2cf;font-variant-numeric:tabular-nums;white-space:nowrap}
-.step-success{
-  display:grid;place-items:center;width:27px;height:27px;border-radius:50%;
-  border:1px solid #fff5a5;background:#ffd66c;color:#18474b;
+#task-success{
+  position:fixed;z-index:40;left:50%;bottom:max(18px,calc(env(safe-area-inset-bottom) + 10px));
+  transform:translateX(-50%);pointer-events:none;
+  display:flex;align-items:center;gap:9px;padding:8px 15px;
+  border:1px solid #19705d;border-radius:18px;background:#0e453c;color:#fff3ce;
+  box-shadow:0 3px 0 #092e29,0 7px 18px #0b343c42;font-weight:800;
 }
+#task-success:empty{padding:0;border:0;box-shadow:none}
+#task-success svg{width:25px;height:25px;padding:4px;border-radius:50%;background:var(--sun);color:#17474a}
+.game-card [data-action].confirmed-answer{background:#cce8cf;color:#174d40;border-color:#518773;box-shadow:0 3px 0 #81ad92}
 .steps{gap:7px;margin-bottom:15px}
 .steps span{height:8px;background:#ffffff2b}
 .steps .done{background:#8cc7a8}
@@ -801,10 +807,8 @@ button.collection-card:active,.basket-choice:active{transform:translateY(3px);bo
 .score-marks span{width:13px;height:13px;border:1px solid #b4a58b;border-radius:50%;background:#eae0c9}
 .score-marks .earned{border-color:#b7813d;background:#f7bd51;box-shadow:inset 0 1px #ffefbf}
 @media(prefers-reduced-motion:no-preference){
-  [data-motion=true] .step-success{animation:success-pop .34s ease-out both}
   [data-motion=true] .activity-tile:not(.locked){transition:background .16s,border-color .16s,transform .16s}
   [data-motion=true] .activity-tile:not(.locked):hover{transform:translateY(-2px)}
-  @keyframes success-pop{from{transform:scale(.66);opacity:.35}65%{transform:scale(1.14)}to{transform:none;opacity:1}}
 }
 @media(max-width:720px){
   .game-card{grid-template-columns:1fr;min-height:auto;border-radius:21px}
@@ -841,7 +845,6 @@ button.collection-card:active,.basket-choice:active{transform:translateY(3px);bo
   .game-top{grid-template-columns:auto 1fr auto}
   .game-top>.text-button{padding-inline:7px}
   .game-island{font-size:.77rem}
-  .step-success{width:21px;height:21px}
   .step-label{gap:3px}
   .number-button{border-radius:14px;min-height:55px}
   .result-card,.result-card.lighthouse-win{grid-template-columns:1fr}

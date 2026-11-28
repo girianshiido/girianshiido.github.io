@@ -34,7 +34,11 @@ async function enter(index){
   if(await confirm.count())await confirm.tap();
 }
 const storeKey='archipel-des-nombres:save';
+async function finishSuccess(){
+  await page.locator('#task-success span').waitFor({state:'detached'});
+}
 async function inSeries(){
+  await finishSuccess();
   assert.equal(await action('advance').count(),0);
   assert.match(await page.locator('.step-label').innerText(),/^1 \/ \d+$/);
 }
@@ -96,18 +100,21 @@ try{
   assert.match(await gameArt.getAttribute('src'),/island-0\.webp$/);
   assert.match(await page.locator('.step-label').innerText(),/Exemple/);
   const novice=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),storeKey);
-  assert.equal(await action('answer-2').isDisabled(),true);
+  assert.equal(await action('answer-2').isEnabled(),true);
   await page.locator('.hit').nth(0).tap();
   assert.equal(await page.evaluate(()=>window.numberStarts),1,'Le nombre démarre lors du toucher');
-  await page.locator('.hit').nth(1).tap();
-  assert.equal(await page.evaluate(()=>window.numberStarts),2);
   const wrong=page.locator('.number-button:not([data-action="answer-2"])').first();
   await wrong.tap();
   assert.match(await page.locator('#example-note').innerText(),/Essaie encore/);
   assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).players[0].records[0][9].errors,storeKey),0);
+  const successStart=Date.now();
   await action('answer-2').tap();
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  assert.equal(await page.locator('#task-success').innerText(),'Bravo !');
+  assert.equal(await page.locator('#task-body').evaluate(body=>body.inert),true);
+  assert.equal(await page.locator('.hit[aria-pressed="true"]').count(),1);
   await inSeries();
-  assert.equal(await page.locator('.step-success').count(),1);
+  assert.ok(Date.now()-successStart>=900);
   assert.equal(await page.locator('.step-label').innerText(),'1 / 6');
 
   await page.evaluate(({key,novice})=>{
@@ -223,7 +230,10 @@ try{
   assert.equal(await page.locator('[data-slot="1"] [data-item]').count(),0);
   await action('put-2').tap();
   assert.equal(await page.locator('[data-slot="0"] [data-item="2"]').count(),1);
-  await action('put-1').tap();
+  await drag(action('put-1'),page.locator('[data-slot="1"]'));
+  assert.equal(await page.locator('.step-label').innerText(),'Exemple');
+  assert.equal(await page.locator('.pair-cell.lit').count(),2);
+  assert.equal(await page.locator('#task-success').innerText(),'Bravo !');
   await inSeries();
 
   await page.locator('.game-top [data-action="map"]').tap();
@@ -246,6 +256,7 @@ try{
   assert.equal(await page.locator('.collection-options button').count(),4);
   const cardNumber=Number((await page.locator('#task-title').innerText()).match(/\d+/)[0]);
   await action('answer-'+cardNumber).tap();
+  await finishSuccess();
   assert.equal(await page.locator('.step-label').innerText(),'2 / 8');
   const collectionCards=page.locator('.collection-options button');
   const collectionRects=()=>collectionCards.evaluateAll(cards=>cards.map(card=>{
@@ -291,15 +302,18 @@ try{
       assert.match(await page.locator('.feedback-title').innerText(),/Observons ensemble/);
       incorrect=true;
       await action('advance').tap();
-    }else await action('answer-'+n).tap();
+    }else{
+      await action('answer-'+n).tap();
+      await finishSuccess();
+    }
   }
   await action('count-help').tap();
   const targets=page.locator('.hit');
   const n=await targets.count();
   assert.ok(n>0);
-  assert.equal(await action('answer-'+n).isDisabled(),true);
-  for(let i=0;i<n;i++)await action('point-'+i).tap();
   assert.equal(await action('answer-'+n).isEnabled(),true);
+  await action('answer-'+n).tap();
+  await finishSuccess();
 
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(0);
@@ -356,7 +370,10 @@ try{
       assert.match(await hand.getAttribute('src'),/hand-0\.webp$/);
       assert.match(await page.locator('.feedback-title').innerText(),/Aucun doigt n’est levé/);
       await action('advance').tap();
-    }else await action('answer-'+n).tap();
+    }else{
+      await action('answer-'+n).tap();
+      await finishSuccess();
+    }
   }
   assert.deepEqual([...poses].sort(),[0,1,2,3,4,5]);
   await action('map').tap();
