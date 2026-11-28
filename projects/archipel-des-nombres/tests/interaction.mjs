@@ -58,6 +58,7 @@ try{
   assert.equal(await page.locator('.island img').count(),6);
   assert.ok(await page.locator('.island img').evaluateAll(imgs=>imgs.every(img=>img.complete&&img.naturalWidth>0)));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth),320);
+  assert.equal(await page.locator('html').evaluate(el=>getComputedStyle(el).overscrollBehaviorY),'contain');
   assert.equal(await page.locator('.hero h1').evaluate(element=>getComputedStyle(element).userSelect),'none');
   const contextMenuBlocked=target=>target.evaluate(element=>!element.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true})));
   assert.equal(await contextMenuBlocked(page.locator('.hero h1')),true);

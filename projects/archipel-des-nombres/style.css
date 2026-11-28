@@ -9,6 +9,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;min-height:100svh;display:flex;flex-direction:column}
+html{overscroll-behavior-y:contain}
 html,dialog{touch-action:pan-x pan-y}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
