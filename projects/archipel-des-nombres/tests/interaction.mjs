@@ -219,11 +219,14 @@ try{
   await inSeries();
   await page.locator('.game-top [data-action="map"]').tap();
   await enter(4);
+  const spokenBeforeLantern=await page.evaluate(()=>window.numberStarts);
   await drag(action('put-0'),page.locator('[data-slot="1"]'));
+  assert.equal(await page.evaluate(()=>window.numberStarts),spokenBeforeLantern+1);
   assert.equal(await page.locator('[data-slot="1"] [data-item="0"]').count(),1);
   assert.equal(await page.locator('[data-slot="0"] [data-item]').count(),0);
   assert.equal(await page.locator('.stock [data-item="3"]').count(),1);
   await drag(action('put-1'),page.locator('[data-slot="1"]'));
+  assert.equal(await page.evaluate(()=>window.numberStarts),spokenBeforeLantern+1,'Remplacer une lanterne ne change pas la quantité');
   assert.equal(await page.locator('[data-slot="1"] [data-item="1"]').count(),1);
   assert.equal(await page.locator('.stock [data-item="0"]').count(),1);
   await drag(action('take-1'),page.locator('.stock h2'));
@@ -234,7 +237,8 @@ try{
   await drag(action('put-1'),page.locator('[data-slot="1"]'));
   assert.equal(await page.locator('.step-label').innerText(),'Exemple');
   assert.equal(await page.locator('.pair-cell.lit').count(),2);
-  assert.equal(await page.locator('#task-success').innerText(),'Bravo !');
+  assert.equal(await page.locator('#task-success').innerText(),'2 lanternes pour 2 feuilles');
+  assert.equal(await page.evaluate(()=>window.numberStarts),spokenBeforeLantern+3);
   await inSeries();
 
   await page.locator('.game-top [data-action="map"]').tap();

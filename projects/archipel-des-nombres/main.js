@@ -39,6 +39,7 @@ const tag=(glyph,label)=>icon(glyph)+'<span>'+label+'</span>';
 let page='map',activeGroup=null,chapter=0,round=null,result=null,current=null,flashTimer=0,toastTimer=0,storageFailed=false,nextAfterCreate=null;
 const successStatus=$('#task-success');
 const successPause=1000;
+const pairSuccessPause=2000;
 let revision=0, opener=null,successTimer=0;
 
 function persistSave(){
@@ -347,7 +348,7 @@ function renderWorkspace(focusSelector){
 function workspaceValue(){
   return current.q.mode==='order'?current.order:current.selected.size;
 }
-function updateWorkspace(focusSelector){
+function updateWorkspace(focusSelector,lanternAdded=false){
   const q=current.q;
   const orderComplete=q.mode==='order'&&current.order.length===q.order.length;
   const bridgeComplete=q.mode==='pair'&&current.selected.size===q.n;
@@ -356,7 +357,7 @@ function updateWorkspace(focusSelector){
     submit(workspaceValue());
     return;
   }
-  audio.chime('tap');
+  if(!lanternAdded||!audio.playVoice('n'+current.selected.size))audio.chime('tap');
 }
 function drawSmallTokens(){
   const basket=$('.wicker-art');
@@ -442,8 +443,11 @@ function presentSuccess(){
   const example=$('.example-controls');
   if(example)example.inert=true;
   if(dialog.open||document.hidden||successTimer)return;
-  successStatus.innerHTML=icon('check')+'<span>Bravo !</span>';
-  successTimer=setTimeout(next,successPause);
+  const {mode,n}=current.q;
+  const plural=n===1?'':'s';
+  const message=mode==='pair'?n+' lanterne'+plural+' pour '+n+' feuille'+plural:'Bravo !';
+  successStatus.innerHTML=icon('check')+'<span>'+message+'</span>';
+  successTimer=setTimeout(next,mode==='pair'?pairSuccessPause:successPause);
 }
 function submit(value){
   if(!current||!round||current.feedback||current.success)return;
@@ -464,7 +468,7 @@ function submit(value){
       current.note='';
       $('#example-note').textContent='';
     }
-    audio.chime('good');
+    if(current.q.mode!=='pair'||!audio.playVoice('n'+current.q.n))audio.chime('good');
     presentSuccess();
     return;
   }
@@ -522,6 +526,7 @@ function renderResult(){
 function place(index,where,slot=null,keyboard=false){
   if(!current||current.feedback||current.success||index<0||index>=current.supply)return;
   const state=current;
+  const previouslyPlaced=state.selected.size;
   if(state.q.mode==='pair'){
     const origin=[...state.slots].find(([,item])=>item===index)?.[0];
     if(where==='basket'){
@@ -540,7 +545,8 @@ function place(index,where,slot=null,keyboard=false){
     }
   }else if(where==='basket')state.selected.add(index);
   else state.selected.delete(index);
-  updateWorkspace(keyboard?'[data-item="'+index+'"]':undefined);
+  const lanternAdded=state.q.mode==='pair'&&state.selected.size>previouslyPlaced;
+  updateWorkspace(keyboard?'[data-item="'+index+'"]':undefined,lanternAdded);
 }
 function openDialog(title,body,kind){
   if(!dialog.open){
